@@ -55,35 +55,35 @@ struct string_l : sor< string_l_<'"'>, string_l_<'\''> > {};
 
 
 template <typename T>
-struct one_tuple_l : seq< T,
+struct one_tuple_l : seq< ifapply< T, a_tuple_element >,
                           opt< seq< pad< one<'*'>, space >,
-                                    int_l
+                                    ifapply< int_l, a_tuple_clone >
                                     >
                                >
                           > {};
 
 template <typename T>
-struct one_struct_l : seq< symbol, 
+struct one_struct_l : seq< ifapply< symbol, a_struct_key >,
                            pad< one<'='>, space >,
-                           must< T >
+                           must< T >, apply< a_struct_val >
                            > {};
 
-template <typename S, typename P, typename E>
-struct commasep_ : seq< padr< S, space >,
+template <typename S, typename P, typename E, typename ACTS, typename ACTE>
+struct commasep_ : seq< padr< ifapply< S, ACTS >, space >,
                         star< seq< P,
                                    star<space>,
                                    opt< one<','> >,
                                    star<space>
                                    >
                               >,
-                        padl< E, space > 
+                        padl< ifapply< E, ACTE >, space > 
                         > {};
 
 template <typename T>
-struct tuple_ : commasep_< one<'['>, one_tuple_l<T>, one<']'> > {};
+struct tuple_ : commasep_< one<'['>, one_tuple_l<T>, one<']'>, a_tuple_start, a_tuple_end > {};
 
 template <typename T>
-struct struct_ : commasep_< one<'{'>, one_struct_l<T>, one<'}'> > {};
+struct struct_ : commasep_< one<'{'>, one_struct_l<T>, one<'}'>, a_struct_start, a_struct_end > {};
 
 struct tuple_l : tuple_<literal> {};
 struct struct_l : struct_<literal> {};
@@ -96,8 +96,8 @@ struct literal_pod : sor< ifapply< symbol, a_symbol_literal >,
                           > {};
 
 struct literal : sor< literal_pod,
-                      tuple_l, 
-                      struct_l 
+                      ifapply< tuple_l, a_tuple_literal >,
+                      ifapply< struct_l, a_struct_literal >
                       > {};
 
 
@@ -119,14 +119,14 @@ struct type_or_literal : sor< seq< padr< one<'<'>, space >,
 struct tuple_t : tuple_<type_or_literal> {};
 struct struct_t : struct_<type_or_literal> {};
 
-struct type : sor< string<'S','y','m','b','o','l'>,
-                   string<'I','n','t'>,
-                   string<'R','e','a','l'>,
-                   string<'B','o','o','l'>,
-                   string<'S','t','r','i','n','g'>,
-                   typenam,
-                   tuple_t,
-                   struct_t
+struct type : sor< ifapply< string<'S','y','m','b','o','l'>, a_type<SYMBOL_TYPE> >,
+                   ifapply< string<'I','n','t'>, a_type<INT_TYPE> >,
+                   ifapply< string<'R','e','a','l'>, a_type<REAL_TYPE> >,
+                   ifapply< string<'B','o','o','l'>, a_type<BOOL_TYPE> >,
+                   ifapply< string<'S','t','r','i','n','g'>, a_type<STRING_TYPE> >,
+                   ifapply< typenam, a_type<CUSTOM_TYPE> >,
+                   ifapply< tuple_t, a_type<TUPLE_TYPE> >,
+                   ifapply< struct_t, a_type<STRUCT_TYPE> >
                    > {};
 
 
@@ -138,10 +138,10 @@ struct patternmatch;
 struct tuple_pm : tuple_<patternmatch> {};
 struct struct_pm : struct_<patternmatch> {};
 
-struct patternmatch : sor< seq< type, one<':'>, must< symbol>  >,
+struct patternmatch : sor< seq< type, one<':'>, must< ifapply< symbol, a_vardef > > >,
                            literal_pod,
-                           tuple_pm,
-                           struct_pm
+                           ifapply< tuple_pm, a_match_tuple >,
+                           ifapply< struct_pm, a_match_struct >
                            > {};
 
 /* The pattern application language. */
@@ -151,10 +151,10 @@ struct patternappl;
 struct tuple_pa : tuple_<patternappl> {};
 struct struct_pa : struct_<patternappl> {};
 
-struct patternappl : sor< seq< one<':'>, symbol >,
+struct patternappl : sor< seq< one<':'>, ifapply< must< symbol >, a_varget > >,
                           literal_pod ,
-                          tuple_pa,
-                          struct_pa
+                          ifapply< tuple_pa, a_tuple_literal >,
+                          ifapply< struct_pa, a_struct_literal >
                           > {};
 
 
