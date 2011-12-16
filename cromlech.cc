@@ -5,28 +5,18 @@
 std::string token_name(int type) {
     switch (type) {
     case crom::LITERAL: return "LITERAL";
-    case crom::TUPLE_ELEMENT: return "TUPLE_ELEMENT";
-    case crom::TUPLE_CLONE: return "TUPLE_CLONE";
     case crom::STRUCT_KEY: return "STRUCT_KEY";
-    case crom::STRUCT_VAL: return "STRUCT_VAL";
-    case crom::TUPLE_LITERAL: return "TUPLE_LITERAL";
-    case crom::STRUCT_LITERAL: return "STRUCT_LITERAL";
     case crom::SYMBOL_TYPE: return "SYMBOL_TYPE";
     case crom::INT_TYPE: return "INT_TYPE";
     case crom::REAL_TYPE: return "REAL_TYPE";
     case crom::BOOL_TYPE: return "BOOL_TYPE";
     case crom::STRING_TYPE: return "STRING_TYPE";
-    case crom::CUSTOM_TYPE: return "CUSTOM_TYPE";
-    case crom::TUPLE_TYPE: return "TUPLE_TYPE";
-    case crom::STRUCT_TYPE: return "STRUCT_TYPE";
     case crom::MATCH_TUPLE: return "MATCH_TUPLE";
     case crom::MATCH_STRUCT: return "MATCH_STRUCT";
     case crom::VARDEF: return "VARDEF";
     case crom::VARGET: return "VARGET";
     case crom::TUPLE_START: return "TUPLE_START";
-    case crom::TUPLE_END: return "TUPLE_END";
     case crom::STRUCT_START: return "STRUCT_START";
-    case crom::STRUCT_END: return "STRUCT_END";
     default: return "?";
     }
 }
@@ -54,15 +44,39 @@ void print(const crom::PODLiteral& l) {
     l(printer());
 }
 
+template <typename ELT>
+void print_element(const ELT& t, const std::string& indent = "") {
+
+    std::cout << indent << token_name(t->token.type) << ": ";
+    print(t->token.val);
+    std::cout << std::endl;
+
+    for (const auto& tt : t->edges) {
+	print_element(tt, indent + "    ");
+    }
+}
+
 template <typename STACK>
-void print_stack(const STACK& s, const std::string& indent = "") {
+void print_context(const STACK& s, const std::string& indent = "") {
 
-    for (auto t : s) {
-        std::cout << indent << token_name(t->token.type) << ": ";
-        print(t->token.val);
-        std::cout << std::endl;
+    std::cout << "--- Stack ---" << std::endl << std::endl;
+    for (const auto& t : s.stack) {
+	print_element(t);
+    }
+    std::cout << std::endl;
 
-        print_stack(t->edges, indent + "    ");
+    std::cout << "--- Typemap ---" << std::endl << std::endl;
+
+    for (const auto& v : s.typemap) {
+
+	printer()(v.first.first);
+	std::cout << std::endl;
+
+	printer()(v.first.second);
+	std::cout << std::endl;
+
+	print_element(v.second);
+	std::cout << std::endl;
     }
 }
 
@@ -71,7 +85,7 @@ int main(int argc, char** argv) {
 
   try {
 
-      crom::stack_t stack;
+      crom::Context stack;
 
       if (argc > 2) {
           pegtl::trace_parse_string<crom::tunit>(true, 
@@ -83,7 +97,7 @@ int main(int argc, char** argv) {
                                                  stack);
       }
 
-      print_stack(stack);
+      print_context(stack);
 
   } catch (std::runtime_error& e) {
       std::cout << "ERROR: " << e.what() << std::endl;

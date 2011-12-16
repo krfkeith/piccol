@@ -124,9 +124,9 @@ struct type : sor< ifapply< string<'S','y','m','b','o','l'>, a_type<SYMBOL_TYPE>
                    ifapply< string<'R','e','a','l'>, a_type<REAL_TYPE> >,
                    ifapply< string<'B','o','o','l'>, a_type<BOOL_TYPE> >,
                    ifapply< string<'S','t','r','i','n','g'>, a_type<STRING_TYPE> >,
-                   ifapply< typenam, a_type<CUSTOM_TYPE> >,
-                   ifapply< tuple_t, a_type<TUPLE_TYPE> >,
-                   ifapply< struct_t, a_type<STRUCT_TYPE> >
+                   ifapply< typenam, a_custom_type >,
+                   tuple_t, 
+                   struct_t
                    > {};
 
 
@@ -233,7 +233,7 @@ struct fun : seq< string<'f','u','n'>,
 
 struct namspace : seq< string<'n','a','m','e','s','p','a','c','e'>,
                        plus<space>,
-                       must< symbol >,
+		       must< ifapply< symbol, a_set_namespace > >,
                        star<space>,
                        one<';'>
                        > {};
@@ -244,14 +244,17 @@ struct typdef : seq< string<'d','e','f','i','n','e'>,
                      plus<space>,
                      string<'a','s'>,
                      plus<space>,
-                     must< typenam >,
+                     must< ifapply< typenam, a_define_type > >,
                      star<space>,
                      one<';'>
                      > {};
 
 struct tunit : seq< star<space>, 
                     namspace,
-                    star< pad< sor< fun, typdef, namspace >, 
+                    star< pad< sor< seq< string<'/','/'>, until<eol> >, 
+				    fun, 
+				    typdef, 
+				    namspace >, 
                                space > 
                           >,
                     star<space>,

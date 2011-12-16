@@ -5,9 +5,21 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 #include <pegtl.hh>
 
+
+namespace std {
+
+template <typename A, typename B>
+struct hash< pair<A,B> > {
+    size_t operator()(const pair<A,B>& p) const {
+	return hash<A>()(p.first) ^ hash<B>()(p.second);
+    }
+};
+
+}
 
 namespace crom {
 
@@ -15,22 +27,16 @@ using namespace pegtl;
 
 enum {
     LITERAL = 1,
-    TUPLE_ELEMENT,
-    TUPLE_CLONE,
     STRUCT_KEY,
-    STRUCT_VAL,
 
-    TUPLE_LITERAL,
-    STRUCT_LITERAL,
+    TUPLE_START,
+    STRUCT_START,
 
     SYMBOL_TYPE,
     INT_TYPE,
     REAL_TYPE,
     BOOL_TYPE,
     STRING_TYPE,
-    CUSTOM_TYPE,
-    TUPLE_TYPE,
-    STRUCT_TYPE,
 
     MATCH_TUPLE,
     MATCH_STRUCT,
@@ -38,10 +44,6 @@ enum {
     VARDEF,
     VARGET,
 
-    TUPLE_START,
-    STRUCT_START,
-    TUPLE_END,
-    STRUCT_END
 };
 
 struct Token {
@@ -59,8 +61,16 @@ struct Node {
     std::vector< std::shared_ptr<Node> > edges;
 };
 
-struct stack_t {
-    std::vector< std::shared_ptr<Node> > stack;
+struct Context {
+
+    typedef std::vector< std::shared_ptr<Node> > stack_t;
+
+    Symbol current_ns;
+
+    std::unordered_map<std::pair<Symbol,Symbol>,
+		       stack_t::value_type> typemap;
+
+    stack_t stack;
 
     void push_back(const Token& t) {
         std::shared_ptr<Node> n(new Node);
@@ -85,25 +95,25 @@ struct stack_t {
 };
 
 struct a_int_literal : action_base<a_int_literal> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(LITERAL, ::atol(s.c_str())));
     }
 };
 
 struct a_real_literal : action_base<a_real_literal> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(LITERAL, ::atof(s.c_str())));
     }
 };
 
 struct a_symbol_literal : action_base<a_symbol_literal> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(LITERAL, sym(s)));
     }
 };
 
 struct a_bool_literal : action_base<a_bool_literal> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         if (s == "\\true") {
             t.push_back(Token(LITERAL, true));
         } else {
@@ -113,7 +123,7 @@ struct a_bool_literal : action_base<a_bool_literal> {
 };
 
 struct a_string_literal : action_base<a_string_literal> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         std::string tmp;
 
         for (std::string::const_iterator i = s.begin(); i != s.end(); ++i) {
@@ -151,42 +161,35 @@ struct a_string_literal : action_base<a_string_literal> {
 
 
 struct a_tuple_start : action_base<a_tuple_start> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(TUPLE_START, (Symbol)0));
     }
 };
 
 struct a_tuple_end : action_base<a_tuple_end> {
-    static void apply(const std::string& s, stack_t& t) {
-        //t.push_back(Token(TUPLE_END, (Symbol)0));
-    }
+    static void apply(const std::string& s, Context& t) {}
 };
 
 
 struct a_struct_start : action_base<a_struct_start> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(STRUCT_START, (Symbol)0));
     }
 };
 
 struct a_struct_end : action_base<a_struct_end> {
-    static void apply(const std::string& s, stack_t& t) {
-        t.push_back(Token(STRUCT_END, (Symbol)0));
-    }
+    static void apply(const std::string& s, Context& t) {}
 };
 
 
 struct a_tuple_element : action_base<a_tuple_element> {
-    static void apply(const std::string& s, stack_t& t) {
-        //t.push_back(Token(TUPLE_ELEMENT, (Symbol)0));
+    static void apply(const std::string& s, Context& t) {
         t.nudge();
     }
 };
 
 struct a_tuple_clone : action_base<a_tuple_clone> {
-    static void apply(const std::string& s, stack_t& t) {
-        //t.push_back(Token(TUPLE_CLONE, ::atol(s.c_str())));
-
+    static void apply(const std::string& s, Context& t) {
         std::shared_ptr<Node> n = t.stack.back();
         t.stack.pop_back();
 
@@ -198,61 +201,87 @@ struct a_tuple_clone : action_base<a_tuple_clone> {
 };
 
 struct a_struct_key : action_base<a_struct_key> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_in_back(Token(STRUCT_KEY, sym(s)));
     }
 };
 
 struct a_struct_val : action_base<a_struct_val> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.nudge();
-        //t.push_in_back(Token(STRUCT_VAL, (Symbol)0));
     }
 };
 
 
 struct a_tuple_literal : action_base<a_tuple_literal> {
-    static void apply(const std::string& s, stack_t& t) {
-        //t.push_back(Token(TUPLE_LITERAL, (Symbol)0));
-    }
+    static void apply(const std::string& s, Context& t) {}
 };
 
 struct a_struct_literal : action_base<a_struct_literal> {
-    static void apply(const std::string& s, stack_t& t) {
-        t.push_back(Token(STRUCT_LITERAL, (Symbol)0));
-    }
+    static void apply(const std::string& s, Context& t) {}
 };
 
 
 template <int TT>
 struct a_type : action_base< a_type<TT> > {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(TT, (Symbol)0));
     }
 };
 
 
+struct a_custom_type : action_base< a_custom_type > {
+    static void apply(const std::string& s, Context& t) {
+
+	Symbol typ = sym(s);
+
+	auto tmp = t.typemap.find(std::make_pair(t.current_ns, typ));
+
+	if (tmp == t.typemap.end()) {
+	    throw std::runtime_error("Undefined type: " + s);
+	}
+
+        t.stack.push_back(tmp->second);
+    }
+};
+
+
 struct a_match_tuple : action_base<a_match_tuple> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(MATCH_TUPLE, (Symbol)0));
     }
 };
 
 struct a_match_struct : action_base<a_match_struct> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(MATCH_STRUCT, (Symbol)0));
     }
 };
 
 struct a_vardef : action_base<a_vardef> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(VARDEF, sym(s)));
     }
 };
 
 struct a_varget : action_base<a_varget> {
-    static void apply(const std::string& s, stack_t& t) {
+    static void apply(const std::string& s, Context& t) {
         t.push_back(Token(VARGET, sym(s)));
+    }
+};
+
+struct a_set_namespace : action_base<a_set_namespace> {
+    static void apply(const std::string& s, Context& t) {
+	t.current_ns = sym(s);
+    }
+};
+
+struct a_define_type : action_base<a_define_type> {
+    static void apply(const std::string& s, Context& t) {
+
+	t.typemap[std::make_pair(t.current_ns, sym(s))] = 
+	    t.stack.back();
+	t.stack.pop_back();
     }
 };
 
