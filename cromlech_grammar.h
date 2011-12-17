@@ -221,7 +221,7 @@ struct codeblock : plus< seq< pad< expr, space >,
 
 struct fun : seq< string<'f','u','n'>,
                   plus<space>,
-                  must< symbol >,
+                  must< seq< opt< one<'>','$'> >, symbol > >,
                   plus<space>,
                   padr<patternmatch, space>,
                   padr<string<'=','>'>, space>,

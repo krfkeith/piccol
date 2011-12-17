@@ -40,7 +40,7 @@ struct printer {
 };
 
 
-void print(const crom::PODLiteral& l) {
+void print(const crom::iVal& l) {
     l(printer());
 }
 

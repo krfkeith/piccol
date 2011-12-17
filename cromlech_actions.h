@@ -48,7 +48,7 @@ enum {
 
 struct Token {
     int type;
-    PODLiteral val;
+    iVal val;
     
     Token() {}
     

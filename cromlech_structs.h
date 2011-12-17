@@ -88,7 +88,9 @@ inline Symbol _string() {
 }
 
 
-struct PODLiteral {
+// Value representation for the interpreter/compiler.
+
+struct iVal {
     Symbol type;
 
     /* NOTE: This should be an anonymous union without constructors and destructors.
@@ -107,25 +109,25 @@ struct PODLiteral {
         ~_d() {}
     } d;
 
-    PODLiteral() { type = _int(); d.i = 0; }
+    iVal() { type = _int(); d.i = 0; }
 
-    PODLiteral(Int _i)    { type = _int();    d.i = _i; }
-    PODLiteral(Real _r)   { type = _real();   d.r = _r; }
-    PODLiteral(Symbol _s) { type = _symbol(); d.s = _s; }
-    PODLiteral(Bool _b)   { type = _bool();   d.b = _b; }
+    iVal(Int _i)    { type = _int();    d.i = _i; }
+    iVal(Real _r)   { type = _real();   d.r = _r; }
+    iVal(Symbol _s) { type = _symbol(); d.s = _s; }
+    iVal(Bool _b)   { type = _bool();   d.b = _b; }
 
-    PODLiteral(const String& _s) {
+    iVal(const String& _s) {
         type = _string();
         new (&d.str) String(_s);
     }
 
-    ~PODLiteral() {
+    ~iVal() {
         if (type == _string()) {
             d.str.~String();
         }
     }
 
-    PODLiteral(const PODLiteral& o) {
+    iVal(const iVal& o) {
         if      (o.type == _int())    { d.i = o.d.i; }
         else if (o.type == _real())   { d.r = o.d.r; }
         else if (o.type == _symbol()) { d.s = o.d.s; }
@@ -136,7 +138,7 @@ struct PODLiteral {
         type = o.type;
     }
 
-    PODLiteral& operator=(const PODLiteral& o) {
+    iVal& operator=(const iVal& o) {
         if (this == &o) return *this;
 
         if (type == _string()) {
