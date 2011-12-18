@@ -48,7 +48,7 @@ enum {
 
 struct Token {
     int type;
-    iVal val;
+    Val val;
     
     Token() {}
     
@@ -56,14 +56,10 @@ struct Token {
     Token(int tp, const T& t) : type(tp), val(t) {}
 };
 
-struct Node {
-    Token token;
-    std::vector< std::shared_ptr<Node> > edges;
-};
 
 struct Context {
 
-    typedef std::vector< std::shared_ptr<Node> > stack_t;
+    typedef std::vector< Token > stack_t;
 
     Symbol current_ns;
 
@@ -73,21 +69,7 @@ struct Context {
     stack_t stack;
 
     void push_back(const Token& t) {
-        std::shared_ptr<Node> n(new Node);
-        n->token = t;
-        stack.push_back(n);
-    }
-
-    void push_in_back(const Token& t) {
-        std::shared_ptr<Node> n(new Node);
-        n->token = t;
-        stack.back()->edges.push_back(n);
-    }
-
-    void nudge() {
-        std::shared_ptr<Node> n = stack.back();
-        stack.pop_back();
-        stack.back()->edges.push_back(n);
+        stack.push_back(t);
     }
 
     auto begin() const -> decltype(stack.cbegin()) { return stack.begin(); }
@@ -162,7 +144,7 @@ struct a_string_literal : action_base<a_string_literal> {
 
 struct a_tuple_start : action_base<a_tuple_start> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(TUPLE_START, (Symbol)0));
+        t.push_back(Token(LITERAL, empty_tuple()));
     }
 };
 
@@ -173,7 +155,7 @@ struct a_tuple_end : action_base<a_tuple_end> {
 
 struct a_struct_start : action_base<a_struct_start> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(STRUCT_START, (Symbol)0));
+        t.push_back(Token(LITERAL, empty_struct()));
     }
 };
 
@@ -184,31 +166,41 @@ struct a_struct_end : action_base<a_struct_end> {
 
 struct a_tuple_element : action_base<a_tuple_element> {
     static void apply(const std::string& s, Context& t) {
-        t.nudge();
+	Val v;
+	v.swap(t.stack.back().val);
+	t.stack.pop_back();
+	get<Val::stup_t>(t.stack.back().val)->push_back(Val());
+	get<Val::stup_t>(t.stack.back().val)->back().swap(v);
     }
 };
 
 struct a_tuple_clone : action_base<a_tuple_clone> {
     static void apply(const std::string& s, Context& t) {
-        std::shared_ptr<Node> n = t.stack.back();
-        t.stack.pop_back();
+
+	Val& tup = t.stack.back().val;
+	Val& tupe = get<Val::stup_t>(tup)->back();
 
         int num = ::atol(s.c_str());
-        for (int i = 0; i < num; ++i) {
-            t.stack.back()->edges.push_back(n);
-        }
+	for (int i = 1; i < num; ++i) {
+	    get<Val::stup_t>(tup)->push_back(tupe);
+	}
     }
 };
 
 struct a_struct_key : action_base<a_struct_key> {
     static void apply(const std::string& s, Context& t) {
-        t.push_in_back(Token(STRUCT_KEY, sym(s)));
+	Val& stru = t.stack.back().val;
+	get<Val::stup_t>(stru)->push_back(sym(s));
     }
 };
 
 struct a_struct_val : action_base<a_struct_val> {
     static void apply(const std::string& s, Context& t) {
-        t.nudge();
+	Val v;
+	v.swap(t.stack.back().val);
+	t.stack.pop_back();
+	get<Val::stup_t>(t.stack.back().val)->push_back(Val());
+	get<Val::stup_t>(t.stack.back().val)->back().swap(v);
     }
 };
 
@@ -225,7 +217,8 @@ struct a_struct_literal : action_base<a_struct_literal> {
 template <int TT>
 struct a_type : action_base< a_type<TT> > {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(TT, (Symbol)0));
+        t.push_back(Token(TT, sym(s)));
+	t.stack.back().val.type = Val::TYPETAG;
     }
 };
 

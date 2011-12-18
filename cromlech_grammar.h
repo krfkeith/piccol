@@ -44,7 +44,7 @@ struct string_q_ : sor< not_one<Q, '\\'>,
 template <char Q>
 struct string_l_ : seq< one<Q>,
                         must< ifapply< 
-                                  string_q_<Q>,
+                                  star< string_q_<Q> >,
                                   a_string_literal
                                   >
                               >,

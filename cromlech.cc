@@ -21,39 +21,58 @@ std::string token_name(int type) {
     }
 }
 
+void print(const crom::Val&, const std::string&);
+
 struct printer {
 
-    void operator()(const crom::Int& t) { std::cout << "Int:" << t; }
-    void operator()(const crom::Real& t) { std::cout << "Real:" << t; }
-    void operator()(const crom::Bool& t) { std::cout << "Bool:" << t; }
+    const std::string& indent;
+    printer(const std::string& i = "") : indent(i) {}
+
+    void operator()(const crom::Int& t) { std::cout << indent << "Int:" << t << std::endl; }
+    void operator()(const crom::Real& t) { std::cout << indent << "Real:" << t << std::endl; }
+    void operator()(const crom::Bool& t) { std::cout << indent << "Bool:" << t << std::endl; }
 
     void operator()(const crom::Symbol& t) { 
         if (t == 0) {
-            std::cout << "-";
+            std::cout << indent << "-" << std::endl;
         } else {
-            std::cout << "Symbol:" << t 
-                      << " (" << crom::Singleton<crom::SymTable>().get(t) << ")";
+            std::cout << indent << "Symbol:" << t 
+                      << " (" << crom::Singleton<crom::SymTable>().get(t) << ")" << std::endl;
         }
     }
 
-    void operator()(const crom::String& t) { std::cout << "String:'" << t << "'" << std::endl; }
+    void operator()(const crom::String& t) { 
+	std::cout << indent << "String:'" << t << "'" << std::endl; 
+    }
+
+    void operator()(const crom::Val::stup_t& t) {
+	for (const auto& v : *t) {
+	    print(v, indent + "    ");
+	}
+    }	
 };
 
 
-void print(const crom::iVal& l) {
-    l(printer());
+void print(const crom::Val& l, const std::string& indent) {
+
+    if (l.type == crom::Val::TUPLE) {
+	std::cout << indent << "Tuple:" << std::endl;
+
+    } else if (l.type == crom::Val::STRUCT) {
+	std::cout << indent << "Struct:" << std::endl;
+
+    } else if (l.type == crom::Val::TYPETAG) {
+	std::cout << indent << "(Typetag)" << std::endl;
+    }
+
+    l(printer(indent));
 }
 
 template <typename ELT>
 void print_element(const ELT& t, const std::string& indent = "") {
 
-    std::cout << indent << token_name(t->token.type) << ": ";
-    print(t->token.val);
-    std::cout << std::endl;
-
-    for (const auto& tt : t->edges) {
-	print_element(tt, indent + "    ");
-    }
+    std::cout << indent << token_name(t.type) << ": " << std::endl;
+    print(t.val, indent);
 }
 
 template <typename STACK>
@@ -68,13 +87,9 @@ void print_context(const STACK& s, const std::string& indent = "") {
     std::cout << "--- Typemap ---" << std::endl << std::endl;
 
     for (const auto& v : s.typemap) {
-
 	printer()(v.first.first);
-	std::cout << std::endl;
-
 	printer()(v.first.second);
-	std::cout << std::endl;
-
+	std::cout << "-->" << std::endl;
 	print_element(v.second);
 	std::cout << std::endl;
     }

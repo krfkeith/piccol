@@ -1,7 +1,10 @@
 #ifndef __CROMLECH_STRUCTS_H
 #define __CROMLECH_STRUCTS_H
 
+#include <string.h>
+
 #include <string>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -88,15 +91,28 @@ inline Symbol _string() {
 }
 
 
-// Value representation for the interpreter/compiler.
+////
 
-struct iVal {
-    Symbol type;
+struct Val {
+    enum {
+	INT = 1,
+	REAL = 2,
+	SYMBOL = 3,
+	BOOL = 4,
+	STRING = 5,
+	TUPLE = 6,
+	STRUCT = 7,
+	TYPETAG = 8
+    };
+
+    unsigned int type;
 
     /* NOTE: This should be an anonymous union without constructors and destructors.
      * However, gcc 4.6.2 doesn't yet properly support unrestricted C++11 unions,
      * so I had to give the union a name and some dummy constructors/destructors.
      */
+
+    typedef std::shared_ptr< std::vector<Val> > stup_t;
 
     union _d {
         Int i;
@@ -105,67 +121,146 @@ struct iVal {
         Bool b;
         String str;
 
+	stup_t stup;
+
         _d() {}
         ~_d() {}
     } d;
 
-    iVal() { type = _int(); d.i = 0; }
+private:
 
-    iVal(Int _i)    { type = _int();    d.i = _i; }
-    iVal(Real _r)   { type = _real();   d.r = _r; }
-    iVal(Symbol _s) { type = _symbol(); d.s = _s; }
-    iVal(Bool _b)   { type = _bool();   d.b = _b; }
+    void _destroy() {
+	switch (type) {
+	case STRING: 
+	    d.str.~String(); 
+	    break;
+	case STRUCT:
+	case TUPLE:
+	    d.stup.~stup_t();
+	    break;
+        }
+    }
 
-    iVal(const String& _s) {
-        type = _string();
+    void _copy(const Val& o) {
+	switch (o.type) {
+	case INT:
+	    d.i = o.d.i;
+	    break;
+	case REAL:
+	    d.r = o.d.r;
+	    break;
+	case SYMBOL:
+	case TYPETAG:
+	    d.s = o.d.s;
+	    break;
+	case BOOL:
+	    d.b = o.d.b;
+	    break;
+	case STRING:
+            new (&d.str) String(o.d.str);
+	    break;
+	case STRUCT:
+	case TUPLE:
+	    new (&d.stup) stup_t(o.d.stup);
+        }
+        type = o.type;
+    }
+
+public:
+
+    Val() { type = INT; d.i = 0; }
+
+    Val(Int _i)    { type = INT;    d.i = _i; }
+    Val(Real _r)   { type = REAL;   d.r = _r; }
+    Val(Symbol _s) { type = SYMBOL; d.s = _s; }
+    Val(Bool _b)   { type = BOOL;   d.b = _b; }
+
+    Val(const String& _s) {
+        type = STRING;
         new (&d.str) String(_s);
     }
 
-    ~iVal() {
-        if (type == _string()) {
-            d.str.~String();
-        }
+    ~Val() {
+	_destroy();
     }
 
-    iVal(const iVal& o) {
-        if      (o.type == _int())    { d.i = o.d.i; }
-        else if (o.type == _real())   { d.r = o.d.r; }
-        else if (o.type == _symbol()) { d.s = o.d.s; }
-        else if (o.type == _bool())   { d.b = o.d.b; }
-        else if (o.type == _string()) {
-            new (&d.str) String(o.d.str);
-        }
-        type = o.type;
+    Val(const Val& o) {
+	_copy(o);
     }
 
-    iVal& operator=(const iVal& o) {
+    Val& operator=(const Val& o) {
         if (this == &o) return *this;
 
-        if (type == _string()) {
-            d.str.~String();
-        }
-
-        if      (o.type == _int())    { d.i = o.d.i; }
-        else if (o.type == _real())   { d.r = o.d.r; }
-        else if (o.type == _symbol()) { d.s = o.d.s; }
-        else if (o.type == _bool())   { d.b = o.d.b; }
-        else if (o.type == _string()) {
-            new (&d.str) String(o.d.str);
-        }
-
-        type = o.type;
+	_destroy();
+	_copy(o);
         return *this;
+    }
+
+    void swap(Val& o) {
+	unsigned int otype = o.type;
+
+	char od[sizeof(_d)];
+	::memcpy(&od[0], &o.d, sizeof(_d));
+
+	::memcpy(&o.d, &d, sizeof(_d));
+	::memcpy(&d, &od[0], sizeof(_d));
+
+	o.type = type;
+	type = otype;
     }
 
     template <typename F>
     void operator()(F&& f) const {
-        if      (type == _int())    { f(d.i); }
-        else if (type == _real())   { f(d.r); }
-        else if (type == _symbol()) { f(d.s); }
-        else if (type == _bool())   { f(d.b); }
-        else if (type == _string()) { f(d.str); }
+	switch (type) {
+	case INT:
+	    f(d.i);
+	    break;
+	case REAL:
+	    f(d.r);
+	    break;
+	case SYMBOL:
+	case TYPETAG:
+	    f(d.s);
+	    break;
+	case BOOL:
+	    f(d.b);
+	    break;
+	case STRING:
+	    f(d.str);
+	    break;
+	case STRUCT:
+	case TUPLE:
+	    f(d.stup);
+	    break;
+	}
     }
 };
+
+inline Val empty_tuple() {
+    Val ret;
+    new (&ret.d.stup) Val::stup_t(new std::vector<Val>());
+    ret.type = Val::TUPLE;
+    return ret;
+}
+
+inline Val empty_struct() {
+    Val ret;
+    new (&ret.d.stup) Val::stup_t(new std::vector<Val>());
+    ret.type = Val::STRUCT;
+    return ret;
+}
+
+
+template <typename T> T& get(Val&);
+
+template <> Int& get(Val& v) { return v.d.i; }
+template <> Real& get(Val& v) { return v.d.r; }
+template <> Symbol& get(Val& v) { return v.d.s; }
+template <> Bool& get(Val& v) { return v.d.b; }
+template <> String& get(Val& v) { return v.d.str; }
+template <> Val::stup_t& get(Val& v) { return v.d.stup; }
+
+
 
 
 
