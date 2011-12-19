@@ -112,11 +112,11 @@ struct type;
 struct tuple_t : tuple_<type> {};
 struct struct_t : struct_<type> {};
 
-struct type_pod : sor< ifapply< string<'S','y','m','b','o','l'>, a_type<SYMBOL_TYPE> >,
-                       ifapply< string<'I','n','t'>, a_type<INT_TYPE> >,
-                       ifapply< string<'R','e','a','l'>, a_type<REAL_TYPE> >,
-                       ifapply< string<'B','o','o','l'>, a_type<BOOL_TYPE> >,
-                       ifapply< string<'S','t','r','i','n','g'>, a_type<STRING_TYPE> >,
+struct type_pod : sor< ifapply< string<'S','y','m','b','o','l'>, a_type >,
+                       ifapply< string<'I','n','t'>, a_type >,
+                       ifapply< string<'R','e','a','l'>, a_type >,
+                       ifapply< string<'B','o','o','l'>, a_type >,
+                       ifapply< string<'S','t','r','i','n','g'>, a_type >,
                        ifapply< typenam, a_custom_type >
                        > {};
 
@@ -161,8 +161,9 @@ struct patternappl : sor< seq< one<':'>, ifapply< must< symbol >, a_varget > >,
 
 struct expr;
 
-struct funcall : seq< symbol, 
-                      plus<space>,
+struct funcall : seq< ifapply< seq< opt< one<'*'> >, symbol>, 
+                               a_setfun >,
+                      pad< one<'$'>, space >,
                       expr
                       > {};
 
@@ -170,36 +171,39 @@ struct expr_e : sor< seq< padr< one<'('>, space >,
                           must< expr >,
                           padl< one<')'>, space >
                           >,
-                     funcall,
+                     ifapply< funcall, a_do_funcall >,
                      patternappl
                      > {};
                     
-
-struct expr_add : seq< expr_e,
-                       star< seq< pad< sor< one<'+'>,
-                                            one<'-'>
-                                            >, 
+struct expr_mul : seq< expr_e,
+                       star< seq< pad< ifapply< sor< one<'*'>, 
+                                                     one<'/'>,
+                                                     one<'%'>
+                                                     >, a_setop
+                                                >,
                                        space
                                        >,
-                                  expr_e
+                                  ifapply< expr_e, a_do_op >
                                   >
                              >
                        > {};
 
-struct expr_mul : seq< expr_add,
-                       star< seq< pad< sor< one<'*'>, 
-                                            one<'/'>,
-                                            one<'%'>
-                                            >, space
+struct expr_add : seq< expr_mul,
+                       star< seq< pad< ifapply< sor< one<'+'>,
+                                                     one<'-'> 
+                                                     >, a_setop
+                                                >,
+                                       space
                                        >,
-                                  expr_add
+                                  ifapply< expr_mul, a_do_op >
                                   >
                              >
                        > {};
 
-struct expr_and : seq< expr_mul,
-                       star< seq< pad< string<'&','&'>, space >,
-                                  expr_mul
+struct expr_and : seq< expr_add,
+                       star< seq< pad< string<'&','&'>, 
+                                       space >,
+                                  expr_add
                                   >
                              >
                        > {};
@@ -220,12 +224,14 @@ struct codeblock : plus< seq< pad< expr, space >,
 
 struct fun : seq< string<'f','u','n'>,
                   plus<space>,
-                  must< seq< opt< one<'>','$'> >, symbol > >,
+                  must< seq< opt< one<'>'> >, symbol > >,
                   plus<space>,
-                  padr<patternmatch, space>,
-                  padr<string<'=','>'>, space>,
+                  padr<patternmatch, space>, 
+                  must< padr<string<'=','>'>, space> >,
+                  apply< a_do_match >, 
                   must< codeblock >,
-                  must< padl< one<';'>, space > >
+                  must< padl< one<';'>, space > >,
+                  apply< a_fun_end >
                   > {};
 
 /* Toplevel. */

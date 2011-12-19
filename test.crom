@@ -9,8 +9,10 @@ define { foo=foo,
 as MyTest;
 
 fun inc [Int:a, {foo=bar, subs=Hackstr, num=Int:z}:c] => 
-foo 1;
-;
+foo $ 1;;
+
+fun inc Int:a => baz$ bar$ (:a+1)*2;;
+
 
 
 

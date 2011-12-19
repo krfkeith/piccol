@@ -27,23 +27,17 @@ using namespace pegtl;
 
 enum {
     LITERAL = 1,
-    STRUCT_KEY,
+    TYPE,
+    VARIABLE,
 
-    TUPLE_START,
-    STRUCT_START,
-
-    SYMBOL_TYPE,
-    INT_TYPE,
-    REAL_TYPE,
-    BOOL_TYPE,
-    STRING_TYPE,
-
-    MATCH_TUPLE,
-    MATCH_STRUCT,
-
-    VARDEF,
-    VARGET,
-
+    IFMATCH,
+    RETURN,
+    FUNCALL,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    MOD,
 };
 
 struct Token {
@@ -63,10 +57,15 @@ struct Context {
 
     Symbol current_ns;
 
+    stack_t stack;
+
     std::unordered_map<std::pair<Symbol,Symbol>,
 		       stack_t::value_type> typemap;
 
-    stack_t stack;
+    std::map<Symbol, size_t> registermap;
+
+    std::vector<unsigned char> op;
+    std::vector<std::pair<int,Symbol>> fun;
 
     void push_back(const Token& t) {
         stack.push_back(t);
@@ -149,8 +148,7 @@ struct a_tuple_start : action_base<a_tuple_start> {
 };
 
 struct a_tuple_end : action_base<a_tuple_end> {
-    static void apply(const std::string& s, Context& t) {
-    }
+    static void apply(const std::string& s, Context& t) {}
 };
 
 
@@ -207,10 +205,9 @@ struct a_struct_val : action_base<a_struct_val> {
 
 
 
-template <int TT>
-struct a_type : action_base< a_type<TT> > {
+struct a_type : action_base< a_type > {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(TT, sym(s)));
+        t.push_back(Token(TYPE, sym(s)));
 	t.stack.back().val.type = Val::TYPETAG;
     }
 };
@@ -232,30 +229,98 @@ struct a_custom_type : action_base< a_custom_type > {
 };
 
 
-struct a_match_tuple : action_base<a_match_tuple> {
-    static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(MATCH_TUPLE, (Symbol)0));
-    }
-};
-
-struct a_match_struct : action_base<a_match_struct> {
-    static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(MATCH_STRUCT, (Symbol)0));
-    }
-};
 
 struct a_vardef : action_base<a_vardef> {
     static void apply(const std::string& s, Context& t) {
-        //t.push_back(Token(VARDEF, sym(s)));
-        t.stack.back().val.binding = sym(s);
+        Symbol var = sym(s);
+
+        auto i = t.registermap.find(var);
+
+        if (i == t.registermap.end()) {
+            i = t.registermap.insert(std::make_pair(var, t.registermap.size()+1)).first;
+        }
+
+        t.stack.back().val.binding = i->second;
     }
 };
 
 struct a_varget : action_base<a_varget> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(VARGET, sym(s)));
+        Symbol var = sym(s);
+
+        auto i = t.registermap.find(var);
+
+        if (i == t.registermap.end())
+            throw std::runtime_error("Reference to an undefined variable: " + s);
+
+        t.push_back(Token(VARIABLE, (Symbol)0));
+        t.stack.back().val.type = Val::PLACEHOLDER;
+        t.stack.back().val.binding = i->second;
     }
 };
+
+
+struct a_do_match : action_base<a_do_match> {
+    static void apply(const std::string& s, Context& t) {
+        t.push_back(Token(IFMATCH, (Int)1234));
+    }
+};
+
+struct a_fun_end : action_base<a_do_match> {
+    static void apply(const std::string& s, Context& t) {
+        t.push_back(Token(RETURN, (Symbol)0));
+    }
+};
+
+struct a_do_funcall : action_base<a_do_funcall> {
+    static void apply(const std::string& s, Context& t) {
+        std::pair<int,Symbol> v = t.fun.back();
+        t.fun.pop_back();
+        t.push_back(Token(FUNCALL, v.second));
+    }
+};
+
+struct a_setfun : action_base<a_setfun> {
+    static void apply(const std::string& s, Context& t) {
+        if (s[0] == '*') {
+            t.fun.push_back(std::make_pair(1, sym(s.substr(1))));
+        } else {
+            t.fun.push_back(std::make_pair(0, sym(s)));
+        }
+    }
+};
+
+struct a_setop : action_base<a_setop> {
+    static void apply(const std::string& s, Context& t) {
+        t.op.push_back(s[0]);
+    }
+};
+
+struct a_do_op : action_base<a_do_op> {
+    static void apply(const std::string& s, Context& t) {
+        unsigned char op = t.op.back();
+        t.op.pop_back();
+
+        switch (op) {
+        case '+':
+            t.push_back(Token(ADD, (Symbol)0));
+            break;
+        case '-':
+            t.push_back(Token(SUB, (Symbol)0));
+            break;
+        case '*':
+            t.push_back(Token(MUL, (Symbol)0));
+            break;
+        case '/':
+            t.push_back(Token(DIV, (Symbol)0));
+            break;
+        case '%':
+            t.push_back(Token(MOD, (Symbol)0));
+            break;
+        }
+    }
+};
+
 
 struct a_set_namespace : action_base<a_set_namespace> {
     static void apply(const std::string& s, Context& t) {

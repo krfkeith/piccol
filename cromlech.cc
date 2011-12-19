@@ -5,18 +5,16 @@
 std::string token_name(int type) {
     switch (type) {
     case crom::LITERAL: return "LITERAL";
-    case crom::STRUCT_KEY: return "STRUCT_KEY";
-    case crom::SYMBOL_TYPE: return "SYMBOL_TYPE";
-    case crom::INT_TYPE: return "INT_TYPE";
-    case crom::REAL_TYPE: return "REAL_TYPE";
-    case crom::BOOL_TYPE: return "BOOL_TYPE";
-    case crom::STRING_TYPE: return "STRING_TYPE";
-    case crom::MATCH_TUPLE: return "MATCH_TUPLE";
-    case crom::MATCH_STRUCT: return "MATCH_STRUCT";
-    case crom::VARDEF: return "VARDEF";
-    case crom::VARGET: return "VARGET";
-    case crom::TUPLE_START: return "TUPLE_START";
-    case crom::STRUCT_START: return "STRUCT_START";
+    case crom::TYPE: return "TYPE";
+    case crom::VARIABLE: return "VARIABLE";
+    case crom::IFMATCH: return "IFMATCH";
+    case crom::RETURN: return "RETURN";
+    case crom::FUNCALL: return "FUNCALL";
+    case crom::ADD: return "ADD";
+    case crom::SUB: return "SUB";
+    case crom::MUL: return "MUL";
+    case crom::DIV: return "DIV";
+    case crom::MOD: return "MOD";
     default: return "?";
     }
 }
@@ -56,8 +54,7 @@ struct printer {
 void print(const crom::Val& l, const std::string& indent) {
 
     if (l.binding) {
-        std::cout << indent << "(Binding: " << l.binding << "=" 
-                  << crom::Singleton<crom::SymTable>().get(l.binding) << ")" << std::endl;
+        std::cout << indent << "(Binding: " << l.binding << ")" << std::endl;
     }
 
     if (l.type == crom::Val::TUPLE) {
@@ -65,6 +62,9 @@ void print(const crom::Val& l, const std::string& indent) {
 
     } else if (l.type == crom::Val::STRUCT) {
 	std::cout << indent << "Struct:" << std::endl;
+
+    } else if (l.type == crom::Val::PLACEHOLDER) {
+        std::cout << indent << "Placeholder:" << std::endl;
 
     } else if (l.type == crom::Val::TYPETAG) {
 	std::cout << indent << "(Typetag)" << std::endl;
@@ -86,6 +86,7 @@ void print_context(const STACK& s, const std::string& indent = "") {
     std::cout << "--- Stack ---" << std::endl << std::endl;
     for (const auto& t : s.stack) {
 	print_element(t);
+        std::cout << std::endl;
     }
     std::cout << std::endl;
 

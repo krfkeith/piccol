@@ -102,7 +102,8 @@ struct Val {
 	STRING = 5,
 	TUPLE = 6,
 	STRUCT = 7,
-	TYPETAG = 8
+	TYPETAG = 8,
+        PLACEHOLDER = 9,
     };
 
     unsigned short type;
