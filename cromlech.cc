@@ -37,7 +37,7 @@ struct printer {
             std::cout << indent << "-" << std::endl;
         } else {
             std::cout << indent << "Symbol:" << t 
-                      << " (" << crom::Singleton<crom::SymTable>().get(t) << ")" << std::endl;
+                      << "=" << crom::Singleton<crom::SymTable>().get(t) << std::endl;
         }
     }
 
@@ -54,6 +54,11 @@ struct printer {
 
 
 void print(const crom::Val& l, const std::string& indent) {
+
+    if (l.binding) {
+        std::cout << indent << "(Binding: " << l.binding << "=" 
+                  << crom::Singleton<crom::SymTable>().get(l.binding) << ")" << std::endl;
+    }
 
     if (l.type == crom::Val::TUPLE) {
 	std::cout << indent << "Tuple:" << std::endl;

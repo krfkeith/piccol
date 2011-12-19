@@ -149,7 +149,8 @@ struct a_tuple_start : action_base<a_tuple_start> {
 };
 
 struct a_tuple_end : action_base<a_tuple_end> {
-    static void apply(const std::string& s, Context& t) {}
+    static void apply(const std::string& s, Context& t) {
+    }
 };
 
 
@@ -205,14 +206,6 @@ struct a_struct_val : action_base<a_struct_val> {
 };
 
 
-struct a_tuple_literal : action_base<a_tuple_literal> {
-    static void apply(const std::string& s, Context& t) {}
-};
-
-struct a_struct_literal : action_base<a_struct_literal> {
-    static void apply(const std::string& s, Context& t) {}
-};
-
 
 template <int TT>
 struct a_type : action_base< a_type<TT> > {
@@ -253,7 +246,8 @@ struct a_match_struct : action_base<a_match_struct> {
 
 struct a_vardef : action_base<a_vardef> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(VARDEF, sym(s)));
+        //t.push_back(Token(VARDEF, sym(s)));
+        t.stack.back().val.binding = sym(s);
     }
 };
 

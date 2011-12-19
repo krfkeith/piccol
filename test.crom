@@ -1,14 +1,15 @@
 
 namespace foo;
 
-define { foo=<foo>,
-         bar=<bar>, tuple = <[1,2,3]>,
-         num=Int } 
+define { triple=[1, Int, Real] } as Hackstr;
+
+define { foo=foo,
+         bar=bar, tuple = [1,2,'Hello world!\t!'],
+         num=Int, subs=Hackstr } 
 as MyTest;
 
-fun inc Int:a => 
-:a+1/3 && foo :a+1;
-foobar { foo=:a };
+fun inc [Int:a, {foo=bar, subs=Hackstr, num=Int:z}:c] => 
+foo 1;
 ;
 
 

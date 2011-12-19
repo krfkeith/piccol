@@ -105,7 +105,8 @@ struct Val {
 	TYPETAG = 8
     };
 
-    unsigned int type;
+    unsigned short type;
+    unsigned short binding;
 
     /* NOTE: This should be an anonymous union without constructors and destructors.
      * However, gcc 4.6.2 doesn't yet properly support unrestricted C++11 unions,
@@ -164,19 +165,19 @@ private:
 	    new (&d.stup) stup_t(o.d.stup);
         }
         type = o.type;
+        binding = o.binding;
     }
 
 public:
 
-    Val() { type = INT; d.i = 0; }
+    Val() : type(INT), binding(0) { d.i = 0; }
 
-    Val(Int _i)    { type = INT;    d.i = _i; }
-    Val(Real _r)   { type = REAL;   d.r = _r; }
-    Val(Symbol _s) { type = SYMBOL; d.s = _s; }
-    Val(Bool _b)   { type = BOOL;   d.b = _b; }
+    Val(Int _i) : type(INT), binding(0)       { d.i = _i; }
+    Val(Real _r) : type(REAL), binding(0)     { d.r = _r; }
+    Val(Symbol _s) : type(SYMBOL), binding(0) { d.s = _s; }
+    Val(Bool _b) : type(BOOL), binding(0)     { d.b = _b; }
 
-    Val(const String& _s) {
-        type = STRING;
+    Val(const String& _s) : type(STRING), binding(0) {
         new (&d.str) String(_s);
     }
 
@@ -197,7 +198,8 @@ public:
     }
 
     void swap(Val& o) {
-	unsigned int otype = o.type;
+	unsigned short otype = o.type;
+        unsigned short obinding = o.binding;
 
 	char od[sizeof(_d)];
 	::memcpy(&od[0], &o.d, sizeof(_d));
@@ -206,7 +208,9 @@ public:
 	::memcpy(&d, &od[0], sizeof(_d));
 
 	o.type = type;
+        o.binding = binding;
 	type = otype;
+        binding = obinding;
     }
 
     template <typename F>
@@ -240,6 +244,7 @@ inline Val empty_tuple() {
     Val ret;
     new (&ret.d.stup) Val::stup_t(new std::vector<Val>());
     ret.type = Val::TUPLE;
+    ret.binding = 0;
     return ret;
 }
 
@@ -247,6 +252,7 @@ inline Val empty_struct() {
     Val ret;
     new (&ret.d.stup) Val::stup_t(new std::vector<Val>());
     ret.type = Val::STRUCT;
+    ret.binding = 0;
     return ret;
 }
 

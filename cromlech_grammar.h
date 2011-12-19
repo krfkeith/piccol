@@ -96,35 +96,32 @@ struct literal_pod : sor< ifapply< symbol, a_symbol_literal >,
                           > {};
 
 struct literal : sor< literal_pod,
-                      ifapply< tuple_l, a_tuple_literal >,
-                      ifapply< struct_l, a_struct_literal >
+                      tuple_l,
+                      struct_l
                       > {};
 
 
 /* The type definition language. */
 
-struct type;
-
 struct typenam : seq< upper,
                       star< sor< lower, upper, digit, one<'_'> > >
                       > {};
 
-struct type_or_literal : sor< seq< padr< one<'<'>, space >,
-                                   literal,
-                                   padl< one<'>'>, space > 
-                                   >,
-                              type
-                              > {};
+struct type;
 
-struct tuple_t : tuple_<type_or_literal> {};
-struct struct_t : struct_<type_or_literal> {};
+struct tuple_t : tuple_<type> {};
+struct struct_t : struct_<type> {};
 
-struct type : sor< ifapply< string<'S','y','m','b','o','l'>, a_type<SYMBOL_TYPE> >,
-                   ifapply< string<'I','n','t'>, a_type<INT_TYPE> >,
-                   ifapply< string<'R','e','a','l'>, a_type<REAL_TYPE> >,
-                   ifapply< string<'B','o','o','l'>, a_type<BOOL_TYPE> >,
-                   ifapply< string<'S','t','r','i','n','g'>, a_type<STRING_TYPE> >,
-                   ifapply< typenam, a_custom_type >,
+struct type_pod : sor< ifapply< string<'S','y','m','b','o','l'>, a_type<SYMBOL_TYPE> >,
+                       ifapply< string<'I','n','t'>, a_type<INT_TYPE> >,
+                       ifapply< string<'R','e','a','l'>, a_type<REAL_TYPE> >,
+                       ifapply< string<'B','o','o','l'>, a_type<BOOL_TYPE> >,
+                       ifapply< string<'S','t','r','i','n','g'>, a_type<STRING_TYPE> >,
+                       ifapply< typenam, a_custom_type >
+                       > {};
+
+struct type : sor< type_pod,
+                   literal_pod,
                    tuple_t, 
                    struct_t
                    > {};
@@ -138,10 +135,12 @@ struct patternmatch;
 struct tuple_pm : tuple_<patternmatch> {};
 struct struct_pm : struct_<patternmatch> {};
 
-struct patternmatch : sor< seq< type, one<':'>, must< ifapply< symbol, a_vardef > > >,
+struct opt_vardef : opt< one<':'>, must< ifapply< symbol, a_vardef > > > {};
+
+struct patternmatch : sor< seq< type_pod, opt_vardef >,
                            literal_pod,
-                           ifapply< tuple_pm, a_match_tuple >,
-                           ifapply< struct_pm, a_match_struct >
+                           seq< tuple_pm, opt_vardef >,
+                           seq< struct_pm, opt_vardef >
                            > {};
 
 /* The pattern application language. */
@@ -153,8 +152,8 @@ struct struct_pa : struct_<patternappl> {};
 
 struct patternappl : sor< seq< one<':'>, ifapply< must< symbol >, a_varget > >,
                           literal_pod ,
-                          ifapply< tuple_pa, a_tuple_literal >,
-                          ifapply< struct_pa, a_struct_literal >
+                          tuple_pa, 
+                          struct_pa
                           > {};
 
 
@@ -240,7 +239,7 @@ struct namspace : seq< string<'n','a','m','e','s','p','a','c','e'>,
 
 struct typdef : seq< string<'d','e','f','i','n','e'>,
                      plus<space>,
-                     must< type_or_literal >,
+                     must< type >,
                      plus<space>,
                      string<'a','s'>,
                      plus<space>,
