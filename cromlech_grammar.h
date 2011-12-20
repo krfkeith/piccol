@@ -161,6 +161,13 @@ struct patternappl : sor< seq< one<':'>, ifapply< must< symbol >, a_varget > >,
 
 struct expr;
 
+template <typename T>
+struct tuple_ : commasep_< one<'['>, one_tuple_l<T>, one<']'>, a_tuple_start, a_tuple_end > {};
+
+template <typename T>
+struct struct_ : commasep_< one<'{'>, one_struct_l<T>, one<'}'>, a_struct_start, a_struct_end > {};
+
+
 struct funcall : seq< ifapply< seq< opt< one<'*'> >, symbol>, 
                                a_setfun >,
                       pad< one<'$'>, space >,

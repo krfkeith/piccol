@@ -25,80 +25,49 @@ namespace crom {
 
 using namespace pegtl;
 
-enum {
-    LITERAL = 1,
-    TYPE,
-    VARIABLE,
-
-    IFMATCH,
-    RETURN,
-    FUNCALL,
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-    MOD,
-};
-
-struct Token {
-    int type;
-    Val val;
-    
-    Token() {}
-    
-    template <typename T>
-    Token(int tp, const T& t) : type(tp), val(t) {}
-};
 
 
 struct Context {
 
-    typedef std::vector< Token > stack_t;
+    Vm vm;
 
     Symbol current_ns;
 
-    stack_t stack;
-
-    std::unordered_map<std::pair<Symbol,Symbol>,
-		       stack_t::value_type> typemap;
-
+    std::unordered_map<std::pair<Symbol,Symbol>, Val> typemap;
     std::map<Symbol, size_t> registermap;
 
     std::vector<unsigned char> op;
     std::vector<std::pair<int,Symbol>> fun;
 
-    void push_back(const Token& t) {
-        stack.push_back(t);
+    void push_back(const Opcall& t) {
+        vm.code.push_back(t);
     }
-
-    auto begin() const -> decltype(stack.cbegin()) { return stack.begin(); }
-    auto end() const -> decltype(stack.cend()) { return stack.end(); }
 };
 
 struct a_int_literal : action_base<a_int_literal> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(LITERAL, ::atol(s.c_str())));
+        t.push_back(Opcall(LITERAL, ::atol(s.c_str())));
     }
 };
 
 struct a_real_literal : action_base<a_real_literal> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(LITERAL, ::atof(s.c_str())));
+        t.push_back(Opcall(LITERAL, ::atof(s.c_str())));
     }
 };
 
 struct a_symbol_literal : action_base<a_symbol_literal> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(LITERAL, sym(s)));
+        t.push_back(Opcall(LITERAL, sym(s)));
     }
 };
 
 struct a_bool_literal : action_base<a_bool_literal> {
     static void apply(const std::string& s, Context& t) {
         if (s == "\\true") {
-            t.push_back(Token(LITERAL, true));
+            t.push_back(Opcall(LITERAL, true));
         } else {
-            t.push_back(Token(LITERAL, false));
+            t.push_back(Opcall(LITERAL, false));
         }
     }
 };
@@ -136,14 +105,14 @@ struct a_string_literal : action_base<a_string_literal> {
             }
         }
 
-        t.push_back(Token(LITERAL, tmp));
+        t.push_back(Opcall(LITERAL, tmp));
     }
 };
 
 
 struct a_tuple_start : action_base<a_tuple_start> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(LITERAL, empty_tuple()));
+        t.push_back(Opcall(LITERAL, empty_tuple()));
     }
 };
 
@@ -154,7 +123,7 @@ struct a_tuple_end : action_base<a_tuple_end> {
 
 struct a_struct_start : action_base<a_struct_start> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(LITERAL, empty_struct()));
+        t.push_back(Opcall(LITERAL, empty_struct()));
     }
 };
 
@@ -166,17 +135,17 @@ struct a_struct_end : action_base<a_struct_end> {
 struct a_tuple_element : action_base<a_tuple_element> {
     static void apply(const std::string& s, Context& t) {
 	Val v;
-	v.swap(t.stack.back().val);
-	t.stack.pop_back();
-	get<Val::stup_t>(t.stack.back().val)->push_back(Val());
-	get<Val::stup_t>(t.stack.back().val)->back().swap(v);
+	v.swap(t.vm.code.back().val);
+	t.vm.code.pop_back();
+	get<Val::stup_t>(t.vm.code.back().val)->push_back(Val());
+	get<Val::stup_t>(t.vm.code.back().val)->back().swap(v);
     }
 };
 
 struct a_tuple_clone : action_base<a_tuple_clone> {
     static void apply(const std::string& s, Context& t) {
 
-	Val& tup = t.stack.back().val;
+	Val& tup = t.vm.code.back().val;
 	Val& tupe = get<Val::stup_t>(tup)->back();
 
         int num = ::atol(s.c_str());
@@ -188,7 +157,7 @@ struct a_tuple_clone : action_base<a_tuple_clone> {
 
 struct a_struct_key : action_base<a_struct_key> {
     static void apply(const std::string& s, Context& t) {
-	Val& stru = t.stack.back().val;
+	Val& stru = t.vm.code.back().val;
 	get<Val::stup_t>(stru)->push_back(sym(s));
     }
 };
@@ -196,10 +165,10 @@ struct a_struct_key : action_base<a_struct_key> {
 struct a_struct_val : action_base<a_struct_val> {
     static void apply(const std::string& s, Context& t) {
 	Val v;
-	v.swap(t.stack.back().val);
-	t.stack.pop_back();
-	get<Val::stup_t>(t.stack.back().val)->push_back(Val());
-	get<Val::stup_t>(t.stack.back().val)->back().swap(v);
+	v.swap(t.vm.code.back().val);
+	t.vm.code.pop_back();
+	get<Val::stup_t>(t.vm.code.back().val)->push_back(Val());
+	get<Val::stup_t>(t.vm.code.back().val)->back().swap(v);
     }
 };
 
@@ -207,8 +176,8 @@ struct a_struct_val : action_base<a_struct_val> {
 
 struct a_type : action_base< a_type > {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(TYPE, sym(s)));
-	t.stack.back().val.type = Val::TYPETAG;
+        t.push_back(Opcall(TYPE, sym(s)));
+	t.vm.code.back().val.type = Val::TYPETAG;
     }
 };
 
@@ -224,7 +193,7 @@ struct a_custom_type : action_base< a_custom_type > {
 	    throw std::runtime_error("Undefined type: " + s);
 	}
 
-        t.stack.push_back(tmp->second);
+        t.vm.code.push_back(Opcall(LITERAL, tmp->second));
     }
 };
 
@@ -240,7 +209,7 @@ struct a_vardef : action_base<a_vardef> {
             i = t.registermap.insert(std::make_pair(var, t.registermap.size()+1)).first;
         }
 
-        t.stack.back().val.binding = i->second;
+        t.vm.code.back().val.binding = i->second;
     }
 };
 
@@ -253,22 +222,26 @@ struct a_varget : action_base<a_varget> {
         if (i == t.registermap.end())
             throw std::runtime_error("Reference to an undefined variable: " + s);
 
-        t.push_back(Token(VARIABLE, (Symbol)0));
-        t.stack.back().val.type = Val::PLACEHOLDER;
-        t.stack.back().val.binding = i->second;
+        t.push_back(Opcall(BIND, (Symbol)0));
+        t.vm.code.back().val.type = Val::PLACEHOLDER;
+        t.vm.code.back().val.binding = i->second;
     }
 };
 
 
 struct a_do_match : action_base<a_do_match> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(IFMATCH, (Int)1234));
+        t.push_back(Opcall(BIND, (Symbol)0));
+        t.vm.code.back().val.type = Val::PLACEHOLDER;
+        t.vm.code.back().val.binding = 0;
+        t.push_back(Opcall(IFMATCH, (Int)2));
+        t.push_back(Opcall(RETURN, (Symbol)0));
     }
 };
 
 struct a_fun_end : action_base<a_do_match> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Token(RETURN, (Symbol)0));
+        t.push_back(Opcall(RETURN, (Symbol)0));
     }
 };
 
@@ -276,7 +249,7 @@ struct a_do_funcall : action_base<a_do_funcall> {
     static void apply(const std::string& s, Context& t) {
         std::pair<int,Symbol> v = t.fun.back();
         t.fun.pop_back();
-        t.push_back(Token(FUNCALL, v.second));
+        t.push_back(Opcall(FUNCALL, v.second));
     }
 };
 
@@ -303,19 +276,19 @@ struct a_do_op : action_base<a_do_op> {
 
         switch (op) {
         case '+':
-            t.push_back(Token(ADD, (Symbol)0));
+            t.push_back(Opcall(ADD, (Symbol)0));
             break;
         case '-':
-            t.push_back(Token(SUB, (Symbol)0));
+            t.push_back(Opcall(SUB, (Symbol)0));
             break;
         case '*':
-            t.push_back(Token(MUL, (Symbol)0));
+            t.push_back(Opcall(MUL, (Symbol)0));
             break;
         case '/':
-            t.push_back(Token(DIV, (Symbol)0));
+            t.push_back(Opcall(DIV, (Symbol)0));
             break;
         case '%':
-            t.push_back(Token(MOD, (Symbol)0));
+            t.push_back(Opcall(MOD, (Symbol)0));
             break;
         }
     }
@@ -332,8 +305,8 @@ struct a_define_type : action_base<a_define_type> {
     static void apply(const std::string& s, Context& t) {
 
 	t.typemap[std::make_pair(t.current_ns, sym(s))] = 
-	    t.stack.back();
-	t.stack.pop_back();
+	    t.vm.code.back().val;
+	t.vm.code.pop_back();
     }
 };
 

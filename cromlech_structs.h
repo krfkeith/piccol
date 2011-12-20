@@ -268,6 +268,48 @@ template <> String& get(Val& v) { return v.d.str; }
 template <> Val::stup_t& get(Val& v) { return v.d.stup; }
 
 
+////
+////
+
+
+enum {
+    LITERAL = 1,
+    TYPE,
+    BIND,
+
+    IFMATCH,
+    RETURN,
+    FUNCALL,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    MOD,
+};
+
+struct Opcall {
+    int type;
+    Val val;
+    
+    Opcall() {}
+    
+    template <typename T>
+    Opcall(int tp, const T& t) : type(tp), val(t) {}
+};
+
+
+////
+////
+
+struct Vm {
+
+    std::vector< Val > stack;
+    std::vector< Opcall > code;
+
+    std::vector< Val > heap;
+    std::vector< size_t > heapframes;
+
+};
 
 
 

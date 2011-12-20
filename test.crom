@@ -8,11 +8,84 @@ define { foo=foo,
          num=Int, subs=Hackstr } 
 as MyTest;
 
-fun inc [Int:a, {foo=bar, subs=Hackstr, num=Int:z}:c] => 
-foo $ 1;;
+define [Int] as Tupint;
 
-fun inc Int:a => baz$ bar$ (:a+1)*2;;
+fun inc Tupint -> Tupint :
+[:z] -> [:z+1];;
+
+fun inc2 Tupint -> Tupint :
+:z -> inc$ inc$ :z;;
+
+=====-----
+
+define {Int:a,Int:b} as Pair;
+define {Int:a,Pair:b} as Tup3;
+
+--
+Pair:[TYPE:Int,TYPE:Int],'a'=0,'b'=1
+Tup3: [TYPE:Int,TYPE:Pair],'a'=0,'b'=1
+--
+
+fun plus3 Tup3->Tup3 { .a, { .b.a, .b.b+1 } };
+
+--
+START_STRUCT
+GET 0
+PUSH_STRUCT
+START_STRUCT
+GET 1
+GET 0
+PUSH_STRUCT
+GET 1
+GET 1
+PUSH 1
+ADD
+PUSH_STRUCT
+PUSH_STRUCT
+--
+
+define {Int:a} as Ia;
+
+--
+Ia:[TYPE:Int],'a'=0
+--
 
 
+fun inc Ia->Ia {.a+1};
+
+--
+START_STRUCT
+GET 0
+PUSH 1
+ADD
+PUSH_STRUCT
+--
+
+
+fun inc2 Ia->Ia inc$ inc$;
+
+--
+CALL inc
+CALL inc
+--
+
+define {Int:a,Ia:b} as Iia;
+
+fun inc3 Iia->Ia .b;
+
+--
+GET 1
+--
+
+fun inc Iia->Iia { .a, inc$ .b };
+
+--
+START_STRUCT
+GET 0
+PUSH_STRUCT
+GET 1
+CALL inc
+PUSH_STRUCT
+--
 
 

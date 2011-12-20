@@ -5,8 +5,8 @@
 std::string token_name(int type) {
     switch (type) {
     case crom::LITERAL: return "LITERAL";
+    case crom::BIND: return "BIND";
     case crom::TYPE: return "TYPE";
-    case crom::VARIABLE: return "VARIABLE";
     case crom::IFMATCH: return "IFMATCH";
     case crom::RETURN: return "RETURN";
     case crom::FUNCALL: return "FUNCALL";
@@ -84,7 +84,7 @@ template <typename STACK>
 void print_context(const STACK& s, const std::string& indent = "") {
 
     std::cout << "--- Stack ---" << std::endl << std::endl;
-    for (const auto& t : s.stack) {
+    for (const auto& t : s.vm.code) {
 	print_element(t);
         std::cout << std::endl;
     }
@@ -96,7 +96,7 @@ void print_context(const STACK& s, const std::string& indent = "") {
 	printer()(v.first.first);
 	printer()(v.first.second);
 	std::cout << "-->" << std::endl;
-	print_element(v.second);
+	print(v.second, "  ");
 	std::cout << std::endl;
     }
 }
