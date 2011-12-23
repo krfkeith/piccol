@@ -5,9 +5,10 @@
 std::string token_name(int type) {
     switch (type) {
     case crom::LITERAL: return "LITERAL";
-    case crom::BIND: return "BIND";
-    case crom::TYPE: return "TYPE";
-    case crom::IFMATCH: return "IFMATCH";
+    case crom::GET: return "GET";
+    case crom::START_STRUCT: return "START_STRUCT";
+    case crom::PUSH_STRUCT: return "PUSH_STRUCT";
+    case crom::FRAME_GET: return "FRAME_GET";
     case crom::RETURN: return "RETURN";
     case crom::FUNCALL: return "FUNCALL";
     case crom::ADD: return "ADD";

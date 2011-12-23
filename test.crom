@@ -1,25 +1,10 @@
 
-namespace foo;
-
-define { triple=[1, Int, Real] } as Hackstr;
-
-define { foo=foo,
-         bar=bar, tuple = [1,2,'Hello world!\t!'],
-         num=Int, subs=Hackstr } 
-as MyTest;
-
-define [Int] as Tupint;
-
-fun inc Tupint -> Tupint :
-[:z] -> [:z+1];;
-
-fun inc2 Tupint -> Tupint :
-:z -> inc$ inc$ :z;;
 
 =====-----
 
 define {Int:a,Int:b} as Pair;
 define {Int:a,Pair:b} as Tup3;
+
 
 --
 Pair:[TYPE:Int,TYPE:Int],'a'=0,'b'=1

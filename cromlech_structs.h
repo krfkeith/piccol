@@ -274,10 +274,12 @@ template <> Val::stup_t& get(Val& v) { return v.d.stup; }
 
 enum {
     LITERAL = 1,
-    TYPE,
-    BIND,
 
-    IFMATCH,
+    GET,
+
+    START_STRUCT,
+    PUSH_STRUCT,
+    FRAME_GET,
     RETURN,
     FUNCALL,
     ADD,
@@ -303,11 +305,7 @@ struct Opcall {
 
 struct Vm {
 
-    std::vector< Val > stack;
     std::vector< Opcall > code;
-
-    std::vector< Val > heap;
-    std::vector< size_t > heapframes;
 
 };
 

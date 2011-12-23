@@ -9,6 +9,8 @@
 
 #include <pegtl.hh>
 
+#include <iostream>
+
 
 namespace std {
 
@@ -34,7 +36,6 @@ struct Context {
     Symbol current_ns;
 
     std::unordered_map<std::pair<Symbol,Symbol>, Val> typemap;
-    std::map<Symbol, size_t> registermap;
 
     std::vector<unsigned char> op;
     std::vector<std::pair<int,Symbol>> fun;
@@ -105,19 +106,9 @@ struct a_string_literal : action_base<a_string_literal> {
             }
         }
 
+        //std::cout << "!" << tmp << std::endl;
         t.push_back(Opcall(LITERAL, tmp));
     }
-};
-
-
-struct a_tuple_start : action_base<a_tuple_start> {
-    static void apply(const std::string& s, Context& t) {
-        t.push_back(Opcall(LITERAL, empty_tuple()));
-    }
-};
-
-struct a_tuple_end : action_base<a_tuple_end> {
-    static void apply(const std::string& s, Context& t) {}
 };
 
 
@@ -132,43 +123,25 @@ struct a_struct_end : action_base<a_struct_end> {
 };
 
 
-struct a_tuple_element : action_base<a_tuple_element> {
-    static void apply(const std::string& s, Context& t) {
-	Val v;
-	v.swap(t.vm.code.back().val);
-	t.vm.code.pop_back();
-	get<Val::stup_t>(t.vm.code.back().val)->push_back(Val());
-	get<Val::stup_t>(t.vm.code.back().val)->back().swap(v);
-    }
-};
-
-struct a_tuple_clone : action_base<a_tuple_clone> {
-    static void apply(const std::string& s, Context& t) {
-
-	Val& tup = t.vm.code.back().val;
-	Val& tupe = get<Val::stup_t>(tup)->back();
-
-        int num = ::atol(s.c_str());
-	for (int i = 1; i < num; ++i) {
-	    get<Val::stup_t>(tup)->push_back(tupe);
-	}
-    }
-};
 
 struct a_struct_key : action_base<a_struct_key> {
     static void apply(const std::string& s, Context& t) {
-	Val& stru = t.vm.code.back().val;
-	get<Val::stup_t>(stru)->push_back(sym(s));
+        //std::cout<<"binding " << s<<std::endl;
+        t.vm.code.back().val.binding = sym(s);
     }
 };
 
 struct a_struct_val : action_base<a_struct_val> {
     static void apply(const std::string& s, Context& t) {
 	Val v;
+        //std::cout<<"val swap " << s<<std::endl;
 	v.swap(t.vm.code.back().val);
 	t.vm.code.pop_back();
+        //std::cout<<"val pushback " << s<<std::endl;
 	get<Val::stup_t>(t.vm.code.back().val)->push_back(Val());
+        //std::cout<<"val swap2 " << s<<std::endl;
 	get<Val::stup_t>(t.vm.code.back().val)->back().swap(v);
+        //std::cout<<"val ok " << s<<std::endl;
     }
 };
 
@@ -176,7 +149,7 @@ struct a_struct_val : action_base<a_struct_val> {
 
 struct a_type : action_base< a_type > {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Opcall(TYPE, sym(s)));
+        t.push_back(Opcall(LITERAL, sym(s)));
 	t.vm.code.back().val.type = Val::TYPETAG;
     }
 };
@@ -198,48 +171,33 @@ struct a_custom_type : action_base< a_custom_type > {
 };
 
 
-
-struct a_vardef : action_base<a_vardef> {
-    static void apply(const std::string& s, Context& t) {
-        Symbol var = sym(s);
-
-        auto i = t.registermap.find(var);
-
-        if (i == t.registermap.end()) {
-            i = t.registermap.insert(std::make_pair(var, t.registermap.size()+1)).first;
-        }
-
-        t.vm.code.back().val.binding = i->second;
-    }
-};
-
 struct a_varget : action_base<a_varget> {
     static void apply(const std::string& s, Context& t) {
-        Symbol var = sym(s);
 
-        auto i = t.registermap.find(var);
-
-        if (i == t.registermap.end())
-            throw std::runtime_error("Reference to an undefined variable: " + s);
-
-        t.push_back(Opcall(BIND, (Symbol)0));
-        t.vm.code.back().val.type = Val::PLACEHOLDER;
-        t.vm.code.back().val.binding = i->second;
+        t.push_back(Opcall(GET, sym(s)));
     }
 };
 
 
-struct a_do_match : action_base<a_do_match> {
+struct a_fun_struct_s : action_base<a_fun_struct_s> {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Opcall(BIND, (Symbol)0));
-        t.vm.code.back().val.type = Val::PLACEHOLDER;
-        t.vm.code.back().val.binding = 0;
-        t.push_back(Opcall(IFMATCH, (Int)2));
-        t.push_back(Opcall(RETURN, (Symbol)0));
+        t.push_back(Opcall(START_STRUCT, (Symbol)0));
     }
 };
 
-struct a_fun_end : action_base<a_do_match> {
+struct a_fun_struct_v : action_base<a_fun_struct_v> {
+    static void apply(const std::string& s, Context& t) {
+        t.push_back(Opcall(PUSH_STRUCT, (Symbol)0));
+    }
+};
+
+struct a_frameget : action_base<a_frameget> {
+    static void apply(const std::string& s, Context& t) {
+        t.push_back(Opcall(FRAME_GET, (Symbol)0));
+    }
+};
+
+struct a_fun_end : action_base<a_fun_end> {
     static void apply(const std::string& s, Context& t) {
         t.push_back(Opcall(RETURN, (Symbol)0));
     }

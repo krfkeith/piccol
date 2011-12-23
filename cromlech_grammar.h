@@ -8,13 +8,16 @@ namespace crom {
 
 using namespace pegtl;
 
-/* The literal definition language. */
 
-struct literal;
+/* Typedef statements. */
 
 struct symbol : seq< lower, 
                      star< sor< lower, upper, digit, one<'_'> > >
                      > {};
+
+struct typenam : seq< upper,
+                      star< sor< lower, upper, digit, one<'_'> > >
+                      > {};
 
 struct int_l : seq< opt< one<'-'> >, 
                     plus< digit > 
@@ -53,136 +56,79 @@ struct string_l_ : seq< one<Q>,
 
 struct string_l : sor< string_l_<'"'>, string_l_<'\''> > {};
 
+struct typename_or_literal : seq< sor< ifapply< typenam, a_type >,
+                                       ifapply< symbol, a_symbol_literal >,
+                                       ifapply< int_l, a_int_literal >,
+                                       ifapply< real_l, a_real_literal >,
+                                       ifapply< bool_l, a_bool_literal >,
+                                       string_l
+                                       >,
+                                  pad< one<':'>, space >,
+                                  ifapply< symbol, a_struct_key, a_struct_val >
+                                  > {};
 
-template <typename T>
-struct one_tuple_l : seq< ifapply< T, a_tuple_element >,
-                          opt< seq< pad< one<'*'>, space >,
-                                    ifapply< int_l, a_tuple_clone >
+struct struct_def : seq< ifapply< padr< one<'{'>, space >, 
+                                  a_struct_start >,
+                         star< seq< typename_or_literal,
+                                    star<space>,
+                                    opt< one<','> >,
+                                    star<space>
                                     >
-                               >
-                          > {};
+                               >,
+                         ifapply< padl< one<'}'>, space >,
+                                  a_struct_end >
+                         > {};
 
-template <typename T>
-struct one_struct_l : seq< ifapply< symbol, a_struct_key >,
-                           pad< one<'='>, space >,
-                           must< T >, apply< a_struct_val >
-                           > {};
+struct type : sor< typenam, struct_def > {};
 
-template <typename S, typename P, typename E, typename ACTS, typename ACTE>
-struct commasep_ : seq< padr< ifapply< S, ACTS >, space >,
-                        star< seq< P,
-                                   star<space>,
-                                   opt< one<','> >,
-                                   star<space>
-                                   >
-                              >,
-                        padl< ifapply< E, ACTE >, space > 
-                        > {};
+struct typdef : seq< string<'d','e','f','i','n','e'>,
+                     plus<space>,
+                     must< type >,
+                     plus<space>,
+                     string<'a','s'>,
+                     plus<space>,
+                     must< ifapply< typenam, a_define_type > >,
+                     star<space>,
+                     one<';'>
+                     > {};
 
-template <typename T>
-struct tuple_ : commasep_< one<'['>, one_tuple_l<T>, one<']'>, a_tuple_start, a_tuple_end > {};
 
-template <typename T>
-struct struct_ : commasep_< one<'{'>, one_struct_l<T>, one<'}'>, a_struct_start, a_struct_end > {};
+/* Function definition statements. */
 
-struct tuple_l : tuple_<literal> {};
-struct struct_l : struct_<literal> {};
+struct expr_1;
 
-struct literal_pod : sor< ifapply< symbol, a_symbol_literal >,
-                          ifapply< real_l, a_real_literal >,
-                          ifapply< int_l, a_int_literal >,
-                          ifapply< bool_l, a_bool_literal >,
-                          string_l
-                          > {};
-
-struct literal : sor< literal_pod,
-                      tuple_l,
-                      struct_l
+struct literal : sor< ifapply< symbol, a_symbol_literal >,
+                      ifapply< int_l, a_int_literal >,
+                      ifapply< real_l, a_real_literal >,
+                      ifapply< bool_l, a_bool_literal >,
+                      string_l
                       > {};
-
-
-/* The type definition language. */
-
-struct typenam : seq< upper,
-                      star< sor< lower, upper, digit, one<'_'> > >
-                      > {};
-
-struct type;
-
-struct tuple_t : tuple_<type> {};
-struct struct_t : struct_<type> {};
-
-struct type_pod : sor< ifapply< string<'S','y','m','b','o','l'>, a_type >,
-                       ifapply< string<'I','n','t'>, a_type >,
-                       ifapply< string<'R','e','a','l'>, a_type >,
-                       ifapply< string<'B','o','o','l'>, a_type >,
-                       ifapply< string<'S','t','r','i','n','g'>, a_type >,
-                       ifapply< typenam, a_custom_type >
-                       > {};
-
-struct type : sor< type_pod,
-                   literal_pod,
-                   tuple_t, 
-                   struct_t
-                   > {};
-
-
-
-/* The pattern match language. */
-
-struct patternmatch;
-
-struct tuple_pm : tuple_<patternmatch> {};
-struct struct_pm : struct_<patternmatch> {};
-
-struct opt_vardef : opt< one<':'>, must< ifapply< symbol, a_vardef > > > {};
-
-struct patternmatch : sor< seq< type_pod, opt_vardef >,
-                           literal_pod,
-                           seq< tuple_pm, opt_vardef >,
-                           seq< struct_pm, opt_vardef >
-                           > {};
-
-/* The pattern application language. */
-
-struct patternappl;
-
-struct tuple_pa : tuple_<patternappl> {};
-struct struct_pa : struct_<patternappl> {};
-
-struct patternappl : sor< seq< one<':'>, ifapply< must< symbol >, a_varget > >,
-                          literal_pod ,
-                          tuple_pa, 
-                          struct_pa
-                          > {};
-
-
-/* The function call language. */
-
-struct expr;
-
-template <typename T>
-struct tuple_ : commasep_< one<'['>, one_tuple_l<T>, one<']'>, a_tuple_start, a_tuple_end > {};
-
-template <typename T>
-struct struct_ : commasep_< one<'{'>, one_struct_l<T>, one<'}'>, a_struct_start, a_struct_end > {};
 
 
 struct funcall : seq< ifapply< seq< opt< one<'*'> >, symbol>, 
                                a_setfun >,
                       pad< one<'$'>, space >,
-                      expr
+                      expr_1
                       > {};
 
-struct expr_e : sor< seq< padr< one<'('>, space >,
-                          must< expr >,
+struct expr_e : sor< ifapply< one<'_'>, a_frameget >,
+                     seq< padr< one<'('>, space >,
+                          must< expr_1 >,
                           padl< one<')'>, space >
                           >,
                      ifapply< funcall, a_do_funcall >,
-                     patternappl
+                     literal
                      > {};
+
+struct expr_deref : seq< expr_e,
+                         star< seq< pad< one<'.'>, space >,
+                                    ifapply< symbol, a_varget >
+                                    >
+                               >
+                         > {};
+
                     
-struct expr_mul : seq< expr_e,
+struct expr_mul : seq< expr_deref,
                        star< seq< pad< ifapply< sor< one<'*'>, 
                                                      one<'/'>,
                                                      one<'%'>
@@ -190,7 +136,7 @@ struct expr_mul : seq< expr_e,
                                                 >,
                                        space
                                        >,
-                                  ifapply< expr_e, a_do_op >
+                                  ifapply< expr_deref, a_do_op >
                                   >
                              >
                        > {};
@@ -215,31 +161,45 @@ struct expr_and : seq< expr_add,
                              >
                        > {};
 
-struct expr : seq< expr_and,
-                   star< seq< pad< string<'|','|'>, space >,
-                              expr_and
-                              >
-                         >
-                   > {};
-                   
+struct expr_1 : seq< expr_and,
+                     star< seq< pad< string<'|','|'>, space >,
+                                expr_and
+                                >
+                           >
+                     > {};
 
-struct codeblock : plus< seq< pad< expr, space >,
-                              must< one<';'> >
+struct struct_e : seq< padr< one<'{'>, space >,
+                       apply< a_fun_struct_s >,
+                       star< seq< ifapply< expr_1, a_fun_struct_v >,
+                                  opt< pad< one<','>, space > >
+                                  >
+                             >,
+                       padl< one<'}'>, space >
+                       > {};
+                   
+struct expr : sor< struct_e, expr_1 > {};
+
+struct codeblock : seq< expr, 
+                        star< seq< pad< one<','>, space >,
+                                   expr 
+                                   >
                               >
-                         > {};
+                        > {};
 
 
 struct fun : seq< string<'f','u','n'>,
                   plus<space>,
                   must< seq< opt< one<'>'> >, symbol > >,
                   plus<space>,
-                  padr<patternmatch, space>, 
-                  must< padr<string<'=','>'>, space> >,
-                  apply< a_do_match >, 
+                  typenam,
+                  pad< string<'-','>'>, space >, 
+                  typenam,
+                  plus<space>,
                   must< codeblock >,
-                  must< padl< one<';'>, space > >,
+                  must< pad< one<';'>, space > >,
                   apply< a_fun_end >
                   > {};
+
 
 /* Toplevel. */
 
@@ -250,16 +210,6 @@ struct namspace : seq< string<'n','a','m','e','s','p','a','c','e'>,
                        one<';'>
                        > {};
 
-struct typdef : seq< string<'d','e','f','i','n','e'>,
-                     plus<space>,
-                     must< type >,
-                     plus<space>,
-                     string<'a','s'>,
-                     plus<space>,
-                     must< ifapply< typenam, a_define_type > >,
-                     star<space>,
-                     one<';'>
-                     > {};
 
 struct tunit : seq< star<space>, 
                     namspace,
