@@ -19,9 +19,9 @@ struct typenam : seq< upper,
                       star< sor< lower, upper, digit, one<'_'> > >
                       > {};
 
-struct ns_typenam : sor< seq< symbol, string<':',':'>, typenam >,
-                         typenam
-                         > {};
+struct ns_typenam_l : sor< seq< symbol, string<':',':'>, typenam >,
+                           typenam
+                           > {};
 
 struct int_l : seq< opt< one<'-'> >, 
                     plus< digit > 
@@ -60,7 +60,7 @@ struct string_l_ : seq< one<Q>,
 
 struct string_l : sor< string_l_<'"'>, string_l_<'\''> > {};
 
-struct typename_or_literal : seq< sor< ifapply< ns_typenam, a_type >,
+struct typename_or_literal : seq< sor< ifapply< ns_typenam_l, a_type >,
                                        ifapply< symbol, a_symbol_literal >,
                                        ifapply< int_l, a_int_literal >,
                                        ifapply< real_l, a_real_literal >,
@@ -107,7 +107,7 @@ struct ns_funname : sor< ifapply< seq< symbol ,
                                        >, 
                                   a_setfun_ns >,
                          seq< one<'*'>, ifapply< symbol, a_setsyscall > >,
-                         ifapply< symbol, a_clear_this_ns, a_setfun >
+                         ifapply< symbol, a_setfun >
                          > {};
 
 struct ns_typenam : sor< seq< symbol, string<':',':'>, typenam >,
