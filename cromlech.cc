@@ -11,6 +11,7 @@ std::string token_name(int type) {
     case crom::FRAME_GET: return "FRAME_GET";
     case crom::RETURN: return "RETURN";
     case crom::FUNCALL: return "FUNCALL";
+    case crom::SYSCALL: return "SYSCALL";
     case crom::ADD: return "ADD";
     case crom::SUB: return "SUB";
     case crom::MUL: return "MUL";
@@ -94,8 +95,7 @@ void print_context(const STACK& s, const std::string& indent = "") {
     std::cout << "--- Typemap ---" << std::endl << std::endl;
 
     for (const auto& v : s.typemap) {
-	printer()(v.first.first);
-	printer()(v.first.second);
+	printer()(v.first);
 	std::cout << "-->" << std::endl;
 	print(v.second, "  ");
 	std::cout << std::endl;

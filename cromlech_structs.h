@@ -282,6 +282,7 @@ enum {
     FRAME_GET,
     RETURN,
     FUNCALL,
+    SYSCALL,
     ADD,
     SUB,
     MUL,

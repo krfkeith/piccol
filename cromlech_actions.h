@@ -33,12 +33,14 @@ struct Context {
 
     Vm vm;
 
-    Symbol current_ns;
+    std::string current_ns;
 
-    std::unordered_map<std::pair<Symbol,Symbol>, Val> typemap;
+    std::unordered_map<Symbol, Val> typemap;
 
     std::vector<unsigned char> op;
-    std::vector<std::pair<int,Symbol>> fun;
+    std::vector< std::pair<int,Symbol> > fun;
+
+    Context() {} 
 
     void push_back(const Opcall& t) {
         vm.code.push_back(t);
@@ -158,12 +160,12 @@ struct a_type : action_base< a_type > {
 struct a_custom_type : action_base< a_custom_type > {
     static void apply(const std::string& s, Context& t) {
 
-	Symbol typ = sym(s);
+	Symbol typ = sym(t.current_ns + "::" + s);
 
-	auto tmp = t.typemap.find(std::make_pair(t.current_ns, typ));
+	auto tmp = t.typemap.find(typ);
 
 	if (tmp == t.typemap.end()) {
-	    throw std::runtime_error("Undefined type: " + s);
+	    throw std::runtime_error("Undefined type: " + t.current_ns + "::" + s);
 	}
 
         t.vm.code.push_back(Opcall(LITERAL, tmp->second));
@@ -205,19 +207,36 @@ struct a_fun_end : action_base<a_fun_end> {
 
 struct a_do_funcall : action_base<a_do_funcall> {
     static void apply(const std::string& s, Context& t) {
-        std::pair<int,Symbol> v = t.fun.back();
+        auto v = t.fun.back();
         t.fun.pop_back();
-        t.push_back(Opcall(FUNCALL, v.second));
+
+        if (v.first) {
+            t.push_back(Opcall(SYSCALL, v.second));
+        } else {
+            t.push_back(Opcall(FUNCALL, v.second));
+        }
     }
 };
 
+
 struct a_setfun : action_base<a_setfun> {
     static void apply(const std::string& s, Context& t) {
-        if (s[0] == '*') {
-            t.fun.push_back(std::make_pair(1, sym(s.substr(1))));
-        } else {
-            t.fun.push_back(std::make_pair(0, sym(s)));
-        }
+        Symbol ss;
+        ss = sym(t.current_ns + "::" + s);
+        t.fun.push_back(std::make_pair(0, ss));
+    }
+};
+
+
+struct a_setfun_ns : action_base<a_setfun_ns> {
+    static void apply(const std::string& s, Context& t) {
+        t.fun.push_back(std::make_pair(0, sym(s)));
+    }
+};
+
+struct a_setsyscall : action_base<a_setsyscall> {
+    static void apply(const std::string& s, Context& t) {
+        t.fun.push_back(std::make_pair(1, sym(s)));
     }
 };
 
@@ -255,15 +274,14 @@ struct a_do_op : action_base<a_do_op> {
 
 struct a_set_namespace : action_base<a_set_namespace> {
     static void apply(const std::string& s, Context& t) {
-	t.current_ns = sym(s);
+	t.current_ns = s;
     }
 };
 
 struct a_define_type : action_base<a_define_type> {
     static void apply(const std::string& s, Context& t) {
 
-	t.typemap[std::make_pair(t.current_ns, sym(s))] = 
-	    t.vm.code.back().val;
+	t.typemap[sym(t.current_ns + "::" + s)] = t.vm.code.back().val;
 	t.vm.code.pop_back();
     }
 };
