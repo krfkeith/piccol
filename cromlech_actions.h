@@ -34,9 +34,6 @@ struct Context {
     Vm vm;
 
     std::string current_ns;
-
-    std::unordered_map<Symbol, Val> typemap;
-
     std::vector<unsigned char> op;
     std::vector< std::pair<int,Symbol> > fun;
 
@@ -162,9 +159,9 @@ struct a_custom_type : action_base< a_custom_type > {
 
 	Symbol typ = sym(t.current_ns + "::" + s);
 
-	auto tmp = t.typemap.find(typ);
+	auto tmp = t.vm.typemap.find(typ);
 
-	if (tmp == t.typemap.end()) {
+	if (tmp == t.vm.typemap.end()) {
 	    throw std::runtime_error("Undefined type: " + t.current_ns + "::" + s);
 	}
 
@@ -202,6 +199,17 @@ struct a_frameget : action_base<a_frameget> {
 struct a_fun_end : action_base<a_fun_end> {
     static void apply(const std::string& s, Context& t) {
         t.push_back(Opcall(RETURN, (Symbol)0));
+
+        Symbol fname = get<Symbol>(t.vm.code[0].val);
+
+        Vm::fun f;
+        f.type_from = t.vm.code[1].val;
+        f.type_to = t.vm.code[2].val;
+        f.code.assign(t.vm.code.begin()+3, t.vm.code.end());
+
+        t.vm.funs.insert(std::make_pair(fname, f));
+
+        t.vm.code.clear();
     }
 };
 
@@ -281,7 +289,7 @@ struct a_set_namespace : action_base<a_set_namespace> {
 struct a_define_type : action_base<a_define_type> {
     static void apply(const std::string& s, Context& t) {
 
-	t.typemap[sym(t.current_ns + "::" + s)] = t.vm.code.back().val;
+	t.vm.typemap[sym(t.current_ns + "::" + s)] = t.vm.code.back().val;
 	t.vm.code.pop_back();
     }
 };

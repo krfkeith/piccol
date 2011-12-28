@@ -100,10 +100,8 @@ struct Val {
 	SYMBOL = 3,
 	BOOL = 4,
 	STRING = 5,
-	TUPLE = 6,
 	STRUCT = 7,
 	TYPETAG = 8,
-        PLACEHOLDER = 9,
     };
 
     unsigned short type;
@@ -137,7 +135,6 @@ private:
 	    d.str.~String(); 
 	    break;
 	case STRUCT:
-	case TUPLE:
 	    d.stup.~stup_t();
 	    break;
         }
@@ -162,7 +159,6 @@ private:
             new (&d.str) String(o.d.str);
 	    break;
 	case STRUCT:
-	case TUPLE:
 	    new (&d.stup) stup_t(o.d.stup);
         }
         type = o.type;
@@ -234,20 +230,12 @@ public:
 	    f(d.str);
 	    break;
 	case STRUCT:
-	case TUPLE:
 	    f(d.stup);
 	    break;
 	}
     }
 };
 
-inline Val empty_tuple() {
-    Val ret;
-    new (&ret.d.stup) Val::stup_t(new std::vector<Val>());
-    ret.type = Val::TUPLE;
-    ret.binding = 0;
-    return ret;
-}
 
 inline Val empty_struct() {
     Val ret;
@@ -259,6 +247,7 @@ inline Val empty_struct() {
 
 
 template <typename T> T& get(Val&);
+template <typename T> const T& get(const Val&);
 
 template <> Int& get(Val& v) { return v.d.i; }
 template <> Real& get(Val& v) { return v.d.r; }
@@ -266,6 +255,13 @@ template <> Symbol& get(Val& v) { return v.d.s; }
 template <> Bool& get(Val& v) { return v.d.b; }
 template <> String& get(Val& v) { return v.d.str; }
 template <> Val::stup_t& get(Val& v) { return v.d.stup; }
+
+template <> const Int& get(const Val& v) { return v.d.i; }
+template <> const Real& get(const Val& v) { return v.d.r; }
+template <> const Symbol& get(const Val& v) { return v.d.s; }
+template <> const Bool& get(const Val& v) { return v.d.b; }
+template <> const String& get(const Val& v) { return v.d.str; }
+template <> const Val::stup_t& get(const Val& v) { return v.d.stup; }
 
 
 ////
@@ -308,6 +304,15 @@ struct Vm {
 
     std::vector< Opcall > code;
 
+    std::unordered_map<Symbol, Val> typemap;
+
+    struct fun {
+        Val type_from;
+        Val type_to;
+        std::vector< Opcall > code;
+    };
+
+    std::unordered_multimap<Symbol, fun> funs;
 };
 
 

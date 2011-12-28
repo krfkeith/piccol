@@ -4,7 +4,7 @@
 #include "cromlech_structs.h"
 #include "cromlech_actions.h"
 #include "cromlech_grammar.h"
-
+#include "cromlech_analyze.h"
 
 
 #endif

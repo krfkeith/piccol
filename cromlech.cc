@@ -59,14 +59,8 @@ void print(const crom::Val& l, const std::string& indent) {
         std::cout << indent << "(Binding: " << l.binding << ")" << std::endl;
     }
 
-    if (l.type == crom::Val::TUPLE) {
-	std::cout << indent << "Tuple:" << std::endl;
-
-    } else if (l.type == crom::Val::STRUCT) {
+    if (l.type == crom::Val::STRUCT) {
 	std::cout << indent << "Struct:" << std::endl;
-
-    } else if (l.type == crom::Val::PLACEHOLDER) {
-        std::cout << indent << "Placeholder:" << std::endl;
 
     } else if (l.type == crom::Val::TYPETAG) {
 	std::cout << indent << "(Typetag)" << std::endl;
@@ -94,12 +88,30 @@ void print_context(const STACK& s, const std::string& indent = "") {
 
     std::cout << "--- Typemap ---" << std::endl << std::endl;
 
-    for (const auto& v : s.typemap) {
+    for (const auto& v : s.vm.typemap) {
 	printer()(v.first);
 	std::cout << "-->" << std::endl;
 	print(v.second, "  ");
 	std::cout << std::endl;
     }
+    std::cout << std::endl;
+
+    std::cout << "--- Funs ---" << std::endl << std::endl;
+
+    for (const auto& v : s.vm.funs) {
+	printer()(v.first);
+	std::cout << "-->" << std::endl;
+	print(v.second.type_from, "  ");
+	std::cout << std::endl;
+	print(v.second.type_to, "  ");
+	std::cout << std::endl;
+
+        for (const auto& tt : v.second.code) {
+            print_element(tt);
+            std::cout << std::endl;
+        }
+    }
+
 }
 
 
@@ -119,6 +131,7 @@ int main(int argc, char** argv) {
                                                  stack);
       }
 
+      crom::check_types(stack.vm);
       print_context(stack);
 
   } catch (std::runtime_error& e) {

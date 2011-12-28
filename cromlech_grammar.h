@@ -205,11 +205,14 @@ struct codeblock : seq< expr,
 
 struct fun : seq< string<'f','u','n'>,
                   plus<space>,
-                  must< seq< opt< one<'>'> >, symbol > >,
+                  must< seq< opt< one<'>'> >, 
+                             ifapply< symbol, a_symbol_literal >
+                             >
+                  >,
                   plus<space>,
-                  ns_typenam,
+                  ifapply< ns_typenam, a_type >,
                   pad< string<'-','>'>, space >, 
-                  ns_typenam,
+                  ifapply< ns_typenam, a_type >,
                   plus<space>,
                   must< codeblock >,
                   must< pad< one<';'>, space > >,
