@@ -1,0 +1,30 @@
+
+namespace foo;
+
+define { Int:a, Int:b } as Pair;
+define { Int:a, baz::Pair: b} as Tup3;
+define { "Hello\nw\torld\90":tag, Int:b } as Tag1I;
+define { 'Hello':tag, Int:b } as Tag1I;
+
+//fun plus3 Tup3->Tup3 { .a, { .b.a, 
+
+//fun inc Pair->Pair one$ bar::two$ (_+1*2/(_*12+3));
+
+fun inc Int->Int _+1;
+
+fun inc Pair->Pair {inc$ _.a, inc$ _.b};
+
+fun make_pair Int->Pair {_,_};
+
+
+define {String:tag,Int:b} as Tag1I;
+
+fun gettag Int->Tag1I {'HellO',_};
+
+fun >foo Int->Int 
+  *print$ (gettag$ _).tag;
+
+
+//  inc$ make_pair$ 0,
+//  *print$ "Hello!";
+

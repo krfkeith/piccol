@@ -316,12 +316,33 @@ struct Vm {
 
     std::unordered_multimap<Symbol, fun> funs;
 
-
     std::vector< Val > runtime_stack;
 
     typedef std::vector<Opcall>::const_iterator iptr_t;
-
     std::vector< std::pair<Val,iptr_t> > runtime_frame;
+
+    typedef Val (*syscall_cb_t)(const Val&);
+
+    struct syscall {
+        Val type_from;
+        Val type_to;
+        syscall_cb_t cb;
+    };
+
+    std::unordered_map<Symbol, syscall> syscalls;
+
+    void add_syscall(const std::string& s, const std::string& tf, const std::string& tt,
+                     syscall_cb_t cb) {
+
+        syscall sc;
+        sc.type_from = Val(sym(tf));
+        sc.type_from.type = Val::TYPETAG;
+        sc.type_to = Val(sym(tt));
+        sc.type_to.type = Val::TYPETAG;
+        sc.cb = cb;
+
+        syscalls[sym(s)] = sc;
+    }
 };
 
 

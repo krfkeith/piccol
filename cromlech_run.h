@@ -28,6 +28,8 @@ inline void run(Vm& vm, const Val& arg, const std::vector<Opcall>& code) {
 
     while (1) {
         const Opcall& o = *ip;
+
+        std::cout << "++ " << o.type << " " << vm.runtime_stack.size() << std::endl;
         
         switch (o.type) {
         case LITERAL:
@@ -71,14 +73,22 @@ inline void run(Vm& vm, const Val& arg, const std::vector<Opcall>& code) {
                 tmp.first++;
             }
 
-            vm.runtime_frame.push_back(std::make_pair(vm.runtime_stack.back(), ip+1));
+            vm.runtime_frame.push_back(std::make_pair(vm.runtime_stack.back(), ip));
             vm.runtime_stack.pop_back();
+            ip = tmp.first->second.code.begin();
+            continue;
             break;
         }
 
         case SYSCALL:
-            throw std::runtime_error("TODO");
+        {
+            const Vm::syscall& tmp = vm.syscalls[get<Symbol>(o.val)];
+            Val in = vm.runtime_stack.back();
+            vm.runtime_stack.pop_back();
+            vm.runtime_stack.push_back(tmp.cb(in));
             break;
+        }
+
 
         case RETURN:
             ip = vm.runtime_frame.back().second;

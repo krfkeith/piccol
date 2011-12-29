@@ -120,11 +120,21 @@ void print_context(const STACK& s, const std::string& indent = "") {
 }
 
 
+crom::Val print_s(const crom::Val& v) {
+    std::cout << crom::get<crom::String>(v) << std::endl;
+    return (crom::Int)0;
+}
+
+
+
 int main(int argc, char** argv) {
 
   try {
 
       crom::Context stack;
+
+      stack.vm.add_syscall("print", "String", "Int", print_s);
+
 
       if (argc > 3) {
           pegtl::trace_parse_string<crom::tunit>(true, 
@@ -138,6 +148,7 @@ int main(int argc, char** argv) {
 
       crom::check_types(stack.vm);
       print_context(stack);
+
       std::cout << "------------------------------" << std::endl;
 
       crom::run(stack.vm, false, crom::sym(argv[2]));

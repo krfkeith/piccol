@@ -1,11 +1,47 @@
 #ifndef __CROMLECH_ANALYZE_H
 #define __CROMLECH_ANALYZE_H
 
+#include <sstream>
+
 namespace crom {
 
 std::string symstr(Symbol s) {
     return crom::Singleton<crom::SymTable>().get(s);
 }
+
+
+struct _vprinter {
+
+    std::ostringstream& os;
+    _vprinter(std::ostringstream& o) : os(o) {}
+
+    void operator()(const crom::Int& t) { os << t; }
+    void operator()(const crom::Real& t) { os << t; }
+    void operator()(const crom::Bool& t) { os << (t ? "\\true" : "\\false"); }
+    void operator()(const crom::Symbol& t) { os << symstr(t); }
+    void operator()(const crom::String& t) { os << "'" << t << "'"; }
+    void operator()(const crom::Val::stup_t& t) {}
+};
+
+
+std::string print_type(const Val& v) {
+    std::ostringstream os;
+
+    if (v.type == Val::STRUCT) {
+
+        os << "{ ";
+        const Val::stup_t& vv = get<Val::stup_t>(v);
+        for (const auto& t : *vv) {
+            os << print_type(t) << " ";
+        }
+        os << "}";
+
+    } else {
+        v(_vprinter(os));
+    }
+    return os.str();
+}
+
 
 inline Val _check_type_typetag(const Val& type, Symbol funname, const Vm& vm) {
 
@@ -20,8 +56,8 @@ inline Val _check_type_typetag(const Val& type, Symbol funname, const Vm& vm) {
     if (s == _int() || s == _real() || s == _symbol() || 
         s == _bool() || s == _string()) {
 
-        return s;
-        //tis.push_back(s);
+        return type;
+        //tis.push_back(type);
 
     } else {
         const auto i = vm.typemap.find(s);
@@ -48,24 +84,29 @@ inline void check_type_literal(const Val& op, Symbol funname, std::vector<Val>& 
     switch (op.type) {
     case Val::INT:
         tis.push_back(_int());
+        tis.back().type = Val::TYPETAG;
         break;
     case Val::REAL:
         tis.push_back(_real());
+        tis.back().type = Val::TYPETAG;
         break;
     case Val::SYMBOL:
         tis.push_back(_symbol());
+        tis.back().type = Val::TYPETAG;
         break;
     case Val::BOOL:
         tis.push_back(_bool());
+        tis.back().type = Val::TYPETAG;
         break;
     case Val::STRING:
         tis.push_back(_string());
+        tis.back().type = Val::TYPETAG;
         break;
     case Val::TYPETAG:
         check_type_typetag(op, funname, tis, vm);
         break;
     default:
-        throw std::runtime_error("TODO: check_type_literal");
+        throw std::runtime_error("Sanity error: check_type_literal");
     }
 }
 
@@ -105,7 +146,7 @@ inline void check_type_numop(int& arg, Symbol funname, std::vector<Val>& tis) {
     Val v1 = tis.back();
     tis.pop_back();
 
-    if (v1.type != Val::SYMBOL || v2.type != Val::SYMBOL) {
+    if (v1.type != Val::TYPETAG || v2.type != Val::TYPETAG) {
 
         throw std::runtime_error("In function " +
                                  symstr(funname) + 
@@ -138,6 +179,8 @@ inline void check_type_numop(int& arg, Symbol funname, std::vector<Val>& tis) {
         tis.push_back(_int());
         arg = 4;
     }
+
+    tis.back().type = Val::TYPETAG;
 }
 
 
@@ -149,7 +192,7 @@ inline bool check_type_equal(const Val& v, const Val& y, Symbol funname, const V
         return false;
     }
 
-    if (v.type == Val::SYMBOL && y.type == Val::SYMBOL) {
+    if (v.type == Val::TYPETAG && y.type == Val::TYPETAG) {
         Symbol vs = get<Symbol>(v);
         Symbol ys = get<Symbol>(y);
 
@@ -175,11 +218,29 @@ inline bool check_type_equal(const Val& v, const Val& y, Symbol funname, const V
 
         for (int i = 0; i < vs->size(); ++i) {
 
+            const Val& vsi = (*vs)[i];
+            const Val& ysi = (*ys)[i];
+
+            std::cout << " -- " << vsi.type << " " << ysi.type << std::endl;
+
+            if (vsi.type != ysi.type) {
+                return false;
+            }
+
+            if (vsi.type != Val::TYPETAG)
+                return false;
+
+            if (get<Symbol>(vsi) != get<Symbol>(ysi)) {
+                return false;
+            }
+
+            /*
             Val yconv = _check_type_typetag((*ys)[i], funname, vm);
 
             if (!check_type_equal((*vs)[i], yconv, funname, vm)) {
                 return false;
-            }
+            }*/
+
         }
     }
     
@@ -216,7 +277,39 @@ inline void check_type_funcall(Symbol calledfun, int& arg, Symbol funname,
     throw std::runtime_error("In function " +
                              symstr(funname) + 
                              ": could not find match for '" + symstr(calledfun) +
-                             "$'");
+                             "$' " + print_type(v));
+}
+
+
+
+
+inline void check_type_syscall(Symbol calledfun, Symbol funname, 
+                               std::vector<Val>& tis, const Vm& vm) {
+
+    Val v = tis.back();
+    tis.pop_back();
+
+    const auto tmp = vm.syscalls.find(calledfun);
+
+    if (tmp == vm.syscalls.end()) {
+        throw std::runtime_error("In function " +
+                                 symstr(funname) + 
+                                 ": could not find match for '*" + symstr(calledfun) +
+                                 "$'");
+    }
+
+    Val y = _check_type_typetag(tmp->second.type_from, funname, vm);
+
+    if (check_type_equal(v, y, funname, vm)) {
+
+        check_type_typetag(tmp->second.type_to, funname, tis, vm);
+        return;
+    }
+
+    throw std::runtime_error("In function " +
+                             symstr(funname) + 
+                             ": type mismatch in calling '" + symstr(calledfun) +
+                             "$':\n  [" + print_type(v) + " " + print_type(y) + "]");
 }
 
 
@@ -233,7 +326,8 @@ inline void check_type_return(const Val& type, Symbol funname, std::vector<Val>&
 
         throw std::runtime_error("In function " +
                                  symstr(funname) + 
-                                 ": declared and actual return type mismatch.");
+                                 ": declared and actual return type mismatch:\n  [" +
+                                 print_type(y) + " " + print_type(v) + "]");
     }
 
     if (tis.size() > 0) {
@@ -279,7 +373,7 @@ inline void check_type_op(Opcall& op, Symbol funname, std::vector<Val>& tis,
         break;
 
     case SYSCALL:
-        throw std::runtime_error("TODO");
+        check_type_syscall(get<Symbol>(op.val), funname, tis, vm);
         break;
 
     case RETURN:
