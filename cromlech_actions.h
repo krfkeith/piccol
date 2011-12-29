@@ -148,7 +148,20 @@ struct a_struct_val : action_base<a_struct_val> {
 
 struct a_type : action_base< a_type > {
     static void apply(const std::string& s, Context& t) {
-        t.push_back(Opcall(LITERAL, sym(s)));
+
+        bool sys = false;
+
+        if (s == "Int" || s == "Real" || 
+            s == "String" || s == "Bool" || s == "Symbol") {
+            sys = true;
+        }
+        
+        if (sys || s.find(':') != std::string::npos) {
+            t.push_back(Opcall(LITERAL, sym(s)));
+        } else {
+            t.push_back(Opcall(LITERAL, sym(t.current_ns + "::" + s)));
+        }
+
 	t.vm.code.back().val.type = Val::TYPETAG;
     }
 };
@@ -193,6 +206,12 @@ struct a_fun_struct_v : action_base<a_fun_struct_v> {
 struct a_frameget : action_base<a_frameget> {
     static void apply(const std::string& s, Context& t) {
         t.push_back(Opcall(FRAME_GET, (Symbol)0));
+    }
+};
+
+struct a_expr_next : action_base<a_expr_next> {
+    static void apply(const std::string& s, Context& t) {
+        t.push_back(Opcall(CLEAR, (Symbol)0));
     }
 };
 
@@ -280,6 +299,18 @@ struct a_do_op : action_base<a_do_op> {
 };
 
 
+struct a_def_funname : action_base< a_def_funname > {
+    static void apply(const std::string& s, Context& t) {
+
+        if (s[0] == '>') {
+            t.push_back(Opcall(LITERAL, sym(s.substr(1))));
+        } else {
+            t.push_back(Opcall(LITERAL, sym(t.current_ns + "::" + s)));
+        }
+    }
+};
+
+
 struct a_set_namespace : action_base<a_set_namespace> {
     static void apply(const std::string& s, Context& t) {
 	t.current_ns = s;
@@ -288,6 +319,12 @@ struct a_set_namespace : action_base<a_set_namespace> {
 
 struct a_define_type : action_base<a_define_type> {
     static void apply(const std::string& s, Context& t) {
+
+        if (s == "Int" || s == "Real" || 
+            s == "String" || s == "Bool" || s == "Symbol") {
+            throw std::runtime_error("Cannot redefine system types.");
+        }
+
 
 	t.vm.typemap[sym(t.current_ns + "::" + s)] = t.vm.code.back().val;
 	t.vm.code.pop_back();

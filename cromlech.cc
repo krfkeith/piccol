@@ -10,6 +10,7 @@ std::string token_name(int type) {
     case crom::PUSH_STRUCT: return "PUSH_STRUCT";
     case crom::FRAME_GET: return "FRAME_GET";
     case crom::RETURN: return "RETURN";
+    case crom::CLEAR: return "CLEAR";
     case crom::FUNCALL: return "FUNCALL";
     case crom::SYSCALL: return "SYSCALL";
     case crom::ADD: return "ADD";
@@ -72,7 +73,11 @@ void print(const crom::Val& l, const std::string& indent) {
 template <typename ELT>
 void print_element(const ELT& t, const std::string& indent = "") {
 
-    std::cout << indent << token_name(t.type) << ": " << std::endl;
+    std::cout << indent << token_name(t.type);
+    if (t.arg) {
+        std::cout << "[" << t.arg << "]";
+    }
+    std::cout << ": " << std::endl;
     print(t.val, indent);
 }
 
@@ -121,7 +126,7 @@ int main(int argc, char** argv) {
 
       crom::Context stack;
 
-      if (argc > 2) {
+      if (argc > 3) {
           pegtl::trace_parse_string<crom::tunit>(true, 
                                                  pegtl::read_string(argv[1]),
                                                  stack);
@@ -133,6 +138,10 @@ int main(int argc, char** argv) {
 
       crom::check_types(stack.vm);
       print_context(stack);
+      std::cout << "------------------------------" << std::endl;
+
+      crom::run(stack.vm, false, crom::sym(argv[2]));
+      
 
   } catch (std::runtime_error& e) {
       std::cout << "ERROR: " << e.what() << std::endl;

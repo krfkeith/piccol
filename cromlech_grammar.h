@@ -196,7 +196,7 @@ struct struct_e : seq< padr< one<'{'>, space >,
 struct expr : sor< struct_e, expr_1 > {};
 
 struct codeblock : seq< expr, 
-                        star< seq< pad< one<','>, space >,
+                        star< seq< ifapply< pad< one<','>, space >, a_expr_next >,
                                    expr 
                                    >
                               >
@@ -205,10 +205,11 @@ struct codeblock : seq< expr,
 
 struct fun : seq< string<'f','u','n'>,
                   plus<space>,
-                  must< seq< opt< one<'>'> >, 
-                             ifapply< symbol, a_symbol_literal >
-                             >
-                  >,
+                  must< ifapply< seq< opt< one<'>'> >, 
+                                      symbol 
+                                      >, 
+                                 a_def_funname >
+                        >,
                   plus<space>,
                   ifapply< ns_typenam, a_type >,
                   pad< string<'-','>'>, space >, 

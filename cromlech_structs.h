@@ -277,6 +277,7 @@ enum {
     PUSH_STRUCT,
     FRAME_GET,
     RETURN,
+    CLEAR,
     FUNCALL,
     SYSCALL,
     ADD,
@@ -289,11 +290,12 @@ enum {
 struct Opcall {
     int type;
     Val val;
+    int arg;
     
     Opcall() {}
     
     template <typename T>
-    Opcall(int tp, const T& t) : type(tp), val(t) {}
+    Opcall(int tp, const T& t) : type(tp), val(t), arg(0) {}
 };
 
 
@@ -313,6 +315,13 @@ struct Vm {
     };
 
     std::unordered_multimap<Symbol, fun> funs;
+
+
+    std::vector< Val > runtime_stack;
+
+    typedef std::vector<Opcall>::const_iterator iptr_t;
+
+    std::vector< std::pair<Val,iptr_t> > runtime_frame;
 };
 
 

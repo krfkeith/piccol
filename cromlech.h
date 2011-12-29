@@ -5,6 +5,7 @@
 #include "cromlech_actions.h"
 #include "cromlech_grammar.h"
 #include "cromlech_analyze.h"
+#include "cromlech_run.h"
 
 
 #endif
