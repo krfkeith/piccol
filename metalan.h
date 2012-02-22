@@ -263,7 +263,79 @@ struct Parser {
     }
 
 
-    void parse(const std::string& pr, const std::string& inp) {
+    bool apply_one(const list_t& rule, 
+                   std::string::const_iterator& b, std::string::const_iterator e, 
+                   std::string& out) {
+
+        std::string::const_iterator savedb = b;
+        std::string savedout = out;
+
+        for (const Symcell& sc : rule) {
+
+            std::cout << "  applying one: " << sc.type << " '" << symtab().get(sc.sym) << "' -> " 
+                      << std::string(b, e) << std::endl;
+
+            if (sc.type == Symcell::ATOM || sc.type == Symcell::QATOM) {
+
+                const std::string& tomatch = symtab().get(sc.sym);
+
+                std::string::const_iterator mi = tomatch.begin();
+                std::string::const_iterator me = tomatch.end();
+
+                while (mi != me) {
+
+                    if (b == e || *b != *mi) {
+                        b = savedb;
+                        out = savedout;
+                        return false;
+                    }
+
+                    ++b;
+                    ++mi;
+                }
+                continue;
+
+            } else if (sc.type == Symcell::VAR) {
+
+                if (!apply(symtab().get(sc.sym), b, e, out)) {
+                    b = savedb;
+                    out = savedout;
+                    return false;
+                }
+
+            } else if (sc.type == Symcell::ACTION) {
+                out += symtab().get(sc.sym);
+            }
+        }
+
+        return true;
+    }
+
+    bool apply(const std::string& rule, 
+               std::string::const_iterator& b, std::string::const_iterator e, 
+               std::string& out) {
+
+        std::cout << "Applying rule: " << rule << std::endl;
+
+        auto it = rules.find(symtab().get(rule));
+
+        if (it == rules.end())
+            throw std::runtime_error("Unknown rule referenced: '" + rule + "'");
+
+        for (const list_t& r : it->second) {
+            if (apply_one(r, b, e, out)) {
+                std::cout << "Applying rule " << rule << " OK!" << std::endl;
+                return true;
+            }
+        }
+
+        std::cout << "Applying rule " << rule << " failed" << std::endl;
+
+        return false;
+    }
+               
+
+    bool parse(const std::string& pr, const std::string& inp, std::string& out) {
 
         Symlist prog;
         prog.parse(pr);
@@ -279,7 +351,17 @@ struct Parser {
 
         }
 
-        
+        std::string::const_iterator sb = inp.begin();
+        std::string::const_iterator se = inp.end();
+
+        bool ok = apply("main", sb, se, out);
+
+        if (!ok || sb != se) {
+            out.assign(sb, se);
+            return false;
+        }
+
+        return true;
     }
 };
 

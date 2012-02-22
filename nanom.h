@@ -39,11 +39,10 @@ enum op_t {
     CMP_UINT,
     CMP_REAL,
     
-    PUSH_IP,
-    JUMP,
-    DJUMP,
+    CALL,
+    RET,
     JUMP_IF,
-    DJUMP_IF,
+    RET_IF,
 
     SYSCALL,
     EXIT,
@@ -72,6 +71,7 @@ struct Vm {
 
     std::vector<Val> stack;
     std::vector<Val> regs;
+    std::vector<size_t> frame;
 
     std::vector<Opcode> code;
 
@@ -197,11 +197,8 @@ inline void vm_run(Vm& vm, size_t ip) {
             break;
         }
 
-        case PUSH_IP:
-            vm.stack.push_back((UInt)ip + 1 + c.arg.inte);
-            break;
-
-        case JUMP:
+        case CALL:
+            vm.frame.push_back((UInt)ip + 1);
             ip = c.arg.uint;
             continue;
 
@@ -214,17 +211,19 @@ inline void vm_run(Vm& vm, size_t ip) {
             break;
         }
          
-        case DJUMP: {
-            Val offs = vm.pop();
-            ip = offs.uint;
+        case RET: {
+            size_t nip = vm.frame.back();
+            vm.frame.pop_back();
+            ip = nip;
             continue;
         }
 
-        case DJUMP_IF: {
-            Val offs = vm.pop();
+        case RET_IF: {
             Val v = vm.pop();
             if (v.inte != 0) {
-                ip = offs.uint;
+                size_t nip = vm.frame.back();
+                vm.frame.pop_back();
+                ip = nip;
                 continue;
             }
             break;
@@ -350,11 +349,10 @@ struct Assembler {
             ("CMP_INT", CMP_INT, NONE)
             ("CMP_UINT", CMP_UINT, NONE)
             ("CMP_REAL", CMP_REAL, NONE)
-            ("JUMP", JUMP, ADDR)
+            ("CALL", CALL, ADDR)
             ("JUMP_IF", JUMP_IF, ADDR)
-            ("DJUMP", DJUMP, NONE)
-            ("DJUMP_IF", DJUMP_IF, NONE)
-            ("PUSH_IP", PUSH_IP, VAL)
+            ("RET", RET, NONE)
+            ("RET_IF", RET_IF, NONE)
             ("SYSCALL", SYSCALL, UINT)
             ("EXIT", EXIT, NONE)
             ("INT_TO_REAL", INT_TO_REAL, NONE)

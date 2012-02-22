@@ -16,13 +16,22 @@ int main(int argc, char** argv) {
     std::ifstream t2(argv[2]);
     std::string inp;
 
-    inp.assign(std::istreambuf_iterator<char>(t),
+    inp.assign(std::istreambuf_iterator<char>(t2),
                std::istreambuf_iterator<char>());
 
 
     metalan::Parser parser;
-    parser.parse(code, inp);
 
+    std::string out;
+    bool ok = parser.parse(code, inp, out);
+
+    if (!ok) {
+        throw std::runtime_error("Parse failed. Unconsumed input: " + out);
+    }
+
+    std::cout << out << std::endl;
+
+    /*
     for (auto& cc : parser.rules) {
         for (auto& rl : cc.second) {
             std::cout << metalan::symtab().get(cc.first) << " :-";
@@ -33,6 +42,7 @@ int main(int argc, char** argv) {
         }
         std::cout << std::endl;
     }
+    */
 
     return 0;
 }
