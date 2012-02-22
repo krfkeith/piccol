@@ -1,0 +1,58 @@
+
+.const(str_free, 6)
+.const(int_to_string, 2)
+.const(append, 5)
+.const(print, 101)
+.const(tmpstr, 200)
+
+.symbol(' bottles of beer on the wall,', 1)
+.symbol(' bottles of beer.', 2)
+.symbol('Take one down, pass it around,', 3)
+.symbol('no more bottles of beer on the wall,\nno more bottles of beer...', 4)
+
+.label(print_append)
+
+TO_REG(100)
+PUSH($tmpstr)
+SYSCALL($int_to_string)
+PUSH($tmpstr)
+FROM_REG(100)
+SYSCALL($append)
+PUSH($tmpstr)
+SYSCALL($print)
+DJUMP
+
+.label(main)
+
+PUSH(99)
+TO_REG(1)
+
+.label(bottles)
+
+PUSH_IP(3)
+FROM_REG(1)
+PUSH(1)
+JUMP(print_append)
+
+PUSH_IP(3)
+FROM_REG(1)
+PUSH(2)
+JUMP(print_append)
+
+PUSH(3)
+SYSCALL($print)
+
+FROM_REG(1)
+PUSH(-1)
+SUB_INT
+COPY_TO_REG(1)
+PUSH(0)
+CMP_INT
+JUMP_IF(bottles)
+
+PUSH(4)
+SYSCALL($print)
+
+EXIT
+
+
