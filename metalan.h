@@ -1,20 +1,18 @@
-#ifndef __CROMLECH_META_H
-#define __CROMLECH_META_H
+#ifndef __METALAN_H
+#define __METALAN_H
 
 #include <cstdint>
 #include <stdexcept>
 
 #include <string>
+#include <vector>
 #include <list>
 #include <unordered_map>
 
 #include <iostream>
-#include <fstream>
-#include <streambuf>
 
 
-
-namespace crom {
+namespace metalan {
 
 typedef uint64_t Sym;
 
@@ -56,7 +54,8 @@ struct Symcell {
     enum type_t {
         ATOM,
         QATOM,
-        VAR
+        VAR,
+        ACTION
     };
 
     type_t type;
@@ -73,7 +72,9 @@ struct Symcell {
 
 struct Symlist {
 
-    std::list<Symcell> syms;
+    typedef std::list<Symcell> list_t;
+
+    list_t syms;
 
     void parse(const std::string& s) {
 
@@ -129,17 +130,18 @@ struct Symlist {
                     buff += *i;
 
                 } else if (*i == ' ' || *i == '\t' || *i == '\n' || *i == '\r') {
-                    syms.push_back(Symcell(Symcell:VAR, buff));
+                    syms.push_back(Symcell(Symcell::VAR, buff));
                     buff.clear();
                     state = IN_BLANK;
 
                 } else {
-                    syms.push_back(Symcell(Symcell:VAR, buff));
+                    syms.push_back(Symcell(Symcell::VAR, buff));
                     buff.clear();
 
                     syms.push_back(Symcell(Symcell::ATOM, std::string(1, *i)));
                     state = IN_BLANK;
                 }
+                break;
             }
 
             case IN_BLANK: {
@@ -178,61 +180,111 @@ struct Symlist {
 };
 
 
-inline std::string read_file(const std::string& file) {
+struct Parser {
 
-    std::ifstream t("file.txt");
-    std::string str(std::istreambuf_iterator<char>(t),
-                    std::istreambuf_iterator<char>());
-    return str;
-}
+    typedef Symlist::list_t list_t;
+
+    std::unordered_map< Sym, std::vector<list_t> > rules;
+
+
+    Sym consume(Symcell::type_t t, Sym v,
+                list_t::iterator& b, list_t::iterator e,
+                const std::string& msg) {
+        
+        if (v != 0) {
+            ++b;
+            if (b == e) throw std::runtime_error("Premature end of input.");
+        }
+
+        if (b->type != t)
+            throw std::runtime_error(msg);
+
+        if (v == 0) return b->sym;
+
+        if (b->sym != v)
+            throw std::runtime_error("Expected '" + symtab().get(v) + "' but received '" +
+                                     symtab().get(b->sym) + "'");
+    }
+
+        
+    list_t::iterator process_query(list_t& l,
+                                   list_t::iterator b, 
+                                   list_t::iterator e) {
+
+        if (b == e)
+            throw std::runtime_error("Empty list instead of rule");
+
+        static Sym colon = symtab().get(":");
+        static Sym dash = symtab().get("-");
+        static Sym dot = symtab().get(".");
+        static Sym at = symtab().get("@");
+
+        Sym head = consume(Symcell::VAR, 0, b, e, "Rule head must be a variable");
+        consume(Symcell::ATOM, colon, b, e, "Invalid rule syntax");
+        consume(Symcell::ATOM, dash, b, e, "Invalid rule syntax");
+
+        ++b;
+
+        list_t::iterator rstart = b;
+        while (1) {
+
+            if (b == e)
+                throw std::runtime_error("Unterminated rule body");
+
+            if (b->type == Symcell::ATOM) {
+
+                if (b->sym == dot) {
+
+                    rules[head].push_back(list_t());
+                    list_t& tmp = rules[head].back();
+
+                    tmp.splice(tmp.end(), l, rstart, b);
+                    
+                    ++b;
+                    return b;
+
+                } else if (b->sym == at) {
+
+                    bool ishead = (b == rstart);
+                    
+                    b = l.erase(b);
+                    if (b == e)
+                        throw std::runtime_error("Unterminated rule body");
+
+                    if (ishead)
+                        rstart = b;
+
+                    b->type = Symcell::ACTION;
+                }
+            }
+
+            ++b;
+        }
+    }
+
+
+    void parse(const std::string& pr, const std::string& inp) {
+
+        Symlist prog;
+        prog.parse(pr);
+
+        list_t::iterator i = prog.syms.begin();
+        list_t::iterator e = prog.syms.end();
+
+        while (1) {
+
+            if (i == e) break;
+
+            i = process_query(prog.syms, i, e);
+
+        }
+
+        
+    }
+};
 
 
 }
 
 #endif
-
-/*
-
-----
-
-space :- ' '; '\n'; '\t'.
-
-spaces :- space spaces.
-spaces :- .
-
-digit :- 0 { PUSH_INT(0) }.
-digit :- 1 { PUSH_INT(1) }.
-digit :- 2 { PUSH_INT(2) }.
-digit :- 3 { PUSH_INT(3) }.
-digit :- 4 { PUSH_INT(4) }.
-digit :- 5 { PUSH_INT(5) }.
-digit :- 6 { PUSH_INT(6) }.
-digit :- 7 { PUSH_INT(7) }.
-digit :- 8 { PUSH_INT(8) }.
-digit :- 9 { PUSH_INT(9) }.
-
-int1 :- { PUSH_INT(10); MUL; } digit { ADD; } int1.
-int1 :- .
-
-int :- digit int1.
-int :- digit.
-
-elt :- ( expr ).
-elt :- - int.
-elt :- int.
-
-expr_m :- elt * expr_m.
-expr_m :- elt / expr_m.
-expr_m :- elt.
-
-expr_a :- expr_m + expr_a.
-expr_a :- expr_m - expr_a.
-expr_a :- expr_m.
-
-expr :- spaces expr_a spaces.
-
-all :- expr all.
-all :- expr.
-
-:- all.
 
