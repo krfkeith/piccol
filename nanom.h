@@ -30,9 +30,12 @@ enum op_t {
     NOOP = 0,
 
     PUSH,
+
     TO_HEAP,
     COPY_TO_HEAP,
     FROM_HEAP,
+    SIZE_HEAP,
+
     POP,
 
     CMP_INT,
@@ -70,7 +73,7 @@ struct Vm {
 
     std::vector<Val> stack;
     std::vector<size_t> frame;
-    std::unordered_map<size_t, Val> heap;
+    std::unordered_map<size_t, std::vector<Val> > heap;
 
     std::unordered_map<size_t, std::string> symtab;
 
@@ -158,22 +161,32 @@ inline void vm_run(Vm& vm, size_t ip) {
             vm.stack.push_back(c.arg);
             break;
 
+        case SIZE_HEAP: {
+            Val cell = vm.pop();
+            if (cell.uint == 0) {
+                vm.heap.erase(cell.uint);
+            } else {
+                vm.heap[cell.uint].resize(c.arg.uint);
+            }
+            break;
+        }
+
         case TO_HEAP: {
             Val cell = vm.pop();
             Val v = vm.pop();
-            vm.heap[cell.uint + c.arg.inte] = v;
+            vm.heap[cell.uint][c.arg.uint] = v;
             break;
         }
 
         case COPY_TO_HEAP: {
             Val cell = vm.pop();
-            vm.heap[cell.uint + c.arg.inte] = vm.stack.back();
+            vm.heap[cell.uint][c.arg.uint] = vm.stack.back();
             break;
         }
 
         case FROM_HEAP: {
             Val cell = vm.pop();
-            vm.stack.push_back(vm.heap[cell.uint + c.arg.inte]);
+            vm.stack.push_back(vm.heap[cell.uint][c.arg.uint]);
             break;
         }
 
@@ -347,9 +360,10 @@ struct Assembler {
 
         opcodes_map
             ("PUSH", PUSH, VAL)
-            ("TO_HEAP", TO_HEAP, VAL)
-            ("COPY_TO_HEAP", COPY_TO_HEAP, VAL)
-            ("FROM_HEAP", FROM_HEAP, VAL)
+            ("TO_HEAP", TO_HEAP, UINT)
+            ("COPY_TO_HEAP", COPY_TO_HEAP, UINT)
+            ("FROM_HEAP", FROM_HEAP, UINT)
+            ("SIZE_HEAP", SIZE_HEAP, UINT)
             ("POP", POP, NONE)
             ("CMP_INT", CMP_INT, NONE)
             ("CMP_UINT", CMP_UINT, NONE)
