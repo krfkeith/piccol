@@ -3,7 +3,8 @@
 #include <fstream>
 #include <streambuf>
 
-#include "metalan.h"
+#include "metalan_prime.h"
+
 
 int main(int argc, char** argv) {
 
@@ -20,29 +21,8 @@ int main(int argc, char** argv) {
                std::istreambuf_iterator<char>());
 
 
-    metalan::Parser parser;
-
-    std::string out;
-    bool ok = parser.parse(code, inp, out);
-
-    if (!ok) {
-        throw std::runtime_error("Parse failed. Unconsumed input: " + out);
-    }
-
-    std::cout << out << std::endl;
-
-    /*
-    for (auto& cc : parser.rules) {
-        for (auto& rl : cc.second) {
-            std::cout << metalan::symtab().get(cc.first) << " :-";
-            for (auto& cell : rl) {
-                std::cout << " " << metalan::symtab().get(cell.sym) << "(" << cell.type << ")";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-    }
-    */
+    metalan::NanomAsmProcessor p;
+    p.parse(code, inp);
 
     return 0;
 }

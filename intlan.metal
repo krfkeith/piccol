@@ -6,22 +6,23 @@ space :- '\t'.
 spaces :- space spaces.
 spaces :- .
 
-digit :- 0  @'PUSH(0)\n'.
-digit :- 1  @'PUSH(1)\n'.
-digit :- 2  @'PUSH(2)\n'.
-digit :- 3  @'PUSH(3)\n'.
-digit :- 4  @'PUSH(4)\n'.
-digit :- 5  @'PUSH(5)\n'.
-digit :- 6  @'PUSH(6)\n'.
-digit :- 7  @'PUSH(7)\n'.
-digit :- 8  @'PUSH(8)\n'.
-digit :- 9  @'PUSH(9)\n'.
+digit :- 0.
+digit :- 1.
+digit :- 2.
+digit :- 3.
+digit :- 4.
+digit :- 5.
+digit :- 6.
+digit :- 7.
+digit :- 8.
+digit :- 9.
 
-int1 :- @'PUSH(10) MUL_INT\n' digit @'ADD_INT\n' int1.
-int1 :- .
+digit_x :- digit &'PUSH(10) PUSH($input) FROM_HEAP(0) SYSCALL($str_append)'.
 
-int :- digit int1.
-int :- digit.
+int_x :- digit_x int_x.
+int_x :- digit_x.
+
+int :- int_x @'PUSH(' &'PUSH($output) FROM_HEAP(0) PUSH(10) SYSCALL($str_append) PUSH(10) SYSCALL($str_free)' @')\n'.
 
 elt :- ( spaces expr spaces ).
 elt :- - @'PUSH(0)\n' int @'SUB_INT\n'.
@@ -35,7 +36,7 @@ expr_a :- expr_m spaces + spaces expr_a @'ADD_INT\n'.
 expr_a :- expr_m spaces - spaces expr_a @'SUB_INT\n'.
 expr_a :- expr_m.
 
-expr :- spaces expr_a spaces @'SYSCALL(1)\n'.
+expr :- spaces expr_a spaces.
 
 all :- expr all.
 all :- expr.

@@ -12,6 +12,7 @@
 #include <iostream>
 
 
+
 namespace metalan {
 
 typedef uint64_t Sym;
@@ -55,7 +56,8 @@ struct Symcell {
         ATOM,
         QATOM,
         VAR,
-        ACTION
+        ACTION_DATA,
+        ACTION_CODE
     };
 
     type_t type;
@@ -180,6 +182,24 @@ struct Symlist {
 };
 
 
+struct Outnode {
+    enum type_t {
+        CODE,
+        DATA
+    }; 
+
+    type_t type;
+    std::string str;
+    std::string capture;
+
+    Outnode(type_t t = DATA, const std::string& s = "") : type(t), str(s) {}
+};
+
+
+typedef std::list<Outnode> Outlist;
+
+
+
 struct Parser {
 
     typedef Symlist::list_t list_t;
@@ -218,6 +238,7 @@ struct Parser {
         static Sym dash = symtab().get("-");
         static Sym dot = symtab().get(".");
         static Sym at = symtab().get("@");
+        static Sym amp = symtab().get("&");
 
         Sym head = consume(Symcell::VAR, 0, b, e, "Rule head must be a variable");
         consume(Symcell::ATOM, colon, b, e, "Invalid rule syntax");
@@ -243,10 +264,11 @@ struct Parser {
                     ++b;
                     return b;
 
-                } else if (b->sym == at) {
+                } else if (b->sym == at || b->sym == amp) {
 
                     bool ishead = (b == rstart);
-                    
+                    bool isdata = (b->sym == at);
+
                     b = l.erase(b);
                     if (b == e)
                         throw std::runtime_error("Unterminated rule body");
@@ -254,7 +276,7 @@ struct Parser {
                     if (ishead)
                         rstart = b;
 
-                    b->type = Symcell::ACTION;
+                    b->type = (isdata ? Symcell::ACTION_DATA : Symcell::ACTION_CODE);
                 }
             }
 
@@ -265,15 +287,12 @@ struct Parser {
 
     bool apply_one(const list_t& rule, 
                    std::string::const_iterator& b, std::string::const_iterator e, 
-                   std::string& out) {
+                   Outlist& out) {
 
         std::string::const_iterator savedb = b;
-        std::string savedout = out;
+        Outlist subout;
 
         for (const Symcell& sc : rule) {
-
-            std::cout << "  applying one: " << sc.type << " '" << symtab().get(sc.sym) << "' -> " 
-                      << std::string(b, e) << std::endl;
 
             if (sc.type == Symcell::ATOM || sc.type == Symcell::QATOM) {
 
@@ -286,7 +305,6 @@ struct Parser {
 
                     if (b == e || *b != *mi) {
                         b = savedb;
-                        out = savedout;
                         return false;
                     }
 
@@ -297,25 +315,30 @@ struct Parser {
 
             } else if (sc.type == Symcell::VAR) {
 
-                if (!apply(symtab().get(sc.sym), b, e, out)) {
+                if (!apply(symtab().get(sc.sym), b, e, subout)) {
                     b = savedb;
-                    out = savedout;
                     return false;
                 }
 
-            } else if (sc.type == Symcell::ACTION) {
-                out += symtab().get(sc.sym);
+            } else if (sc.type == Symcell::ACTION_DATA) {
+
+                subout.push_back(Outnode(Outnode::DATA, symtab().get(sc.sym)));
+
+            } else if (sc.type == Symcell::ACTION_CODE) {
+
+                subout.push_back(Outnode(Outnode::CODE, symtab().get(sc.sym)));
+                subout.back().capture.assign(savedb, b);
             }
         }
+
+        out.splice(out.end(), subout, subout.begin(), subout.end());
 
         return true;
     }
 
     bool apply(const std::string& rule, 
                std::string::const_iterator& b, std::string::const_iterator e, 
-               std::string& out) {
-
-        std::cout << "Applying rule: " << rule << std::endl;
+               Outlist& out) {
 
         auto it = rules.find(symtab().get(rule));
 
@@ -324,18 +347,16 @@ struct Parser {
 
         for (const list_t& r : it->second) {
             if (apply_one(r, b, e, out)) {
-                std::cout << "Applying rule " << rule << " OK!" << std::endl;
                 return true;
             }
         }
-
-        std::cout << "Applying rule " << rule << " failed" << std::endl;
 
         return false;
     }
                
 
-    bool parse(const std::string& pr, const std::string& inp, std::string& out) {
+    bool parse(const std::string& pr, const std::string& inp, Outlist& out,
+               std::string& unprocessed) {
 
         Symlist prog;
         prog.parse(pr);
@@ -357,7 +378,7 @@ struct Parser {
         bool ok = apply("main", sb, se, out);
 
         if (!ok || sb != se) {
-            out.assign(sb, se);
+            unprocessed.assign(sb, se);
             return false;
         }
 

@@ -20,7 +20,7 @@ union Val {
     UInt uint;
     Real real;
 
-    Val() {}
+    Val() : inte(0) {}
     Val(Int i)  { inte = i; }
     Val(UInt i) { uint = i; }
     Val(Real i) { real = i; }
@@ -30,9 +30,9 @@ enum op_t {
     NOOP = 0,
 
     PUSH,
-    TO_REG,
-    COPY_TO_REG,
-    FROM_REG,
+    TO_HEAP,
+    COPY_TO_HEAP,
+    FROM_HEAP,
     POP,
 
     CMP_INT,
@@ -67,21 +67,19 @@ struct Vm;
 typedef void (*syscall_callback_t)(Vm&);
 
 struct Vm {
-    static const size_t NUM_REGS = 128;
 
     std::vector<Val> stack;
-    std::vector<Val> regs;
     std::vector<size_t> frame;
-
-    std::vector<Opcode> code;
+    std::unordered_map<size_t, Val> heap;
 
     std::unordered_map<size_t, std::string> symtab;
 
     std::unordered_map<size_t, syscall_callback_t> syscalls;
 
-    Vm() {
-        regs.resize(NUM_REGS);
-    }
+    std::vector<Opcode> code;
+
+
+    Vm() {}
 
     void register_syscall(size_t n, syscall_callback_t c) {
         syscalls[n] = c;
@@ -160,17 +158,24 @@ inline void vm_run(Vm& vm, size_t ip) {
             vm.stack.push_back(c.arg);
             break;
 
-        case TO_REG:
-            vm.regs[c.arg.inte] = vm.pop();
+        case TO_HEAP: {
+            Val cell = vm.pop();
+            Val v = vm.pop();
+            vm.heap[cell.uint + c.arg.inte] = v;
             break;
+        }
 
-        case COPY_TO_REG:
-            vm.regs[c.arg.inte] = vm.stack.back();
+        case COPY_TO_HEAP: {
+            Val cell = vm.pop();
+            vm.heap[cell.uint + c.arg.inte] = vm.stack.back();
             break;
+        }
 
-        case FROM_REG:
-            vm.stack.push_back(vm.regs[c.arg.inte]);
+        case FROM_HEAP: {
+            Val cell = vm.pop();
+            vm.stack.push_back(vm.heap[cell.uint + c.arg.inte]);
             break;
+        }
 
         case POP:
             vm.stack.pop_back();
@@ -342,9 +347,9 @@ struct Assembler {
 
         opcodes_map
             ("PUSH", PUSH, VAL)
-            ("TO_REG", TO_REG, UINT)
-            ("COPY_TO_REG", COPY_TO_REG, UINT)
-            ("FROM_REG", FROM_REG, UINT)
+            ("TO_HEAP", TO_HEAP, VAL)
+            ("COPY_TO_HEAP", COPY_TO_HEAP, VAL)
+            ("FROM_HEAP", FROM_HEAP, VAL)
             ("POP", POP, NONE)
             ("CMP_INT", CMP_INT, NONE)
             ("CMP_UINT", CMP_UINT, NONE)
@@ -373,6 +378,13 @@ struct Assembler {
 
         nanom::vm_run(vm, i->second);
     }
+
+
+    void register_const(const std::string& name, Val v) {
+        const_map[name] = v;
+    }
+
+private:
 
 
     std::string chomp(const std::string& arg_) {
@@ -599,6 +611,8 @@ struct Assembler {
             break;
         }
     }
+
+public:
 
     void assemble(const std::string& s) {
 
