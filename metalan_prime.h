@@ -132,6 +132,7 @@ struct NanomAsmProcessor {
         
 
         std::cout << asmprog << std::endl << std::endl;
+        std::cout << "-----------------------------" << std::endl;
 
         vm_as.assemble(asmprog);
         nanom::vm_run(vm, 0);

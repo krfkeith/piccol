@@ -65,8 +65,8 @@ inline void string_to_real(Vm& vm) {
 
 
 inline void append_copy_string(Vm& vm) {
-    Val cellfrom = vm.pop();
     Val cellto = vm.pop();
+    Val cellfrom = vm.pop();
     vm.symtab[cellto.uint] += vm.symtab[cellfrom.uint];
 }
 

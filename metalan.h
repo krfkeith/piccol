@@ -101,7 +101,8 @@ struct Symlist {
         std::string::const_iterator i = s.begin();
         enum {
             IN_BLANK,
-            IN_ATOM,
+            IN_ATOMQ,
+            IN_ATOMB,
             IN_VAR
         } state = IN_BLANK;
 
@@ -110,9 +111,12 @@ struct Symlist {
             if (i == s.end()) break;
 
             switch (state) {
-            case IN_ATOM: {
+            case IN_ATOMQ: 
+            case IN_ATOMB: {
                 
-                if (*i == '\'') {
+                if ((state == IN_ATOMQ && *i == '\'') ||
+                    (state == IN_ATOMB && *i == '}')) {
+
                     syms.push_back(Symcell(Symcell::QATOM, buff));
                     buff.clear();
                     state = IN_BLANK;
@@ -169,7 +173,10 @@ struct Symlist {
                     // Nothing.
 
                 } else if (*i == '\'') {
-                    state = IN_ATOM;
+                    state = IN_ATOMQ;
+
+                } else if (*i == '{') {
+                    state = IN_ATOMB;
 
                 } else if (('A' <= *i && *i <= 'Z') ||
                            ('a' <= *i && *i <= 'z') ||
@@ -192,8 +199,8 @@ struct Symlist {
         if (state == IN_VAR) {
             syms.push_back(Symcell(Symcell::VAR, buff));
 
-        } else if (state == IN_ATOM) {
-            throw std::runtime_error("Unterminated \"'\" while at end-of-input.");
+        } else if (state == IN_ATOMQ || state == IN_ATOMB) {
+            throw std::runtime_error("Unterminated \"'\" or \"{\" while at end-of-input.");
         }
     }
 };
