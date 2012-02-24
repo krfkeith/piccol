@@ -1,7 +1,10 @@
 #ifndef __NANOM_UTILS_H
 #define __NANOM_UTILS_H
 
+#include <stdlib.h>
+
 #include "nanom.h"
+
 
 namespace nanom {
 
@@ -34,6 +37,7 @@ inline UInt string_to_uint(const std::string& s) {
 inline Real string_to_real(const std::string& s) {
     return (Real)::strtod(s.c_str(), NULL);
 }
+
 
 }
 

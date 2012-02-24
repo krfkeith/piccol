@@ -1,31 +1,44 @@
 
-space :- ' '.
-space :- '\n'.
-space :- '\t'.
+:- include 'system.metal'
 
-spaces :- space spaces.
-spaces :- .
+:- define concat_number '
+   PUSH(10) 
+   PUSH($port) 
+   FROM_HEAP($in) 
+   SYSCALL($str_append)'
 
-digit :- 0.
-digit :- 1.
-digit :- 2.
-digit :- 3.
-digit :- 4.
-digit :- 5.
-digit :- 6.
-digit :- 7.
-digit :- 8.
-digit :- 9.
+:- define get_number '
+   PUSH($port) 
+   FROM_HEAP($out) 
+   PUSH(10) 
+   SYSCALL($str_append) 
+   PUSH(10) 
+   SYSCALL($str_free)'
 
-digit_x :- digit &'PUSH(10) PUSH($input) FROM_HEAP(0) SYSCALL($str_append)'.
+:- define mark_int '
+   PUSH(0)'
 
-int_x :- digit_x int_x.
-int_x :- digit_x.
+:- define mark_float '
+   PUSH(1)'
 
-int :- int_x @'PUSH(' &'PUSH($output) FROM_HEAP(0) PUSH(10) SYSCALL($str_append) PUSH(10) SYSCALL($str_free)' @')\n'.
+int_x :- digit &concat_number int_x.
+int_x :- digit &concat_number.
+
+number_dot :- '.' &concat_number.
+
+real_x :- int_x number_dot int_x.
+
+int :- int_x @'PUSH(' &get_number @')\n' &mark_int.
+
+real :- real_x @'PUSH(' &get_number @'f)\n' &mark_float.
+
+
+
+
 
 elt :- ( spaces expr spaces ).
 elt :- - @'PUSH(0)\n' int @'SUB_INT\n'.
+elt :- real.
 elt :- int.
 
 expr_m :- elt spaces * spaces expr_m @'MUL_INT\n'.

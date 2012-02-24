@@ -10,6 +10,23 @@
 #include <unordered_map>
 
 #include <iostream>
+#include <fstream>
+#include <streambuf>
+
+
+namespace {
+
+inline std::string read_file(const std::string& f) {
+    std::ifstream t(f);
+    std::string ret;
+
+    ret.assign(std::istreambuf_iterator<char>(t),
+               std::istreambuf_iterator<char>());
+    return ret;
+}
+
+}
+
 
 
 
@@ -206,6 +223,8 @@ struct Parser {
 
     std::unordered_map< Sym, std::vector<list_t> > rules;
 
+    std::unordered_map< Sym, Sym > actions;
+
 
     Sym consume(Symcell::type_t t, Sym v,
                 list_t::iterator& b, list_t::iterator e,
@@ -227,9 +246,7 @@ struct Parser {
     }
 
         
-    list_t::iterator process_query(list_t& l,
-                                   list_t::iterator b, 
-                                   list_t::iterator e) {
+    list_t::iterator process_query(list_t& l, list_t::iterator b, list_t::iterator e) {
 
         if (b == e)
             throw std::runtime_error("Empty list instead of rule");
@@ -276,13 +293,93 @@ struct Parser {
                     if (ishead)
                         rstart = b;
 
+                    if (b->type == Symcell::VAR) {
+                        auto i = actions.find(b->sym);
+
+                        if (i == actions.end())
+                            throw std::runtime_error("Unknown 'define' referenced: " + 
+                                                     symtab().get(b->sym));
+
+                        b->sym = i->second;
+                    }
+
                     b->type = (isdata ? Symcell::ACTION_DATA : Symcell::ACTION_CODE);
+
                 }
             }
 
             ++b;
         }
     }
+
+
+    list_t::iterator process_directive(list_t& l, list_t::iterator b, list_t::iterator e, 
+                                       bool& did_expand) {
+
+        did_expand = false;
+
+        list_t::iterator savedb = b;
+
+        if (b == e) return savedb;
+
+        if (b->sym != symtab().get(":"))
+            return savedb;
+
+        ++b;
+        if (b == e) return savedb;
+
+        if (b->sym != symtab().get("-"))
+            return savedb;
+
+        ++b;
+        if (b == e) return savedb;
+
+        if (b->sym == symtab().get("include")) {
+
+            ++b;
+            if (b == e) 
+                throw std::runtime_error("End-of-file in 'include' directive");
+
+            std::string f = read_file(symtab().get(b->sym));
+
+            Symlist prog;
+            prog.parse(f);
+
+            ++b;
+
+            did_expand = true;
+
+            list_t::iterator ni = l.erase(savedb, b);
+            list_t::iterator ret = prog.syms.begin();
+            l.splice(ni, prog.syms);
+
+            return ret;
+
+        } else if (b->sym == symtab().get("define")) {
+
+            ++b;
+            if (b == e) 
+                throw std::runtime_error("End-of-file in 'define' directive");
+
+            Sym name = b->sym;
+
+            ++b;
+            if (b == e) 
+                throw std::runtime_error("End-of-file in 'define' directive");
+
+            Sym action = b->sym;
+
+            actions[name] = action;
+
+            did_expand = true;
+
+            ++b;
+            return b;
+        }
+
+        return savedb;
+    }
+
 
 
     bool apply_one(const list_t& rule, 
@@ -367,6 +464,11 @@ struct Parser {
         while (1) {
 
             if (i == e) break;
+
+            bool did_expand;
+            do {
+                i = process_directive(prog.syms, i, e, did_expand);
+            } while (did_expand);
 
             i = process_query(prog.syms, i, e);
 

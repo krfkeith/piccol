@@ -43,6 +43,11 @@ struct fmter {
         str += nanom::int_to_string((nanom::Int)v);
         return *this;
     }
+
+    fmter& operator<<(unsigned int v) {
+        str += nanom::uint_to_string((nanom::Int)v);
+        return *this;
+    }
 };
 
 
@@ -59,8 +64,9 @@ struct NanomAsmProcessor {
         {
             nanom::register_stringlib(vm, 0);
 
-            vm_as.register_const("input", (nanom::UInt)100);
-            vm_as.register_const("output", (nanom::UInt)101);
+            vm_as.register_const("port", (nanom::UInt)0xFF0000);
+            vm_as.register_const("in", (nanom::UInt)0);
+            vm_as.register_const("out", (nanom::UInt)1);
 
             vm_as.register_const("str_append_char", (nanom::UInt)1);
             vm_as.register_const("int_to_str", (nanom::UInt)2);
@@ -86,7 +92,12 @@ struct NanomAsmProcessor {
         std::string asmprog;
 
         std::map<size_t,std::string> result;
-        
+
+        fmter f(asmprog);
+
+        f << "PUSH($port)\n"
+          << "SIZE_HEAP(2)\n";
+
         for (const auto& n : out) {
 
             size_t inputid = symbol_base + result.size() * 2;
@@ -94,8 +105,6 @@ struct NanomAsmProcessor {
             std::string& respart = result[outputid];
 
             if (n.type == Outnode::CODE) {
-
-                fmter f(asmprog);
 
                 f << "\n.symbol('";
 
@@ -106,11 +115,11 @@ struct NanomAsmProcessor {
 
                 f << "', " << inputid << ")\n"
                   << "PUSH(" << inputid << ")\n"
-                  << "PUSH($input)\n"
-                  << "TO_HEAP(0)\n"
+                  << "PUSH($port)\n"
+                  << "TO_HEAP($in)\n"
                   << "PUSH(" << outputid << ")\n"
-                  << "PUSH($output)\n"
-                  << "TO_HEAP(0)\n";
+                  << "PUSH($port)\n"
+                  << "TO_HEAP($out)\n";
 
                 asmprog += n.str;
 
