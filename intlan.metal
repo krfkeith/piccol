@@ -109,6 +109,8 @@
    RET
    CALL(x_real_binop)
    RET
+
+   .label main
 }
 
 :- define prelude_runtime {
@@ -121,6 +123,8 @@
    PUSH($swap_cell) FROM_HEAP(0)
    PUSH($swap_cell) FROM_HEAP(1)
    RET
+
+   .label main
 }
 
 
