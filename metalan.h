@@ -18,8 +18,11 @@ namespace {
 
 inline std::string read_file(const std::string& f) {
     std::ifstream t(f);
-    std::string ret;
 
+    if (!t)
+        throw std::runtime_error("File not found: " + f);
+
+    std::string ret;
     ret.assign(std::istreambuf_iterator<char>(t),
                std::istreambuf_iterator<char>());
     return ret;
@@ -242,7 +245,7 @@ struct Parser {
             if (b == e) throw std::runtime_error("Premature end of input.");
         }
 
-        if (b->type != t)
+        if (b->type != t) 
             throw std::runtime_error(msg);
 
         if (v == 0) return b->sym;
@@ -468,6 +471,15 @@ struct Parser {
         list_t::iterator i = prog.syms.begin();
         list_t::iterator e = prog.syms.end();
 
+        /*
+        std::string rest;
+        for (list_t::iterator tmp = i; tmp != e; ++tmp) {
+            rest += " ";
+            rest += symtab().get(tmp->sym);
+        }
+        std::cout << rest << std::endl;
+        */
+
         while (1) {
 
             if (i == e) break;
@@ -478,7 +490,6 @@ struct Parser {
             } while (did_expand);
 
             i = process_query(prog.syms, i, e);
-
         }
 
         std::string::const_iterator sb = inp.begin();

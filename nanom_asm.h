@@ -164,7 +164,7 @@ private:
         std::string arg = chomp(arg_);
 
         if (arg.size() == 0) 
-            throw std::runtime_error("Cannot parse an empty string as value.");
+            throw std::runtime_error("Cannot parse an empty string as uint.");
 
         if (arg[0] == '$') {
             arg = arg.substr(1);
@@ -184,7 +184,7 @@ private:
         std::string arg = chomp(arg_);
 
         if (arg.size() == 0) 
-            throw std::runtime_error("Cannot parse an empty string as value.");
+            throw std::runtime_error("Cannot parse an empty string as address.");
 
         if (arg[0] == '+') {
             return vm.code.size() - 1 + process_uint(arg.substr(1));
@@ -202,62 +202,25 @@ private:
         }
     }
 
-    void process_label(const std::string& arg_) {
+    std::string::const_iterator process_string(std::string& val, std::string::const_iterator i, 
+                                               std::string::const_iterator e) {
 
-        std::string arg = chomp(arg_);
-
-        if (arg.size() == 0) 
-            throw std::runtime_error("Cannot parse an empty string as label name.");
-
-        addr_map[arg] = vm.code.size();
-    }
-
-    void process_const(const std::string& arg) {
-
-        std::string name;
-        std::string val;
-        bool state = false;
-
-        for (auto c : arg) {
-
-            if (::isspace(c)) {
-                continue;
-
-            } else if (c == ',') {
-                state = true;
-
-            } else {
-                if (state) {
-                    val += c;
-                } else {
-                    name += c;
-                }
-            }
-        }
-
-        const_map[name] = process_val(val);
-    }
-
-    void process_symbol(const std::string& arg) {
-
-        std::string val;
-        std::string n;
         enum {
             IN_START,
             IN_STRINGQ,
             IN_STRINGDQ,
-            IN_QUOTE,
-            IN_N
+            IN_QUOTE
         } state = IN_START, oldstate;
 
-        
+        while (i != e) {
+            unsigned char c = *i;
 
-        for (auto c : arg) {
             switch (state) {
 
             case IN_START: {
                 if (::isspace(c)) {
                     // Nothing
+
                 } else if (c == '\'') {
                     state = IN_STRINGQ;
 
@@ -265,7 +228,7 @@ private:
                     state = IN_STRINGDQ;
 
                 } else {
-                    throw std::runtime_error("Invalid symtable directive: " + arg);
+                    throw std::runtime_error("Invalid string constant: string needs to be quoted");
                 }
                 break;
             }
@@ -275,9 +238,12 @@ private:
                 if (c == '\\') {
                     oldstate = state;
                     state = IN_QUOTE;
+
                 } else if ((state == IN_STRINGQ && c == '\'') ||
                            (state == IN_STRINGDQ && c == '"')) {
-                    state = IN_N;
+                    ++i;
+                    return i;
+
                 } else {
                     val += c;
                 }
@@ -287,111 +253,136 @@ private:
             case IN_QUOTE: {
                 if (c == 't') {
                     val += '\t';
+
                 } else if (c == 'n') {
                     val += '\n';
+
                 } else {
                     val += c;
                 }
+
                 state = oldstate;
                 break;
             }
+            }
 
-            case IN_N: {
-                if (::isspace(c) || c == ',') {
-                    // Nothing
-                } else {
-                    n += c;
-                }
-                break;
-            }
-            }
+            ++i;
         }
 
-        vm.symtab[process_uint(n)] = val;
+        throw std::runtime_error("End of input while parsing string constant");
     }
 
-    void process_opcode(const std::string& opcode, const std::string& arg) {
+    
+    std::string::const_iterator process_token(std::string& s, bool toup,
+                                              std::string::const_iterator i,
+                                              std::string::const_iterator e) {
 
-        if (opcode.size() > 0 && opcode[0] == '.') {
+        if (i == e)
+            throw std::runtime_error("Premature end of input");
 
-            if (opcode == ".CONST") {
-                process_const(arg);
+        bool state = false;
 
-            } else if (opcode == ".LABEL") {
-                process_label(arg);
-
-            } else if (opcode == ".SYMBOL") {
-                process_symbol(arg);
+        while (i != e) {
+            if (::isspace(*i)) {
+                if (state) {
+                    return i;
+                } else {
+                    // Nothing.
+                }
 
             } else {
-                throw std::runtime_error("Invalid directive: " + opcode);
+                state = true;
+                if (toup) {
+                    s += ::toupper(*i);
+                } else {
+                    s += *i;
+                }
             }
-            return;
+            ++i;
         }
 
-        auto i = opcodes_map.opcodes_map.find(opcode);
+        if (!state)
+            throw std::runtime_error("Premature end of input");
 
-        if (i == opcodes_map.opcodes_map.end())
-            throw std::runtime_error("Unknown opcode: " + opcode);
+        return i;
+    }
+                    
 
-        vm.code.push_back(Opcode());
-        Opcode& opc = vm.code.back();
 
-        opc.op = i->second.first;
+    std::string::const_iterator process_directive(std::string::const_iterator i,
+                                                  std::string::const_iterator e) {
 
-        switch (i->second.second) {
-        case VAL:
-            opc.arg = process_val(arg);
-            break;
-        case UINT:
-            opc.arg.uint = process_uint(arg);
-            break;
-        case ADDR:
-            opc.arg.uint = process_addr(arg);
-            break;
+        std::string name;
+        i = process_token(name, true, i, e);
+
+        if (name == ".CONST") {
+            std::string cname;
+            std::string val;
+            i = process_token(cname, false, i, e);
+            i = process_token(val, false, i, e);
+
+            const_map[cname] = process_val(val);
+
+        } else if (name == ".LABEL") {
+            std::string label;
+            i = process_token(label, false, i, e);
+
+            addr_map[label] = vm.code.size();
+
+        } else if (name == ".SYMBOL") {
+            std::string sym;
+            std::string cell;
+
+            i = process_string(sym, i, e);
+            i = process_token(cell, false, i, e);
+
+            vm.symtab[process_uint(cell)] = sym;
+
+        } else if (name == ".SYMCONST") {
+
+            std::string sym;
+            std::string cname;
+            std::string val;
+            i = process_string(sym, i, e);
+            i = process_token(cname, false, i, e);
+            i = process_token(val, false, i, e);
+
+            UInt uival = process_uint(val);
+            const_map[cname] = uival;
+            vm.symtab[uival] = sym;
+
+        } else {
+            throw std::runtime_error("Invalid directive: '" + name + "'");
         }
+
+        return i;
     }
 
-public:
+    std::string::const_iterator process_opcode(std::string::const_iterator i,
+                                               std::string::const_iterator e) {
 
-    void assemble(const std::string& s) {
 
-        std::string::const_iterator i = s.begin();
+
         std::string opcode;
         std::string arg;
 
         enum {
-            IN_BLANK,
             IN_OPCODE,
             IN_ARG
-        } state = IN_BLANK;
+        } state = IN_OPCODE;
 
-        while (1) {
+        bool done = false;
 
-            if (i == s.end())
-                break;
+        while (!done && i != e) {
 
             switch (state) {
-
-            case IN_BLANK: {
-                if (::isspace(*i)) {
-                    // Nothing.
-                } else {
-                    state = IN_OPCODE;
-                    continue;
-                }
-                break;
-            }
 
             case IN_OPCODE: {
                 if (*i == '(') {
                     state = IN_ARG;
 
                 } else if (::isspace(*i)) {
-                    process_opcode(opcode, arg);
-                    opcode.clear();
-                    arg.clear();
-                    state = IN_BLANK;
+                    done = true;
 
                 } else {
                     if (::isalpha(*i)) {
@@ -405,10 +396,10 @@ public:
              
             case IN_ARG: {
                 if (*i == ')') {
-                    process_opcode(opcode, arg);
-                    opcode.clear();
-                    arg.clear();
-                    state = IN_BLANK;
+                    done = true;
+
+                } else if (::isspace(*i)) {
+                    // Nothing.
 
                 } else {
                     arg += *i;
@@ -418,6 +409,68 @@ public:
             }
 
             ++i;
+        }
+        
+
+        auto ix = opcodes_map.opcodes_map.find(opcode);
+
+        if (ix == opcodes_map.opcodes_map.end())
+            throw std::runtime_error("Unknown opcode: '" + opcode +"'");
+
+        vm.code.push_back(Opcode());
+        Opcode& opc = vm.code.back();
+
+        opc.op = ix->second.first;
+
+        switch (ix->second.second) {
+        case VAL:
+            opc.arg = process_val(arg);
+            break;
+        case UINT:
+            opc.arg.uint = process_uint(arg);
+            break;
+        case ADDR:
+            opc.arg.uint = process_addr(arg);
+            break;
+        }
+
+        return i;
+    }
+
+
+
+public:
+
+    void assemble(const std::string& s) {
+
+        std::string::const_iterator i = s.begin();
+        std::string::const_iterator e = s.end();
+
+        try {
+
+            while (i != e) {
+
+                if (::isspace(*i)) {
+                    ++i;
+
+                } else if (*i == '.') {
+                    i = process_directive(i, e);
+
+                } else {
+                    i = process_opcode(i, e);
+                }
+            }
+
+        } catch (std::exception& ex) {
+
+            std::string rest(i, e);
+
+            if (rest.size() > 100) {
+                rest = rest.substr(0, 100);
+                rest += "...";
+            }
+
+            throw std::runtime_error(ex.what() + std::string("; error at: \"") + rest + "\"");
         }
     }
     

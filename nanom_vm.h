@@ -121,6 +121,7 @@ struct Vm {
     void push(Val v) {
         stack.push_back(v);
     }
+
 };
 
 namespace {
@@ -167,6 +168,8 @@ inline void vm_run(Vm& vm, size_t ip) {
         }
 
         Opcode& c = vm.code[ip];
+
+        std::cout << "!" << ip << " " << c.op << std::endl;
 
         switch (c.op) {
         case NOOP:

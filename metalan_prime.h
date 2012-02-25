@@ -106,14 +106,14 @@ struct NanomAsmProcessor {
 
             if (n.type == Outnode::CODE) {
 
-                f << "\n.symbol('";
+                f << "\n.symbol '";
 
                 for (unsigned char c : n.capture) {
                     if (c == '\'') asmprog += "\\'";
                     else asmprog += c;
                 }
 
-                f << "', " << inputid << ")\n"
+                f << "' " << inputid << "\n"
                   << "PUSH(" << inputid << ")\n"
                   << "PUSH($port)\n"
                   << "TO_HEAP($in)\n"
