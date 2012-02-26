@@ -71,7 +71,14 @@ enum op_t {
     SUB_REAL,
     MUL_REAL,
     DIV_REAL,
-    NEG_REAL
+    NEG_REAL,
+
+    BAND,
+    BOR,
+    BNOT,
+    BXOR,
+    BSHL,
+    BSHR
 };
 
 
@@ -398,6 +405,47 @@ inline void vm_run(Vm& vm, size_t ip) {
         case NEG_REAL: {
             Val v = vm.pop();
             vm.stack.push_back(-v.real);
+            break;
+        }
+
+        case BAND: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.stack.push_back(v1.uint & v2.uint);
+            break;
+        }
+
+        case BOR: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.stack.push_back(v1.uint | v2.uint);
+            break;
+        }
+
+        case BNOT: {
+            Val v1 = vm.pop();
+            vm.stack.push_back(~v1.uint);
+            break;
+        }
+
+        case BXOR: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.stack.push_back(v1.uint ^ v2.uint);
+            break;
+        }
+
+        case BSHL: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.stack.push_back(v1.uint << v2.uint);
+            break;
+        }
+
+        case BSHR: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.stack.push_back(v1.uint >> v2.uint);
             break;
         }
 

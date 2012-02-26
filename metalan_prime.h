@@ -95,9 +95,6 @@ struct NanomAsmProcessor {
 
         fmter f(asmprog);
 
-        f << "PUSH($port)\n"
-          << "SIZE_HEAP(2)\n";
-
         for (const auto& n : out) {
 
             size_t inputid = symbol_base + result.size() * 2;
@@ -128,14 +125,18 @@ struct NanomAsmProcessor {
             }
         }
 
-        asmprog += "\nEXIT\n";
+        f << ".label __init_start_compile\n"
+          << "PUSH($port)\n"
+          << "SIZE_HEAP(2)\n"
+          << "CALL(main)\n"
+          << "EXIT\n";
         
 
         std::cout << asmprog << std::endl << std::endl;
         std::cout << "-----------------------------" << std::endl;
 
         vm_as.assemble(asmprog);
-        vm_as.vm_run("main");
+        vm_as.vm_run("__init_start_compile");
 
         for (auto& c : result) {
 

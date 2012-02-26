@@ -89,6 +89,14 @@ struct Symcell {
         type(t),
         sym(symtab().get(s))
         {}
+
+    bool operator==(const Symcell& a) const {
+        return (sym == a.sym && type == a.type);
+    }
+
+    bool operator!=(const Symcell& a) const {
+        return !(operator==(a));
+    }
 };
 
 
@@ -231,7 +239,61 @@ struct Parser {
 
     typedef Symlist::list_t list_t;
 
-    std::unordered_map< Sym, std::vector<list_t> > rules;
+    struct rule_t {
+        list_t common_head;
+        std::vector<list_t> alternatives;
+
+        void optimize() {
+
+            if (alternatives.size() < 2) {
+                return;
+            }
+
+            typedef std::pair<list_t::iterator,list_t::iterator> range_t;
+            std::vector<range_t> alts;
+
+            for (list_t& l : alternatives) {
+
+                if (l.empty()) {
+                    return;
+                }
+
+                alts.push_back(std::make_pair(l.begin(), l.end()));
+            }
+
+            while (1) {
+                const Symcell& scprev = *(alts[0].first);
+
+                for (auto& l : alts) {
+                    if (*(l.first) != scprev) {
+                        return;
+                    }
+                }
+
+                common_head.push_back(scprev);
+
+                size_t n = 0;
+                bool done = false;
+
+                for (auto& l : alts) {
+                    list_t::iterator tmp = l.first;
+                    ++(l.first);
+                    alternatives[n].erase(tmp);
+
+                    if (l.first == l.second) {
+                        done = true;
+                    }
+                    ++n;
+                }
+
+                if (done) {
+                    return;
+                }
+            }
+        }
+    };
+
+    std::unordered_map< Sym, rule_t > rules;
 
     std::unordered_map< Sym, Sym > actions;
 
@@ -256,7 +318,7 @@ struct Parser {
     }
 
         
-    list_t::iterator process_query(list_t& l, list_t::iterator b, list_t::iterator e) {
+    list_t::iterator process_rule(list_t& l, list_t::iterator b, list_t::iterator e) {
 
         if (b == e)
             throw std::runtime_error("Empty list instead of rule");
@@ -283,8 +345,8 @@ struct Parser {
 
                 if (b->sym == dot) {
 
-                    rules[head].push_back(list_t());
-                    list_t& tmp = rules[head].back();
+                    rules[head].alternatives.push_back(list_t());
+                    list_t& tmp = rules[head].alternatives.back();
 
                     tmp.splice(tmp.end(), l, rstart, b);
                     
@@ -438,7 +500,7 @@ struct Parser {
             }
         }
 
-        out.splice(out.end(), subout, subout.begin(), subout.end());
+        out.splice(out.end(), subout);
 
         return true;
     }
@@ -452,12 +514,22 @@ struct Parser {
         if (it == rules.end())
             throw std::runtime_error("Unknown rule referenced: '" + rule + "'");
 
-        for (const list_t& r : it->second) {
-            if (apply_one(r, b, e, out)) {
+        std::string::const_iterator savedb = b;
+        Outlist subout;
+
+        if (!apply_one(it->second.common_head, b, e, subout)) {
+            return false;
+        }
+
+        for (const list_t& r : it->second.alternatives) {
+            if (apply_one(r, b, e, subout)) {
+
+                out.splice(out.end(), subout);
                 return true;
             }
         }
 
+        b = savedb;
         return false;
     }
                
@@ -489,7 +561,11 @@ struct Parser {
                 i = process_directive(prog.syms, i, e, did_expand);
             } while (did_expand);
 
-            i = process_query(prog.syms, i, e);
+            i = process_rule(prog.syms, i, e);
+        }
+
+        for (auto& r : rules) {
+            r.second.optimize();
         }
 
         std::string::const_iterator sb = inp.begin();

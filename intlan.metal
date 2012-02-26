@@ -7,10 +7,10 @@
 
    .symconst "0"    0     100
    .symconst "0f"   0f    101
-   .symconst "ADD"  ADD   102
-   .symconst "SUB"  SUB   103
-   .symconst "MUL"  MUL   104
-   .symconst "DIV"  DIV   105
+   .symconst "ADD_"  ADD   102
+   .symconst "SUB_"  SUB   103
+   .symconst "MUL_"  MUL   104
+   .symconst "DIV_"  DIV   105
    .symconst "INT"  INT   106
    .symconst "REAL" REAL  107
    .symconst "INT_TO_REAL\n" INT_TO_REAL  108
@@ -83,6 +83,8 @@
    CALL(sendout)
    PUSH($CALL_swap)
    CALL(sendout)
+   PUSH($opname_sym)
+   CALL(sendout)
    PUSH($REAL)
    CALL(sendout)
    PUSH(1)
@@ -110,7 +112,17 @@
    CALL(x_real_binop)
    RET
 
+   .label force_int
+   POP
+   POP
+   CALL(mark_int)
+   RET
+
    .label main
+}
+
+:- define epilogue_compiletime {
+   RET
 }
 
 :- define prelude_runtime {
@@ -127,6 +139,9 @@
    .label main
 }
 
+:- define epilogue_runtime {
+   EXIT
+}
 
 
 int_x :- digit &'CALL(concat_number)' int_x.
@@ -145,7 +160,7 @@ elt :- ( spaces expr spaces ).
 elt :- real.
 elt :- int.
 
-neg :- '-' elt 
+neg :- '-' spaces elt 
   @'NEG_' 
   &{ JUMP_CHECK_IF(+3)
        PUSH($INT) JUMP(+2)
@@ -156,9 +171,21 @@ neg :- '-' elt
 
 neg :- elt.
 
-expr_m :- neg spaces * spaces expr_m &{PUSH($MUL) CALL(check_binop)} @'\n'.
-expr_m :- neg spaces / spaces expr_m &{PUSH($DIV) CALL(check_binop)} @'\n'.
-expr_m :- neg.
+expr_bnot :- '~' spaces neg &{POP CALL(mark_int)} @'BNOT\n'.
+expr_bnot :- neg.
+
+expr_bop :- expr_bnot spaces '&' spaces expr_bop &{CALL(force_int)} @'BAND\n'.
+expr_bop :- expr_bnot spaces '|' spaces expr_bop &{CALL(force_int)} @'BOR\n'.
+expr_bop :- expr_bnot spaces '^' spaces expr_bop &{CALL(force_int)} @'BXOR\n'.
+expr_bop :- expr_bnot.
+
+expr_bsh :- expr_bop spaces '>>' spaces int &{CALL(force_int)} @'BSHR\n'.
+expr_bsh :- expr_bop spaces '<<' spaces int &{CALL(force_int)} @'BSHL\n'.
+expr_bsh :- expr_bop.
+
+expr_m :- expr_bsh spaces * spaces expr_m &{PUSH($MUL) CALL(check_binop)} @'\n'.
+expr_m :- expr_bsh spaces / spaces expr_m &{PUSH($DIV) CALL(check_binop)} @'\n'.
+expr_m :- expr_bsh.
 
 expr_a :- expr_m spaces + spaces expr_a &{PUSH($ADD) CALL(check_binop)} @'\n'.
 expr_a :- expr_m spaces - spaces expr_a &{PUSH($SUB) CALL(check_binop)} @'\n'.
@@ -169,6 +196,8 @@ expr :- spaces expr_a spaces.
 all :- expr all.
 all :- expr.
 
-main :- &prelude_compiletime @prelude_runtime all.
+main :- &prelude_compiletime @prelude_runtime 
+        all 
+        &epilogue_compiletime @epilogue_runtime.
 
 

@@ -97,6 +97,12 @@ struct Assembler {
             ("SUB_REAL", SUB_REAL, NONE)
             ("MUL_REAL", MUL_REAL, NONE)
             ("DIV_REAL", DIV_REAL, NONE)
+            ("BAND", BAND, NONE)
+            ("BOR", BOR, NONE)
+            ("BNOT", BNOT, NONE)
+            ("BXOR", BXOR, NONE)
+            ("BSHL", BSHL, NONE)
+            ("BSHR", BSHR, NONE)
             ;
     }
 
