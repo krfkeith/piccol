@@ -335,27 +335,32 @@ private:
 
             addr_map[label] = vm.code.size();
 
-        } else if (name == ".SYMBOL") {
-            std::string sym;
+        } else if (name == ".STRING") {
+            std::string str;
             std::string cell;
 
-            i = process_string(sym, i, e);
+            i = process_string(str, i, e);
             i = process_token(cell, false, i, e);
 
-            vm.symtab[process_uint(cell)] = sym;
+            vm.strtab[process_uint(cell)] = str;
 
-        } else if (name == ".SYMCONST") {
+        } else if (name == ".STRCONST") {
 
-            std::string sym;
+            std::string str;
             std::string cname;
             std::string val;
-            i = process_string(sym, i, e);
+            i = process_string(str, i, e);
             i = process_token(cname, false, i, e);
             i = process_token(val, false, i, e);
 
             UInt uival = process_uint(val);
             const_map[cname] = uival;
-            vm.symtab[uival] = sym;
+            vm.strtab[uival] = str;
+
+        } else if (name == ".COMMENT") {
+            while (*i != '\n') {
+                ++i;
+            }
 
         } else {
             throw std::runtime_error("Invalid directive: '" + name + "'");

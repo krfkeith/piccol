@@ -97,7 +97,7 @@ struct Vm {
     std::vector<size_t> frame;
     std::unordered_map<size_t, std::vector<Val> > heap;
 
-    std::unordered_map<size_t, std::string> symtab;
+    std::unordered_map<size_t, std::string> strtab;
 
     std::unordered_map<size_t, syscall_callback_t> syscalls;
 

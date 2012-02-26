@@ -17,7 +17,7 @@ inline void append_char(Vm& vm) {
 
     UInt bm = 0xFF;
     UInt ch = v.uint;
-    std::string& s = vm.symtab[cell.uint];
+    std::string& s = vm.strtab[cell.uint];
     int offs = 0;
 
     for (int i = 0; i < 8; ++i) {
@@ -30,36 +30,36 @@ inline void append_char(Vm& vm) {
 inline void int_to_string(Vm& vm) {
     Val cell = vm.pop();
     Val v = vm.pop();
-    vm.symtab[cell.uint] = nanom::int_to_string(v.inte);
+    vm.strtab[cell.uint] = nanom::int_to_string(v.inte);
 }
 
 inline void uint_to_string(Vm& vm) {
     Val cell = vm.pop();
     Val v = vm.pop();
-    vm.symtab[cell.uint] = nanom::uint_to_string(v.uint);
+    vm.strtab[cell.uint] = nanom::uint_to_string(v.uint);
 }
 
 inline void real_to_string(Vm& vm) {
     Val cell = vm.pop();
     Val v = vm.pop();
-    vm.symtab[cell.uint] = nanom::real_to_string(v.real);
+    vm.strtab[cell.uint] = nanom::real_to_string(v.real);
 }
 
 inline void string_to_int(Vm& vm) {
     Val cell = vm.pop();
-    const std::string& s = vm.symtab[cell.uint];
+    const std::string& s = vm.strtab[cell.uint];
     vm.push(nanom::string_to_int(s));
 }
 
 inline void string_to_uint(Vm& vm) {
     Val cell = vm.pop();
-    const std::string& s = vm.symtab[cell.uint];
+    const std::string& s = vm.strtab[cell.uint];
     vm.push(nanom::string_to_uint(s));
 }
 
 inline void string_to_real(Vm& vm) {
     Val cell = vm.pop();
-    const std::string& s = vm.symtab[cell.uint];
+    const std::string& s = vm.strtab[cell.uint];
     vm.push(nanom::string_to_real(s));
 }
 
@@ -67,12 +67,12 @@ inline void string_to_real(Vm& vm) {
 inline void append_copy_string(Vm& vm) {
     Val cellto = vm.pop();
     Val cellfrom = vm.pop();
-    vm.symtab[cellto.uint] += vm.symtab[cellfrom.uint];
+    vm.strtab[cellto.uint] += vm.strtab[cellfrom.uint];
 }
 
 inline void free_string(Vm& vm) {
     Val cell = vm.pop();
-    vm.symtab.erase(cell.uint);
+    vm.strtab.erase(cell.uint);
 }
 
 }

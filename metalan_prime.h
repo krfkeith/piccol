@@ -53,7 +53,7 @@ struct fmter {
 
 struct NanomAsmProcessor {
 
-    static const size_t symbol_base = 0xFF0000;
+    static const size_t strtab_base = 0xFF0000;
 
     nanom::Vm vm;
     nanom::Assembler vm_as;
@@ -97,13 +97,13 @@ struct NanomAsmProcessor {
 
         for (const auto& n : out) {
 
-            size_t inputid = symbol_base + result.size() * 2;
+            size_t inputid = strtab_base + result.size() * 2;
             size_t outputid = inputid + 1;
             std::string& respart = result[outputid];
 
             if (n.type == Outnode::CODE) {
 
-                f << "\n.symbol '";
+                f << "\n.string '";
 
                 for (unsigned char c : n.capture) {
                     if (c == '\'') asmprog += "\\'";
@@ -140,9 +140,9 @@ struct NanomAsmProcessor {
 
         for (auto& c : result) {
 
-            auto i = vm.symtab.find(c.first);
+            auto i = vm.strtab.find(c.first);
 
-            if (i != vm.symtab.end()) {
+            if (i != vm.strtab.end()) {
                 std::cout << i->second;
             } else {
                 std::cout << c.second;

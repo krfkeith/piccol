@@ -2,20 +2,29 @@
 :- include 'system.metal'
 
 :- define prelude_compiletime {
-   .const number_sym 10
-   .const opname_sym 16
+   .const number_str 10
+   .const opname_str 16
+   .const scopes_numbering_start 100
+   .const scopes_cell 1
 
-   .symconst "0"    0     100
-   .symconst "0f"   0f    101
-   .symconst "ADD_"  ADD   102
-   .symconst "SUB_"  SUB   103
-   .symconst "MUL_"  MUL   104
-   .symconst "DIV_"  DIV   105
-   .symconst "INT"  INT   106
-   .symconst "REAL" REAL  107
-   .symconst "INT_TO_REAL\n" INT_TO_REAL  108
-   .symconst "CALL(swap)\n" CALL_swap     109
+   .strconst "0"    0     100
+   .strconst "0f"   0f    101
+   .strconst "ADD_"  ADD   102
+   .strconst "SUB_"  SUB   103
+   .strconst "MUL_"  MUL   104
+   .strconst "DIV_"  DIV   105
+   .strconst "INT"  INT   106
+   .strconst "REAL" REAL  107
+   .strconst "INT_TO_REAL\n" INT_TO_REAL  108
+   .strconst "CALL(swap)\n" CALL_swap     109
 
+   .label init
+   PUSH($scopes_cell)
+   SIZE_HEAP(1)
+   PUSH($scopes_numbering_start)
+   PUSH($scopes_cell)
+   TO_HEAP(0)
+   RET
 
    .label sendout
    PUSH($port) FROM_HEAP($out) 
@@ -24,14 +33,14 @@
 
    .label concat_number
    PUSH($port) FROM_HEAP($in) 
-   PUSH($number_sym) 
+   PUSH($number_str) 
    SYSCALL($str_append)
    RET
 
    .label get_number
-   PUSH($number_sym)
+   PUSH($number_str)
    CALL(sendout)
-   PUSH($number_sym) 
+   PUSH($number_str) 
    SYSCALL($str_free)
    RET
 
@@ -44,14 +53,14 @@
    RET
 
    .label set_opname
-   PUSH($opname_sym)
+   PUSH($opname_str)
    SYSCALL($str_free)
-   PUSH($opname_sym)
+   PUSH($opname_str)
    SYSCALL($str_append)
    RET
 
    .label int_int_binop
-   PUSH($opname_sym)
+   PUSH($opname_str)
    CALL(sendout)
    PUSH($INT) 
    CALL(sendout)
@@ -59,7 +68,7 @@
    RET
 
    .label real_real_binop
-   PUSH($opname_sym)
+   PUSH($opname_str)
    CALL(sendout)
    PUSH($REAL)
    CALL(sendout)
@@ -69,7 +78,7 @@
    .label real_int_binop
    PUSH($INT_TO_REAL)
    CALL(sendout)
-   PUSH($opname_sym)
+   PUSH($opname_str)
    CALL(sendout)
    PUSH($REAL)
    CALL(sendout)
@@ -83,7 +92,7 @@
    CALL(sendout)
    PUSH($CALL_swap)
    CALL(sendout)
-   PUSH($opname_sym)
+   PUSH($opname_str)
    CALL(sendout)
    PUSH($REAL)
    CALL(sendout)
@@ -119,6 +128,7 @@
    RET
 
    .label main
+   CALL(init)
 }
 
 :- define epilogue_compiletime {
@@ -192,6 +202,15 @@ expr_a :- expr_m spaces - spaces expr_a &{PUSH($SUB) CALL(check_binop)} @'\n'.
 expr_a :- expr_m.
 
 expr :- spaces expr_a spaces.
+
+exprs :- expr ';' exprs.
+exprs :- expr.
+
+scope :- spaces 
+         '{' &'CALL(start_scope)' 
+         exprs 
+         '}' 
+         spaces.
 
 all :- expr all.
 all :- expr.

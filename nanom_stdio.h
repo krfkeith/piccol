@@ -11,7 +11,7 @@ namespace {
 
 inline void print(Vm& vm) {
     Val cell = vm.pop();
-    std::cout << vm.symtab[cell.uint] << std::endl;
+    std::cout << vm.strtab[cell.uint] << std::endl;
 }
 
 }
