@@ -93,6 +93,21 @@ inline void register_stringlib(Vm& vm, size_t block) {
     vm.register_syscall(9+block, free_string);
 }
 
+inline void register_stringlib(Assembler& as, size_t block) {
+
+    register_stringlib(as.vm, block);
+
+    as.register_const("str_append_char", (UInt)1+block);
+    as.register_const("int_to_str", (UInt)2+block);
+    as.register_const("uint_to_str", (UInt)3+block);
+    as.register_const("real_to_str", (UInt)4+block);
+    as.register_const("str_to_int", (UInt)5+block);
+    as.register_const("str_to_uint", (UInt)6+block);
+    as.register_const("str_to_real", (UInt)7+block);
+    as.register_const("str_append", (UInt)8+block);
+    as.register_const("str_free", (UInt)9+block);
+}
+
 }
 
 #endif

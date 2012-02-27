@@ -71,6 +71,8 @@ struct Assembler {
             ("FROM_HEAP", FROM_HEAP, UINT)
             ("SIZE_HEAP", SIZE_HEAP, UINT)
             ("POP", POP, NONE)
+            ("SWAP", SWAP, NONE)
+            ("DUP", DUP, NONE)
             ("CMP_INT", CMP_INT, NONE)
             ("CMP_UINT", CMP_UINT, NONE)
             ("CMP_REAL", CMP_REAL, NONE)

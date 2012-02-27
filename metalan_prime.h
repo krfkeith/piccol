@@ -5,7 +5,10 @@
 
 #include "metalan.h"
 #include "nanom.h"
+
 #include "nanom_stringlib.h"
+#include "nanom_symtablib.h"
+#include "nanom_stdio.h"
 
 
 namespace metalan {
@@ -51,7 +54,7 @@ struct fmter {
 };
 
 
-struct NanomAsmProcessor {
+struct MetalanPrime {
 
     static const size_t strtab_base = 0xFF0000;
 
@@ -60,23 +63,15 @@ struct NanomAsmProcessor {
 
     Parser parser;
 
-    NanomAsmProcessor() : vm_as(vm) 
+    MetalanPrime() : vm_as(vm) 
         {
-            nanom::register_stringlib(vm, 0);
+            nanom::register_stringlib(vm_as, 0);
+            nanom::register_symtablib(vm_as, 100);
+            nanom::register_stdio(vm_as, 200);
 
             vm_as.register_const("port", (nanom::UInt)0xFF0000);
             vm_as.register_const("in", (nanom::UInt)0);
             vm_as.register_const("out", (nanom::UInt)1);
-
-            vm_as.register_const("str_append_char", (nanom::UInt)1);
-            vm_as.register_const("int_to_str", (nanom::UInt)2);
-            vm_as.register_const("uint_to_str", (nanom::UInt)3);
-            vm_as.register_const("real_to_str", (nanom::UInt)4);
-            vm_as.register_const("str_to_int", (nanom::UInt)5);
-            vm_as.register_const("str_to_uint", (nanom::UInt)6);
-            vm_as.register_const("str_to_real", (nanom::UInt)7);
-            vm_as.register_const("str_append", (nanom::UInt)8);
-            vm_as.register_const("str_free", (nanom::UInt)9);
         }
 
     void parse(const std::string& code, const std::string& inp) {

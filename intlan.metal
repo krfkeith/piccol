@@ -4,8 +4,14 @@
 :- define prelude_compiletime {
    .const number_str 10
    .const opname_str 16
+   .const tmp_str 15
+
    .const scopes_numbering_start 100
+   .const int_type 0
+   .const float_type 1
+
    .const scopes_cell 1
+   .const current_scope_size_cell 2
 
    .strconst "0"    0     100
    .strconst "0f"   0f    101
@@ -16,7 +22,8 @@
    .strconst "INT"  INT   106
    .strconst "REAL" REAL  107
    .strconst "INT_TO_REAL\n" INT_TO_REAL  108
-   .strconst "CALL(swap)\n" CALL_swap     109
+   .strconst "SWAP\n" SWAP 109
+   .strconst "scope" SCOPE 110
 
    .label init
    PUSH($scopes_cell)
@@ -24,6 +31,8 @@
    PUSH($scopes_numbering_start)
    PUSH($scopes_cell)
    TO_HEAP(0)
+   PUSH($current_scope_size_cell)
+   SIZE_HEAP(1)
    RET
 
    .label sendout
@@ -45,11 +54,11 @@
    RET
 
    .label mark_int
-   PUSH(0)
+   PUSH($int_type)
    RET
 
    .label mark_float
-   PUSH(1)
+   PUSH($float_type)
    RET
 
    .label set_opname
@@ -64,7 +73,7 @@
    CALL(sendout)
    PUSH($INT) 
    CALL(sendout)
-   PUSH(0)
+   PUSH($int_type)
    RET
 
    .label real_real_binop
@@ -72,7 +81,7 @@
    CALL(sendout)
    PUSH($REAL)
    CALL(sendout)
-   PUSH(1)
+   PUSH($float_type)
    RET
    
    .label real_int_binop
@@ -82,21 +91,21 @@
    CALL(sendout)
    PUSH($REAL)
    CALL(sendout)
-   PUSH(1)
+   PUSH($float_type)
    RET
 
    .label int_real_binop
-   PUSH($CALL_swap)
+   PUSH($SWAP)
    CALL(sendout)
    PUSH($INT_TO_REAL)
    CALL(sendout)
-   PUSH($CALL_swap)
+   PUSH($SWAP)
    CALL(sendout)
    PUSH($opname_str)
    CALL(sendout)
    PUSH($REAL)
    CALL(sendout)
-   PUSH(1)
+   PUSH($float_type)
    RET
 
    .label x_int_binop
@@ -127,6 +136,55 @@
    CALL(mark_int)
    RET
 
+   .label start_scope
+   PUSH($scopes_cell)
+   FROM_HEAP(0)
+   PUSH(1)
+   ADD_UINT
+   PUSH($scopes_cell)
+   TO_HEAP(0)
+   PUSH(0)
+   PUSH($current_scope_size_cell)
+   TO_HEAP(0)
+   RET
+
+   .label get_cur_scopetag
+   PUSH($SCOPE)
+   CALL(sendout)
+   PUSH($scopes_cell)
+   FROM_HEAP(0)
+   PUSH($tmp_str)
+   SYSCALL($uint_to_str)
+   PUSH($tmp_str)
+   CALL(sendout)
+   RET
+
+   .label get_varindex
+   PUSH($port) FROM_HEAP($in)
+   PUSH($scopes_cell) FROM_HEAP(0)
+   SYSCALL($symtab_get)
+   PUSH($tmp_str)
+   SYSCALL($uint_to_str)
+   PUSH($tmp_str)
+   CALL(sendout)
+   RET
+
+   .label get_var_mark_cell
+   PUSH($scopes_numbering_start)
+   PUSH($port) FROM_HEAP($in)
+   PUSH(0)
+   SYSCALL($symtab_get)
+   ADD_UINT
+   RET
+
+   .label get_var_type
+   .comment TODO: check for uninitialized variables!
+   CALL(get_var_mark_cell)
+   SIZE_HEAP(1)
+   CALL(get_var_mark_cell)
+   FROM_HEAP(0)
+   RET
+
    .label main
    CALL(init)
 }
@@ -136,15 +194,6 @@
 }
 
 :- define prelude_runtime {
-   .const swap_cell 10
-   PUSH($swap_cell) SIZE_HEAP(2)
-
-   .label swap
-   PUSH($swap_cell) TO_HEAP(0)
-   PUSH($swap_cell) TO_HEAP(1)
-   PUSH($swap_cell) FROM_HEAP(0)
-   PUSH($swap_cell) FROM_HEAP(1)
-   RET
 
    .label main
 }
@@ -165,10 +214,24 @@ int :- int_x @'PUSH(' &'CALL(get_number)' @')\n' &'CALL(mark_int)'.
 
 real :- real_x @'PUSH(' &'CALL(get_number)' @'f)\n' &'CALL(mark_float)'.
 
+var_x :- any_letter.
+var_x :- digit.
+var_x :- '_'.
+var_x :- .
+
+var :- any_letter var_x 
+       @'PUSH(' 
+       &'CALL(get_cur_scopetag)'
+       @') FROM_HEAP('
+       &'CALL(get_varindex)'
+       @')\n'
+       &'CALL(get_var_type)'
+       .
 
 elt :- ( spaces expr spaces ).
 elt :- real.
 elt :- int.
+elt :- var.
 
 neg :- '-' spaces elt 
   @'NEG_' 
@@ -203,8 +266,13 @@ expr_a :- expr_m.
 
 expr :- spaces expr_a spaces.
 
-exprs :- expr ';' exprs.
-exprs :- expr.
+var_lval :- var &'CALL(get_var_mark_cell)'.
+
+statement :- spaces var_lval spaces '=' expr &{SWAP TO_HEAP(0)}.
+statement :- expr &{POP}.
+
+statements :- statement ';' statements.
+statements :- statement.
 
 scope :- spaces 
          '{' &'CALL(start_scope)' 

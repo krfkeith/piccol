@@ -37,6 +37,8 @@ enum op_t {
     SIZE_HEAP,
 
     POP,
+    SWAP,
+    DUP,
 
     CMP_INT,
     CMP_UINT,
@@ -160,6 +162,59 @@ T _div(T a, T b) {
     return (a / b);
 }
 
+struct _mapper {
+    std::unordered_map<int,std::string> m;
+    _mapper() {
+        m[NOOP] = "NOOP";
+        m[PUSH] = "PUSH";
+        m[TO_HEAP] = "TO_HEAP";
+        m[COPY_TO_HEAP] = "COPY_TO_HEAP";
+        m[FROM_HEAP] = "FROM_HEAP";
+        m[SIZE_HEAP] = "SIZE_HEAP";
+        m[POP] = "POP";
+        m[SWAP] = "SWAP";
+        m[DUP] = "DUP";
+        m[CMP_INT] = "CMP_INT";
+        m[CMP_UINT] = "CMP_UINT";
+        m[CMP_REAL] = "CMP_REAL";
+        m[CALL] = "CALL";
+        m[CALL_IF] = "CALL_IF";
+        m[RET] = "RET";
+        m[JUMP] = "JUMP";
+        m[JUMP_IF] = "JUMP_IF";
+        m[JUMP_CHECK_IF] = "JUMP_CHECK_IF";
+        m[RET_IF] = "RET_IF";
+        m[SYSCALL] = "SYSCALL";
+        m[EXIT] = "EXIT";
+        m[INT_TO_REAL] = "INT_TO_REAL";
+        m[REAL_TO_INT] = "REAL_TO_INT";
+        m[ADD_INT] = "ADD_INT";
+        m[SUB_INT] = "SUB_INT";
+        m[MUL_INT] = "MUL_INT";
+        m[DIV_INT] = "DIV_INT";
+        m[NEG_INT] = "NEG_INT";
+        m[ADD_UINT] = "ADD_UINT";
+        m[SUB_UINT] = "SUB_UINT";
+        m[MUL_UINT] = "MUL_UINT";
+        m[DIV_UINT] = "DIV_UINT";
+        m[ADD_REAL] = "ADD_REAL";
+        m[SUB_REAL] = "SUB_REAL";
+        m[MUL_REAL] = "MUL_REAL";
+        m[DIV_REAL] = "DIV_REAL";
+        m[NEG_REAL] = "NEG_REAL";
+        m[BAND] = "BAND";
+        m[BOR] = "BOR";
+        m[BNOT] = "BNOT";
+        m[BXOR] = "BXOR";
+        m[BSHL] = "BSHL";
+        m[BSHR] = "BSHR";
+    }
+};
+
+const std::string& opcodename(int opc) {
+    static _mapper m;
+    return m.m[opc];
+}
 
 }
 
@@ -176,7 +231,13 @@ inline void vm_run(Vm& vm, size_t ip) {
 
         Opcode& c = vm.code[ip];
 
-        std::cout << "!" << ip << " " << c.op << std::endl;
+        /*
+        std::cout << "/" << ip << " " << opcodename(c.op) << " ||\t\t\t";
+        for (const auto& ii : vm.stack) {
+            std::cout << " " << ii.inte;
+        }
+        std::cout << std::endl;
+        */
 
         switch (c.op) {
         case NOOP:
@@ -188,10 +249,15 @@ inline void vm_run(Vm& vm, size_t ip) {
 
         case SIZE_HEAP: {
             Val cell = vm.pop();
-            if (cell.uint == 0) {
+
+            if (c.arg.uint == 0) {
                 vm.heap.erase(cell.uint);
             } else {
-                vm.heap[cell.uint].resize(c.arg.uint);
+                std::vector<Val>& h = vm.heap[cell.uint];
+
+                if (h.size() < c.arg.uint) {
+                    h.resize(c.arg.uint);
+                }
             }
             break;
         }
@@ -199,18 +265,22 @@ inline void vm_run(Vm& vm, size_t ip) {
         case TO_HEAP: {
             Val cell = vm.pop();
             Val v = vm.pop();
+
             vm.heap[cell.uint][c.arg.uint] = v;
             break;
         }
 
         case COPY_TO_HEAP: {
             Val cell = vm.pop();
+
             vm.heap[cell.uint][c.arg.uint] = vm.stack.back();
             break;
         }
 
         case FROM_HEAP: {
+
             Val cell = vm.pop();
+
             vm.stack.push_back(vm.heap[cell.uint][c.arg.uint]);
             break;
         }
@@ -218,6 +288,21 @@ inline void vm_run(Vm& vm, size_t ip) {
         case POP:
             vm.stack.pop_back();
             break;
+
+        case SWAP: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.stack.push_back(v2);
+            vm.stack.push_back(v1);
+            break;
+        }
+
+        case DUP: {
+            Val v = vm.pop();
+            vm.stack.push_back(v);
+            vm.stack.push_back(v);
+            break;
+        }
 
         case CMP_INT: {
             Val v2 = vm.pop();

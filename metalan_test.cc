@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
                std::istreambuf_iterator<char>());
 
 
-    metalan::NanomAsmProcessor p;
+    metalan::MetalanPrime p;
     p.parse(code, inp);
 
     return 0;

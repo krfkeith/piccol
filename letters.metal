@@ -52,3 +52,6 @@ locase_letter :- 'w'.
 locase_letter :- 'x'.
 locase_letter :- 'y'.
 locase_letter :- 'z'.
+
+any_letter :- locase_letter.
+any_letter :- upcase_letter.
