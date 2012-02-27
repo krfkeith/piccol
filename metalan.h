@@ -528,19 +528,26 @@ struct Parser {
         std::string::const_iterator savedb = b;
         Outlist subout;
 
+        std::cout << "- " << rule << std::endl;
+
         if (!apply_one(it->second.common_head, b, e, subout)) {
+            std::cout << "head failed " << rule << std::endl;
             return false;
         }
+
+        std::cout << "head ok " << rule << std::endl;
 
         for (const list_t& r : it->second.alternatives) {
             if (apply_one(r, b, e, subout)) {
 
                 out.splice(out.end(), subout);
+                std::cout << "tail ok " << rule << std::endl;
                 return true;
             }
         }
 
         b = savedb;
+        std::cout << "tail failed " << rule << std::endl;
         return false;
     }
                

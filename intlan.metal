@@ -342,7 +342,7 @@ statement :- expr '->' spaces var_lval spaces.
 statement :- expr &{POP\n} @'POP\n'.
 
 statements :- statement ';' statements.
-statements :- statement ';' .
+statements :- statement ';' spaces.
 
 scope :- spaces 
          '{' 
