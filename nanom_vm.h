@@ -231,13 +231,14 @@ inline void vm_run(Vm& vm, size_t ip) {
 
         Opcode& c = vm.code[ip];
 
-        /*
-        std::cout << "/" << ip << " " << opcodename(c.op) << " ||\t\t\t";
+
+        std::cout << "/" << ip << " " << opcodename(c.op) << "(" << c.arg.inte << ") "
+                  << " ||\t\t\t";
         for (const auto& ii : vm.stack) {
             std::cout << " " << ii.inte;
         }
         std::cout << std::endl;
-        */
+
 
         switch (c.op) {
         case NOOP:

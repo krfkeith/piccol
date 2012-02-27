@@ -10,8 +10,9 @@
    .const int_type 0
    .const float_type 1
 
-   .const scopes_cell 1
+   .const num_scopes_cell 1
    .const current_scope_size_cell 2
+   .const tmp_cell 3
 
    .strconst "0"    0     100
    .strconst "0f"   0f    101
@@ -24,20 +25,43 @@
    .strconst "INT_TO_REAL\n" INT_TO_REAL  108
    .strconst "SWAP\n" SWAP 109
    .strconst "scope" SCOPE 110
+   .strconst "size_" SIZE 111
 
    .label init
-   PUSH($scopes_cell)
+   PUSH($num_scopes_cell)
    SIZE_HEAP(1)
    PUSH($scopes_numbering_start)
-   PUSH($scopes_cell)
+   PUSH($num_scopes_cell)
    TO_HEAP(0)
    PUSH($current_scope_size_cell)
+   SIZE_HEAP(1)
+   PUSH($tmp_cell)
    SIZE_HEAP(1)
    RET
 
    .label sendout
    PUSH($port) FROM_HEAP($out) 
    SYSCALL($str_append)
+   RET
+
+   .label dupdup
+   PUSH($tmp_cell) TO_HEAP(0)
+   DUP
+   PUSH($tmp_cell) FROM_HEAP(0)
+   SWAP
+   PUSH($tmp_cell) FROM_HEAP(0)
+   RET
+
+   .label max_uint
+   CALL(dupdup)
+   CMP_UINT
+   PUSH(1)
+   CMP_INT
+   JUMP_IF(+3)
+   POP
+   RET
+   SWAP
+   POP
    RET
 
    .label concat_number
@@ -137,21 +161,40 @@
    RET
 
    .label start_scope
-   PUSH($scopes_cell)
+   PUSH($num_scopes_cell)
    FROM_HEAP(0)
    PUSH(1)
    ADD_UINT
-   PUSH($scopes_cell)
+   PUSH($num_scopes_cell)
    TO_HEAP(0)
    PUSH(0)
    PUSH($current_scope_size_cell)
    TO_HEAP(0)
    RET
 
+   .label get_cur_scopenum
+   PUSH($num_scopes_cell)
+   FROM_HEAP(0)
+   PUSH($tmp_str)
+   SYSCALL($uint_to_str)
+   PUSH($tmp_str)
+   CALL(sendout)
+   RET
+
    .label get_cur_scopetag
    PUSH($SCOPE)
    CALL(sendout)
-   PUSH($scopes_cell)
+   CALL(get_cur_scopenum)
+   RET  
+
+   .label get_scopesizetag
+   PUSH($SIZE)
+   CALL(sendout)
+   CALL(get_cur_scopetag)
+   RET
+
+   .label get_cur_scopesize
+   PUSH($current_scope_size_cell)
    FROM_HEAP(0)
    PUSH($tmp_str)
    SYSCALL($uint_to_str)
@@ -161,7 +204,7 @@
 
    .label get_varindex
    PUSH($port) FROM_HEAP($in)
-   PUSH($scopes_cell) FROM_HEAP(0)
+   PUSH($num_scopes_cell) FROM_HEAP(0)
    SYSCALL($symtab_get)
    PUSH($tmp_str)
    SYSCALL($uint_to_str)
@@ -180,9 +223,25 @@
    .label get_var_type
    .comment TODO: check for uninitialized variables!
    CALL(get_var_mark_cell)
+   FROM_HEAP(0)
+   RET
+
+   .label inc_scope_size
+   PUSH($current_scope_size_cell)
+   FROM_HEAP(0)
+   PUSH($port) FROM_HEAP($in)
+   PUSH($num_scopes_cell) FROM_HEAP(0)
+   SYSCALL($symtab_get)
+   CALL(max_uint)
+   PUSH($current_scope_size_cell)
+   TO_HEAP(0)
+   RET
+
+   .label set_var_type
+   CALL(get_var_mark_cell)
    SIZE_HEAP(1)
    CALL(get_var_mark_cell)
-   FROM_HEAP(0)
+   TO_HEAP(0)
    RET
 
    .label main
@@ -214,17 +273,18 @@ int :- int_x @'PUSH(' &'CALL(get_number)' @')\n' &'CALL(mark_int)'.
 
 real :- real_x @'PUSH(' &'CALL(get_number)' @'f)\n' &'CALL(mark_float)'.
 
-var_x :- any_letter.
-var_x :- digit.
-var_x :- '_'.
+var_x :- any_letter var_x.
+var_x :- digit var_x.
+var_x :- '_' var_x.
 var_x :- .
 
 var :- any_letter var_x 
-       @'PUSH(' 
+       @'PUSH($' 
        &'CALL(get_cur_scopetag)'
        @') FROM_HEAP('
        &'CALL(get_varindex)'
        @')\n'
+
        &'CALL(get_var_type)'
        .
 
@@ -266,22 +326,40 @@ expr_a :- expr_m.
 
 expr :- spaces expr_a spaces.
 
-var_lval :- var &'CALL(get_var_mark_cell)'.
+var_lval :- any_letter var_x 
+      @'PUSH($'
+      &'CALL(get_cur_scopetag)'
+      @') TO_HEAP('
+      &'CALL(get_varindex)'
+      @')\n'
 
-statement :- spaces var_lval spaces '=' expr &{SWAP TO_HEAP(0)}.
-statement :- expr &{POP}.
+      &'CALL(set_var_type)'
+      &'CALL(inc_scope_size)'
+      .
+
+statement :- expr '->' spaces var_lval spaces.
+
+statement :- expr &{POP\n} @'POP\n'.
 
 statements :- statement ';' statements.
-statements :- statement.
+statements :- statement ';' .
 
 scope :- spaces 
-         '{' &'CALL(start_scope)' 
-         exprs 
-         '}' 
-         spaces.
+         '{' 
+         &'CALL(start_scope)' 
+         @'PUSH($' &'CALL(get_cur_scopetag)' @')\n'
+         @'SIZE_HEAP($' &'CALL(get_scopesizetag)' @')\n'
 
-all :- expr all.
-all :- expr.
+         statements
+
+         '}' 
+         spaces
+         @'.const ' &'CALL(get_cur_scopetag)' @' ' &'CALL(get_cur_scopenum)' @'\n'
+         @'.const ' &'CALL(get_scopesizetag)' @' ' &'CALL(get_cur_scopesize)' @'\n'
+         .
+
+all :- scope all.
+all :- scope.
 
 main :- &prelude_compiletime @prelude_runtime 
         all 
