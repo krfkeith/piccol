@@ -7,14 +7,6 @@
 
 namespace metalan {
 
-struct charcapture {
-
-    void operator()(std::string& s, 
-                    std::string::const_iterator b, 
-                    std::string::const_iterator e) {
-        s.assign(b, e);
-    }
-};
 
 struct charmatcher {
 
@@ -40,13 +32,14 @@ struct charmatcher {
 
 struct MetalanPrime {
 
-    Parser<std::string, charmatcher, charcapture> parser;
+    typedef Parser<std::string, charmatcher> parser_t;
+    parser_t parser;
 
     MetalanPrime() {}
 
     void parse(const std::string& code, const std::string& inp) {
 
-        Outlist out;
+        parser_t::outlist_t out;
         std::string unprocessed;
         
         bool ok = parser.parse(code, inp, out, unprocessed);
@@ -60,7 +53,7 @@ struct MetalanPrime {
         for (const auto& n : out) {
 
             sout += "'";
-            sout += n.str;
+            sout += symtab().get(n.str);
             sout += "'";
 
             if (!n.capture.empty()) {

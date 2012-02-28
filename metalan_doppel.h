@@ -10,24 +10,6 @@ namespace metalan {
 typedef Symlist::list_t::const_iterator symlist_iter;
 
 
-struct symcellcapture {
-
-    void operator()(std::string& s, 
-                    symlist_iter b, 
-                    symlist_iter e) {
-
-        while (b != e) {
-            if (!s.empty()) {
-                s += " ";
-            }
-
-            s += symtab().get(b->sym);
-            ++b;
-        }
-    }
-};
-
-
 struct symcellmatcher {
 
     bool operator()(const Symcell& sc, symlist_iter& b, symlist_iter e) {
@@ -52,7 +34,8 @@ struct symcellmatcher {
 
 struct MetalanDoppel {
 
-    Parser<Symlist::list_t, symcellmatcher, symcellcapture> parser;
+    typedef Parser<Symlist::list_t, symcellmatcher> parser_t;
+    parser_t parser;
 
     MetalanDoppel() {}
 
@@ -61,7 +44,7 @@ struct MetalanDoppel {
         Symlist sl;
         sl.parse(inp);
 
-        Outlist out;
+        parser_t::outlist_t out;
         Symlist::list_t unprocessed;
         
         bool ok = parser.parse(code, sl.syms, out, unprocessed);
@@ -81,14 +64,18 @@ struct MetalanDoppel {
 
         for (const auto& n : out) {
 
-            sout += "'";
-            sout += n.str;
-            sout += "'";
+            if (n.str != symtab().get("")) {
+                sout += "'";
+                sout += symtab().get(n.str);
+                sout += "'";
+            }
 
             if (!n.capture.empty()) {
-                sout += ":'";
-                sout += n.capture;
-                sout += "'";
+                for (const auto& nn : n.capture) {
+                    sout += " '";
+                    sout += symtab().get(nn.sym);
+                    sout += "'";
+                }
             }
 
             sout += "\n";

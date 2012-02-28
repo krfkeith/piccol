@@ -217,6 +217,7 @@ struct Symlist {
 };
 
 
+template <typename TOKENLIST>
 struct Outnode {
     enum type_t {
         CODE,
@@ -224,24 +225,27 @@ struct Outnode {
     }; 
 
     type_t type;
-    std::string str;
-    std::string capture;
+    Sym str;
+    TOKENLIST capture;
 
-    Outnode(type_t t = DATA, const std::string& s = "") : type(t), str(s) {}
+    Outnode(type_t t = DATA, Sym s = "") : type(t), str(s) {}
 };
 
 
-typedef std::list<Outnode> Outlist;
+//typedef std::list<Outnode> Outlist;
 
 
 
-template <typename TOKENLIST, typename MATCHER, typename CAPTURE>
+template <typename TOKENLIST, typename MATCHER>
 struct Parser {
 
     typedef TOKENLIST tokenlist_t;
     typedef typename tokenlist_t::const_iterator tokeniter_t;
 
     typedef Symlist::list_t list_t;
+
+    typedef Outnode<TOKENLIST> outnode_t;
+    typedef std::list<outnode_t> outlist_t;
 
     struct rule_t {
         list_t common_head;
@@ -475,10 +479,10 @@ struct Parser {
 
     bool apply_one(const list_t& rule, 
                    tokeniter_t& b, tokeniter_t e, 
-                   Outlist& out) {
+                   outlist_t& out) {
 
         tokeniter_t savedb = b;
-        Outlist subout;
+        outlist_t subout;
 
         for (const Symcell& sc : rule) {
 
@@ -498,13 +502,13 @@ struct Parser {
 
             } else if (sc.type == Symcell::ACTION_DATA) {
 
-                subout.push_back(Outnode(Outnode::DATA, symtab().get(sc.sym)));
+                subout.push_back(outnode_t(outnode_t::DATA, sc.sym));
 
             } else if (sc.type == Symcell::ACTION_CODE) {
 
-                subout.push_back(Outnode(Outnode::CODE, symtab().get(sc.sym)));
+                subout.push_back(outnode_t(outnode_t::CODE, sc.sym));
 
-                CAPTURE()(subout.back().capture, savedb, b);
+                subout.back().capture.assign(savedb, b);
             }
         }
 
@@ -515,7 +519,7 @@ struct Parser {
 
     bool apply(const std::string& rule, 
                tokeniter_t& b, tokeniter_t e, 
-               Outlist& out) {
+               outlist_t& out) {
 
         auto it = rules.find(symtab().get(rule));
 
@@ -523,7 +527,7 @@ struct Parser {
             throw std::runtime_error("Unknown rule referenced: '" + rule + "'");
 
         tokeniter_t savedb = b;
-        Outlist subout;
+        outlist_t subout;
 
         if (!apply_one(it->second.common_head, b, e, subout)) {
             return false;
@@ -542,7 +546,7 @@ struct Parser {
     }
                
 
-    bool parse(const std::string& pr, const tokenlist_t& inp, Outlist& out,
+    bool parse(const std::string& pr, const tokenlist_t& inp, outlist_t& out,
                tokenlist_t& unprocessed) {
 
         Symlist prog;
