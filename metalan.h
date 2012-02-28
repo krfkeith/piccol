@@ -235,7 +235,7 @@ typedef std::list<Outnode> Outlist;
 
 
 
-template <typename TOKENLIST, typename MATCHER>
+template <typename TOKENLIST, typename MATCHER, typename CAPTURE>
 struct Parser {
 
     typedef TOKENLIST tokenlist_t;
@@ -489,9 +489,6 @@ struct Parser {
                     return false;
                 }
 
-                //subout.push_back(Outnode(Outnode::MATCH, symtab().get(sc.sym)));
-                //subout.back().capture.assign(savedb, b);
-
             } else if (sc.type == Symcell::VAR) {
 
                 if (!apply(symtab().get(sc.sym), b, e, subout)) {
@@ -506,7 +503,8 @@ struct Parser {
             } else if (sc.type == Symcell::ACTION_CODE) {
 
                 subout.push_back(Outnode(Outnode::CODE, symtab().get(sc.sym)));
-                subout.back().capture.assign(savedb, b);
+
+                CAPTURE()(subout.back().capture, savedb, b);
             }
         }
 
@@ -524,7 +522,7 @@ struct Parser {
         if (it == rules.end())
             throw std::runtime_error("Unknown rule referenced: '" + rule + "'");
 
-        std::string::const_iterator savedb = b;
+        tokeniter_t savedb = b;
         Outlist subout;
 
         if (!apply_one(it->second.common_head, b, e, subout)) {

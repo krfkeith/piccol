@@ -7,6 +7,14 @@
 
 namespace metalan {
 
+struct charcapture {
+
+    void operator()(std::string& s, 
+                    std::string::const_iterator b, 
+                    std::string::const_iterator e) {
+        s.assign(b, e);
+    }
+};
 
 struct charmatcher {
 
@@ -32,7 +40,7 @@ struct charmatcher {
 
 struct MetalanPrime {
 
-    Parser<std::string, charmatcher> parser;
+    Parser<std::string, charmatcher, charcapture> parser;
 
     MetalanPrime() {}
 
