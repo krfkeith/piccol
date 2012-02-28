@@ -14,10 +14,10 @@ int main(int argc, char** argv) {
     code.assign(std::istreambuf_iterator<char>(t),
                 std::istreambuf_iterator<char>());
 
-    std::ifstream t2(argv[2]);
+    //std::ifstream t2(argv[2]);
     std::string inp;
 
-    inp.assign(std::istreambuf_iterator<char>(t2),
+    inp.assign(std::istreambuf_iterator<char>(std::cin),
                std::istreambuf_iterator<char>());
 
 

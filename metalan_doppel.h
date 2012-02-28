@@ -32,7 +32,14 @@ struct symcellmatcher {
 
     bool operator()(const Symcell& sc, symlist_iter& b, symlist_iter e) {
 
-        if (b == e || b->sym != sc.sym) {
+        if (b == e) return false;
+
+        if (sc.type == Symcell::ATOM && sc.sym == symtab().get("*")) {
+            ++b;
+            return true;
+        }
+
+        if (b->sym != sc.sym) {
             return false;
         }
 

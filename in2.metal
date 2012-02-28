@@ -31,22 +31,22 @@ neg :- elt.
 expr_bnot :- '~' spaces neg @'bnot'.
 expr_bnot :- neg.
 
-expr_bop :- expr_bnot spaces '&' spaces expr_bop @'band'.
-expr_bop :- expr_bnot spaces '|' spaces expr_bop @'bor'.
-expr_bop :- expr_bnot spaces '^' spaces expr_bop @'bxor'.
-expr_bop :- expr_bnot.
+expr_bop :- @'(' expr_bnot spaces '&' spaces expr_bop @'band' @')'.
+expr_bop :- @'(' expr_bnot spaces '|' spaces expr_bop @'bor' @')'.
+expr_bop :- @'(' expr_bnot spaces '^' spaces expr_bop @'bxor' @')'.
+expr_bop :- @'(' expr_bnot @')'.
 
-expr_bsh :- expr_bop spaces '>>' spaces int @'bshl'.
-expr_bsh :- expr_bop spaces '<<' spaces int @'bshr'.
-expr_bsh :- expr_bop.
+expr_bsh :- @'(' expr_bop spaces '>>' spaces int @'bshl' @')'.
+expr_bsh :- @'(' expr_bop spaces '<<' spaces int @'bshr' @')'.
+expr_bsh :- @'(' expr_bop @')'.
 
-expr_m :- expr_bsh spaces * spaces expr_m @'mul'.
-expr_m :- expr_bsh spaces / spaces expr_m @'div'.
-expr_m :- expr_bsh.
+expr_m :- @'(' expr_bsh spaces * spaces expr_m @'mul' @')'.
+expr_m :- @'(' expr_bsh spaces / spaces expr_m @'div' @')'.
+expr_m :- @'(' expr_bsh @')'.
 
-expr_a :- expr_m spaces + spaces expr_a @'add'.
-expr_a :- expr_m spaces - spaces expr_a @'sub'.
-expr_a :- expr_m.
+expr_a :- @'(' expr_m spaces + spaces expr_a @'add' @')'.
+expr_a :- @'(' expr_m spaces - spaces expr_a @'sub' @')'.
+expr_a :- @'(' expr_m @')'.
 
 expr :- spaces expr_a spaces.
 
