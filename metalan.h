@@ -235,7 +235,11 @@ typedef std::list<Outnode> Outlist;
 
 
 
+template <typename TOKENLIST, typename MATCHER>
 struct Parser {
+
+    typedef TOKENLIST tokenlist_t;
+    typedef typename tokenlist_t::const_iterator tokeniter_t;
 
     typedef Symlist::list_t list_t;
 
@@ -465,33 +469,28 @@ struct Parser {
 
 
 
+    /*************************************************************/
+
+
+
     bool apply_one(const list_t& rule, 
-                   std::string::const_iterator& b, std::string::const_iterator e, 
+                   tokeniter_t& b, tokeniter_t e, 
                    Outlist& out) {
 
-        std::string::const_iterator savedb = b;
+        tokeniter_t savedb = b;
         Outlist subout;
 
         for (const Symcell& sc : rule) {
 
             if (sc.type == Symcell::ATOM || sc.type == Symcell::QATOM) {
 
-                const std::string& tomatch = symtab().get(sc.sym);
-
-                std::string::const_iterator mi = tomatch.begin();
-                std::string::const_iterator me = tomatch.end();
-
-                while (mi != me) {
-
-                    if (b == e || *b != *mi) {
-                        b = savedb;
-                        return false;
-                    }
-
-                    ++b;
-                    ++mi;
+                if (!(MATCHER()(sc, b, e))) {
+                    b = savedb;
+                    return false;
                 }
-                continue;
+
+                //subout.push_back(Outnode(Outnode::MATCH, symtab().get(sc.sym)));
+                //subout.back().capture.assign(savedb, b);
 
             } else if (sc.type == Symcell::VAR) {
 
@@ -517,7 +516,7 @@ struct Parser {
     }
 
     bool apply(const std::string& rule, 
-               std::string::const_iterator& b, std::string::const_iterator e, 
+               tokeniter_t& b, tokeniter_t e, 
                Outlist& out) {
 
         auto it = rules.find(symtab().get(rule));
@@ -528,32 +527,25 @@ struct Parser {
         std::string::const_iterator savedb = b;
         Outlist subout;
 
-        std::cout << "- " << rule << std::endl;
-
         if (!apply_one(it->second.common_head, b, e, subout)) {
-            std::cout << "head failed " << rule << std::endl;
             return false;
         }
-
-        std::cout << "head ok " << rule << std::endl;
 
         for (const list_t& r : it->second.alternatives) {
             if (apply_one(r, b, e, subout)) {
 
                 out.splice(out.end(), subout);
-                std::cout << "tail ok " << rule << std::endl;
                 return true;
             }
         }
 
         b = savedb;
-        std::cout << "tail failed " << rule << std::endl;
         return false;
     }
                
 
-    bool parse(const std::string& pr, const std::string& inp, Outlist& out,
-               std::string& unprocessed) {
+    bool parse(const std::string& pr, const tokenlist_t& inp, Outlist& out,
+               tokenlist_t& unprocessed) {
 
         Symlist prog;
         prog.parse(pr);
@@ -586,8 +578,8 @@ struct Parser {
             r.second.optimize();
         }
 
-        std::string::const_iterator sb = inp.begin();
-        std::string::const_iterator se = inp.end();
+        tokeniter_t sb = inp.begin();
+        tokeniter_t se = inp.end();
 
         bool ok = apply("main", sb, se, out);
 
