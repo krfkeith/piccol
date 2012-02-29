@@ -39,7 +39,7 @@ struct MetalanDoppel {
 
     MetalanDoppel() {}
 
-    void parse(const std::string& code, const std::string& inp) {
+    std::string parse(const std::string& code, const std::string& inp) {
 
         Symlist sl;
         sl.parse(inp);
@@ -81,7 +81,7 @@ struct MetalanDoppel {
             sout += "\n";
         }
 
-        std::cout << sout << std::endl;
+        return sout;
     }
 };
 

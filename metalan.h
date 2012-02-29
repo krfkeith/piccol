@@ -306,6 +306,13 @@ struct Parser {
     std::unordered_map< Sym, Sym > actions;
 
 
+    bool verbose;
+
+    Parser() : verbose(false) {}
+
+
+
+
     Sym consume(Symcell::type_t t, Sym v,
                 list_t::iterator& b, list_t::iterator e,
                 const std::string& msg) {
@@ -479,7 +486,8 @@ struct Parser {
 
     bool apply_one(const list_t& rule, 
                    tokeniter_t& b, tokeniter_t e, 
-                   outlist_t& out) {
+                   outlist_t& out,
+                   size_t depth) {
 
         tokeniter_t savedb = b;
         outlist_t subout;
@@ -495,7 +503,7 @@ struct Parser {
 
             } else if (sc.type == Symcell::VAR) {
 
-                if (!apply(symtab().get(sc.sym), b, e, subout)) {
+                if (!apply(symtab().get(sc.sym), b, e, subout, depth + 1)) {
                     b = savedb;
                     return false;
                 }
@@ -519,7 +527,8 @@ struct Parser {
 
     bool apply(const std::string& rule, 
                tokeniter_t& b, tokeniter_t e, 
-               outlist_t& out) {
+               outlist_t& out, 
+               size_t depth = 0) {
 
         auto it = rules.find(symtab().get(rule));
 
@@ -529,19 +538,64 @@ struct Parser {
         tokeniter_t savedb = b;
         outlist_t subout;
 
-        if (!apply_one(it->second.common_head, b, e, subout)) {
+        /**/
+        if (verbose) {
+            for (size_t i = 0; i < depth; ++i) std::cout << " . ";
+            std::cout << "+> " << rule << ".. :-";
+            for (const auto& sc : it->second.common_head)
+                std::cout << " " << symtab().get(sc.sym);
+            std::cout << std::endl;
+        }
+        /**/
+
+        if (!apply_one(it->second.common_head, b, e, subout, depth)) {
+
+            /**/
+            if (verbose) {
+                for (size_t i = 0; i < depth; ++i) std::cout << " . ";
+                std::cout << "xx " << rule << std::endl;
+            }
+            /**/
+
             return false;
         }
 
         for (const list_t& r : it->second.alternatives) {
-            if (apply_one(r, b, e, subout)) {
+
+            /**/
+            if (verbose) {
+                for (size_t i = 0; i < depth; ++i) std::cout << " . ";
+                std::cout << "+- .." << rule << " :-";
+                for (const auto& sc : r)
+                    std::cout << " " << symtab().get(sc.sym);
+                std::cout << std::endl;
+            }
+            /**/
+
+            if (apply_one(r, b, e, subout, depth)) {
 
                 out.splice(out.end(), subout);
+
+                /**/
+                if (verbose) {
+                    for (size_t i = 0; i < depth; ++i) std::cout << " . ";
+                    std::cout << "<< ok " << rule << std::endl;
+                }
+                /**/
+
                 return true;
             }
         }
 
         b = savedb;
+
+        /**/
+        if (verbose) {
+            for (size_t i = 0; i < depth; ++i) std::cout << " . ";
+            std::cout << "xx failed " << rule << std::endl;
+        }
+        /**/
+
         return false;
     }
                
@@ -554,15 +608,6 @@ struct Parser {
 
         list_t::iterator i = prog.syms.begin();
         list_t::iterator e = prog.syms.end();
-
-        /*
-        std::string rest;
-        for (list_t::iterator tmp = i; tmp != e; ++tmp) {
-            rest += " ";
-            rest += symtab().get(tmp->sym);
-        }
-        std::cout << rest << std::endl;
-        */
 
         while (1) {
 

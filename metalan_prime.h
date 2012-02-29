@@ -37,7 +37,7 @@ struct MetalanPrime {
 
     MetalanPrime() {}
 
-    void parse(const std::string& code, const std::string& inp) {
+    std::string parse(const std::string& code, const std::string& inp) {
 
         parser_t::outlist_t out;
         std::string unprocessed;
@@ -65,7 +65,7 @@ struct MetalanPrime {
             sout += "\n";
         }
 
-        std::cout << sout << std::endl;
+        return sout;
     }
 };
 

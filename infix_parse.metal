@@ -36,8 +36,8 @@ expr_bop :- @'(' expr_bnot spaces '|' spaces expr_bop @'bor' @')'.
 expr_bop :- @'(' expr_bnot spaces '^' spaces expr_bop @'bxor' @')'.
 expr_bop :- @'(' expr_bnot @')'.
 
-expr_bsh :- @'(' expr_bop spaces '>>' spaces int @'bshl' @')'.
-expr_bsh :- @'(' expr_bop spaces '<<' spaces int @'bshr' @')'.
+expr_bsh :- @'(' expr_bop spaces '>>' spaces elt @'bshl' @')'.
+expr_bsh :- @'(' expr_bop spaces '<<' spaces elt @'bshr' @')'.
 expr_bsh :- @'(' expr_bop @')'.
 
 expr_m :- @'(' expr_bsh spaces * spaces expr_m @'mul' @')'.
