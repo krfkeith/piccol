@@ -224,6 +224,7 @@ enum op_t {
     POP,
     SWAP,
     DUP,
+    PUSH_DUP,
 
     ADD_INT,
     SUB_INT,
@@ -324,6 +325,7 @@ struct _mapper {
         m[POP] = "POP";
         m[SWAP] = "SWAP";
         m[DUP] = "DUP";
+        m[PUSH_DUP] = "PUSH_DUP";
         m[ADD_INT] = "ADD_INT";
         m[SUB_INT] = "SUB_INT";
         m[MUL_INT] = "MUL_INT";
@@ -377,6 +379,7 @@ struct _mapper {
         n["POP"] = POP;
         n["SWAP"] = SWAP;
         n["DUP"] = DUP;
+        n["PUSH_DUP"] = PUSH_DUP;
         n["ADD_INT"] = ADD_INT;
         n["SUB_INT"] = SUB_INT;
         n["MUL_INT"] = MUL_INT;
@@ -490,6 +493,13 @@ inline void vm_run(Vm& vm, size_t ip) {
             break;
         }
 
+        case PUSH_DUP: {
+            Val v = vm.stack.back();
+            vm.stack.push_back(c.arg);
+            vm.stack.push_back(v);
+            break;
+        }
+            
         case ADD_INT: {
             Val v2 = vm.pop();
             Val v1 = vm.pop();
@@ -842,6 +852,54 @@ inline void vm_run(Vm& vm, size_t ip) {
 
 /*
 
+NEW_SHAPE
+PUSH('slot')
+PUSH(SYM)
+ADD_FIELD
+PUSH('name')
+PUSH(SYM
+ADD_FIELD
+PUSH('coord_x')
+PUSH(INT)
+ADD_FIELD
+PUSH('coord_y')
+PUSH(INT)
+ADD_FIELD
+PUSH('invslot')
+PUSH(SYM)
+ADD_FIELD
+PUSH('item')
+DEF_SHAPE
+
+PUSH('item')
+NEW_STRUCT
+
+PUSH_DUP('item')
+PUSH('slot')
+PUSH('b')
+SET_FIELD
+
+PUSH_DUP('item')
+PUSH('coord_x')
+PUSH(-1)
+SET_FIELD
+
+PUSH_DUP('item')
+PUSH('coord_y')
+PUSH(-1)
+SET_FIELD
+
+PUSH_DUP('item')
+PUSH('invslot')
+PUSH(-1)
+SET_FIELD
+
+PUSH_DUP('item')
+INDEX_ADD
+
+POP
+
+...
 
 
 
