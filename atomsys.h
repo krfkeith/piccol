@@ -43,6 +43,7 @@ union Val {
 
 enum Type {
     NONE = 0,
+    EMPTY,
     SYMBOL,
     INT, 
     UINT,
@@ -226,6 +227,8 @@ enum op_t {
     DUP,
     PUSH_DUP,
 
+    EXIT,
+
     ADD_INT,
     SUB_INT,
     MUL_INT,
@@ -283,7 +286,8 @@ enum op_t {
     ADD_INDEX,
     DEL_INDEX,
     INDEX_CHANGE_FIELD,
-    INDEX_FIND
+    INDEX_FIND,
+    INDEX_FIND2
 };
 
 
@@ -292,14 +296,21 @@ struct Opcode {
     Val arg;
 };
 
+struct VmCode {
+    typedef std::vector<Opcode> code_t;
+    std::unordered_map<Sym, code_t> codes;
+};
+
 struct Vm {
 
     std::vector<Val> stack;
-    std::vector<Opcode> code;
+    std::vector< std::pair<Sym,size_t> > frame;
+
+    VmCode& code;
 
     Shape tmp_shape;
 
-    Vm() {}
+    Vm(VmCode& c) : code(c) {}
 
     Val pop() {
         Val ret = stack.back();
@@ -326,6 +337,7 @@ struct _mapper {
         m[SWAP] = "SWAP";
         m[DUP] = "DUP";
         m[PUSH_DUP] = "PUSH_DUP";
+        m[EXIT] = "EXIT";
         m[ADD_INT] = "ADD_INT";
         m[SUB_INT] = "SUB_INT";
         m[MUL_INT] = "MUL_INT";
@@ -373,6 +385,7 @@ struct _mapper {
         m[DEL_INDEX] = "DEL_INDEX";
         m[INDEX_CHANGE_FIELD] = "INDEX_CHANGE_FIELD";
         m[INDEX_FIND] = "INDEX_FIND";
+        m[INDEX_FIND2] = "INDEX_FIND2";
         
         n["NOOP"] = NOOP;
         n["PUSH"] = PUSH;
@@ -380,6 +393,7 @@ struct _mapper {
         n["SWAP"] = SWAP;
         n["DUP"] = DUP;
         n["PUSH_DUP"] = PUSH_DUP;
+        n["EXIT"] = EXIT;
         n["ADD_INT"] = ADD_INT;
         n["SUB_INT"] = SUB_INT;
         n["MUL_INT"] = MUL_INT;
@@ -427,6 +441,7 @@ struct _mapper {
         n["DEL_INDEX"] = DEL_INDEX;
         n["INDEX_CHANGE_FIELD"] = INDEX_CHANGE_FIELD;
         n["INDEX_FIND"] = INDEX_FIND;
+        n["INDEX_FIND2"] = INDEX_FIND2;
     }
 };
 
@@ -445,17 +460,19 @@ const op_t opcodecode(const std::string& opc) {
 }
 
 
-inline void vm_run(Vm& vm, size_t ip) {
+inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
 
     bool done = false;
 
+    Vm::code_t code* = &(vm.code.codes[label]);
+
     while (!done) {
 
-        if (ip >= vm.code.size()) {
+        if (ip >= code->size()) {
             throw std::runtime_error("Sanity error: instruction pointer out of bounds.");
         }
 
-        Opcode& c = vm.code[ip];
+        Opcode& c = (*code)[ip];
 
         /*
         std::cout << "/" << ip << " " << opcodename(c.op) << "(" << c.arg.inte << ") "
@@ -498,6 +515,27 @@ inline void vm_run(Vm& vm, size_t ip) {
             vm.stack.push_back(c.arg);
             vm.stack.push_back(v);
             break;
+        }
+
+        case EXIT: {
+            if (vm.frame.size() == 0) {
+                return;
+            } else {
+                auto symip = vm.frame.back();
+                vm.frame.pop_back();
+                label = symip.first;
+                code = &(vm.code.codes[label]);
+                ip = symip.second;
+                continue;
+            }
+        }
+
+        case CALL: {
+            vm.frame.push_back(std::make_pair(label, ip+1));
+            label = c.arg.uint;
+            code = &(vm.code.codes[label]);
+            ip = 0;
+            continue;
         }
             
         case ADD_INT: {
@@ -828,13 +866,48 @@ inline void vm_run(Vm& vm, size_t ip) {
             auto range = index().find(v1.uint, v2.uint, v3);
 
             while (range.first != range.second) {
-                vm.stack.push_back(range.first->second);
-                vm_run(vm,ip+1);
+
+                Vm vm2(vm.code);
+                vm2.stack.push_back(range.first->second);
+                vm_run(vm2, c.arg.uint);
+
                 ++(range.first);
             }
 
             return;
         }
+
+        case INDEX_FIND2: {
+            Val v5 = vm.pop();
+            Val v4 = vm.pop();
+            Val v3 = vm.pop();
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+
+            auto range1 = index().find(v1.uint, v2.uint, v3);
+            auto range2 = index().find(v1.uint, v4.uint, v5);
+
+            while (range1.first != range1.second && range2.first != range2.second) {
+
+                bool lt1 = (*(range1.first) < *(range2.second));
+                bool lt2 = (*(range2.first) < *(range1.second));
+
+                if (lt1) {
+                    ++(range1.first);
+
+                } else if (lt2) {
+                    ++(range2.first);
+
+                } else {
+                    Vm vm2(vm.code);
+                    vm2.stack.push_back(range1.first->second);
+                    vm_run(vm2, c.arg.uint);
+                }
+            }
+
+            return;
+        }
+
 
         }
 
