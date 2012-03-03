@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     while (1) {
 
         metalan::MetalanDoppel p;
-        p.parser.verbose = true;
+        //p.parser.verbose = true;
 
         std::string ret = p.parse(code, inp);
 

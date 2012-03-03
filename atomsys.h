@@ -42,20 +42,25 @@ union Val {
 };
 
 enum Type {
-    NONE = 0,
-    EMPTY,
-    SYMBOL,
-    INT, 
-    UINT,
-    REAL,
-    STRUCT
+    NONE   = 0,
+    BOOL   = 1,
+    SYMBOL = 2,
+    INT    = 3, 
+    UINT   = 4,
+    REAL   = 5,
+    STRUCT = 6
 };
 
 struct Shape {
-    std::unordered_map< Sym, std::pair<size_t,Type> > sym2field;
-    std::vector< std::pair<Sym,Type> > idx2field;
+    struct typeinfo {
+        Type type;
+        Sym shape;
+    };
 
-    Type get_type(Sym s) const {
+    std::unordered_map< Sym, std::pair<size_t,typeinfo> > sym2field;
+    std::vector< std::pair<Sym,typeinfo> > idx2field;
+
+    typeinfo get_type(Sym s) const {
         auto i = sym2field.find(s);
         if (i == sym2field.end())
             return NONE;
@@ -69,18 +74,22 @@ struct Shape {
         return i->second.first;
     }
 
-    void add_field(Sym s, Type t) {
+    void add_field(Sym s, Type t, Sym shape=0) {
         if (sym2field.count(s) != 0) {
             throw std::runtime_error("Cannot add duplicate field to shape.");
         }
 
-        idx2field.push_back(std::make_pair(s, t));
-        sym2field[s] = std::make_pair(idx2field.size()-1, t);
+        typeinfo ti;
+        ti.type = t;
+        ti.shape = shape;
+
+        idx2field.push_back(std::make_pair(s, ti));
+        sym2field[s] = std::make_pair(idx2field.size()-1, ti);
     }
 
-    Type get_type(const std::string& s) const { return get_type(symtab().get(s)); }
+    typeinfo get_type(const std::string& s) const { return get_type(symtab().get(s)); }
     Int get_index(const std::string& s) const { return get_index(symtab().get(s)); }
-    void add_field(const std::string& s, Type t) { add_field(symtab().get(s), t); }
+    void add_field(const std::string& s, Type t, Sym shape=0) { add_field(symtab().get(s), t, shape); }
 };
 
 struct Shapes {
@@ -276,6 +285,7 @@ enum op_t {
 
     NEW_SHAPE,
     ADD_FIELD,
+    ADD_STRUCT_FIELD,
     DEF_SHAPE
 
     NEW_STRUCT,
@@ -377,6 +387,7 @@ struct _mapper {
         m[GTE_REAL] = "GTE_REAL";
         m[NEW_SHAPE] = "NEW_SHAPE";
         m[ADD_FIELD] = "ADD_FIELD";
+        m[ADD_STRUCT_FIELD] = "ADD_STRUCT_FIELD";
         m[DEF_SHAPE] = "DEF_SHAPE";
         m[NEW_STRUCT] = "NEW_STRUCT";
         m[SET_FIELD] = "SET_FIELD";
@@ -433,6 +444,7 @@ struct _mapper {
         n["GTE_REAL"] = GTE_REAL;
         n["NEW_SHAPE"] = NEW_SHAPE;
         n["ADD_FIELD"] = ADD_FIELD;
+        n["ADD_STRUCT_FIELD"] = ADD_STRUCT_FIELD;
         n["DEF_SHAPE"] = DEF_SHAPE;
         n["NEW_STRUCT"] = NEW_STRUCT;
         n["SET_FIELD"] = SET_FIELD;
@@ -797,6 +809,13 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
             Val v2 = vm.pop();
             Val v1 = vm.pop();
             vm.tmp_shape.add_field(v1.uint, v2.uint);
+            break;
+        }
+
+        case ADD_STRUCT_FIELD: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.tmp_shape.add_field(v1.uint, STRUCT, v2.uint);
             break;
         }
 
