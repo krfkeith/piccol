@@ -37,7 +37,7 @@ struct MetalanPrime {
 
     MetalanPrime() {}
 
-    std::string parse(const std::string& code, const std::string& inp) {
+    Symlist parse(Symlist& code, const std::string& inp) {
 
         parser_t::outlist_t out;
         std::string unprocessed;
@@ -48,24 +48,28 @@ struct MetalanPrime {
             throw std::runtime_error("Parse failed. Unconsumed input: " + unprocessed);
         }
 
-        std::string sout;
+        Symlist ret;
 
         for (const auto& n : out) {
 
-            sout += "'";
-            sout += symtab().get(n.str);
-            sout += "'";
+            ret.syms.push_back(Symcell(Symcell::QATOM, n.str));
 
             if (!n.capture.empty()) {
-                sout += ":'";
-                sout += n.capture;
-                sout += "'";
+                ret.syms.push_back(Symcell(Symcell::ATOM, ":"));
+                ret.syms.push_back(Symcell(Symcell::QATOM, n.capture));
             }
-
-            sout += "\n";
         }
+        
+        return ret;
+    }
 
-        return sout;
+    std::string parse(const std::string& code, const std::string& inp) {
+
+        Symlist code_;
+        code_.parse(code);
+
+        Symlist ret = parse(code_, inp);
+        return ret.print();
     }
 };
 

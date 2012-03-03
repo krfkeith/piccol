@@ -39,15 +39,12 @@ struct MetalanDoppel {
 
     MetalanDoppel() {}
 
-    std::string parse(const std::string& code, const std::string& inp) {
-
-        Symlist sl;
-        sl.parse(inp);
+    Symlist parse(Symlist& code, const Symlist& inp) {
 
         parser_t::outlist_t out;
         Symlist::list_t unprocessed;
         
-        bool ok = parser.parse(code, sl.syms, out, unprocessed);
+        bool ok = parser.parse(code, inp.syms, out, unprocessed);
 
         if (!ok) {
             
@@ -60,28 +57,34 @@ struct MetalanDoppel {
             throw std::runtime_error("Parse failed. Unconsumed input: " + err);
         }
 
-        std::string sout;
+        Symlist ret;
 
         for (const auto& n : out) {
 
             if (n.str != symtab().get("")) {
-                sout += "'";
-                sout += symtab().get(n.str);
-                sout += "'";
+                ret.syms.push_back(Symcell(Symcell::QATOM, n.str));
             }
 
             if (!n.capture.empty()) {
                 for (const auto& nn : n.capture) {
-                    sout += " '";
-                    sout += symtab().get(nn.sym);
-                    sout += "'";
+                    ret.syms.push_back(Symcell(Symcell::QATOM, nn.sym));
                 }
             }
-
-            sout += "\n";
         }
 
-        return sout;
+        return ret;
+    }
+
+    std::string parse(const std::string& code, const std::string& inp) {
+
+        Symlist code_;
+        code_.parse(code);
+
+        Symlist sl;
+        sl.parse(inp);
+
+        Symlist ret = parse(code_, sl);
+        return ret.print();
     }
 };
 

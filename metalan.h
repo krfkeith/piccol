@@ -106,6 +106,34 @@ struct Symlist {
 
     list_t syms;
 
+    Symlist() {}
+
+    Symlist(Symlist&& sl) {
+        syms.swap(sl.syms);
+    }
+
+    std::string print() {
+        std::string ret;
+
+        for (const Symcell& s : syms) {
+
+            if (s.type == Symcell::VAR || s.type == Symcell::ATOM) {
+                ret += symtab().get(s.sym);
+                ret += "\n";
+
+            } else {
+                const std::string& symstr = symtab().get(s.sym);
+                for (unsigned char cc : symstr) {
+                    if (cc == '\'') {
+                        ret += "\\'";
+                    } else {
+                        ret += cc;
+                    }
+                }
+            }
+        }
+    }
+
     void parse(const std::string& s) {
 
         std::string buff;
@@ -599,15 +627,11 @@ struct Parser {
         return false;
     }
                
-
-    bool parse(const std::string& pr, const tokenlist_t& inp, outlist_t& out,
+    bool parse(Symlist& pr, const tokenlist_t& inp, outlist_t& out,
                tokenlist_t& unprocessed) {
 
-        Symlist prog;
-        prog.parse(pr);
-
-        list_t::iterator i = prog.syms.begin();
-        list_t::iterator e = prog.syms.end();
+        list_t::iterator i = pr.syms.begin();
+        list_t::iterator e = pr.syms.end();
 
         while (1) {
 
@@ -615,10 +639,10 @@ struct Parser {
 
             bool did_expand;
             do {
-                i = process_directive(prog.syms, i, e, did_expand);
+                i = process_directive(pr.syms, i, e, did_expand);
             } while (did_expand);
 
-            i = process_rule(prog.syms, i, e);
+            i = process_rule(pr.syms, i, e);
         }
 
         for (auto& r : rules) {
@@ -636,6 +660,15 @@ struct Parser {
         }
 
         return true;
+    }
+
+    bool parse(const std::string& pr, const tokenlist_t& inp, outlist_t& out,
+               tokenlist_t& unprocessed) {
+
+        Symlist prog;
+        prog.parse(pr);
+
+        return parse(prog.syms, inp, out, unprocessed);
     }
 };
 
