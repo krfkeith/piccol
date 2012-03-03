@@ -122,6 +122,8 @@ struct Symlist {
                 ret += "\n";
 
             } else {
+                ret += "'";
+
                 const std::string& symstr = symtab().get(s.sym);
                 for (unsigned char cc : symstr) {
                     if (cc == '\'') {
@@ -130,8 +132,12 @@ struct Symlist {
                         ret += cc;
                     }
                 }
+
+                ret += "'\n";
             }
         }
+
+        return ret;
     }
 
     void parse(const std::string& s) {
@@ -358,6 +364,8 @@ struct Parser {
         if (b->sym != v)
             throw std::runtime_error("Expected '" + symtab().get(v) + "' but received '" +
                                      symtab().get(b->sym) + "'");
+
+        return v;
     }
 
         

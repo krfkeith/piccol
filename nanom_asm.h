@@ -27,13 +27,10 @@ inline Real string_to_real(const std::string& s) {
 
 struct VmAsm {
 
-    metalan::Symlist prog;
     VmCode code;
+
+    void parse(const metalan::Symlist& prog) {
     
-    void parse(const std::string& pr) {
-
-        prog.parse(pr);
-
         Sym label = metalan::symtab().get("");
 
         auto p_i = prog.syms.begin();
@@ -88,8 +85,21 @@ struct VmAsm {
                 ++p_i;
             }
             
+            c.push_back(op);
+
         }
     }
+
+
+
+    void parse(const std::string& pr) {
+
+        metalan::Symlist prog;
+        prog.parse(pr);
+
+        parse(prog);
+    }
+
 };
 
 
