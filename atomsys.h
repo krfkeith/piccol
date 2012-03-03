@@ -26,6 +26,9 @@ struct hash< pair<A,B> > {
 
 namespace atomsys {
 
+using metalan::Sym;
+using metalan::symtab;
+
 typedef int64_t Int;
 typedef uint64_t UInt;
 typedef double Real;
@@ -55,6 +58,8 @@ struct Shape {
     struct typeinfo {
         Type type;
         Sym shape;
+
+        typeinfo() : type(NONE), shape(0) {}
     };
 
     std::unordered_map< Sym, std::pair<size_t,typeinfo> > sym2field;
@@ -62,8 +67,10 @@ struct Shape {
 
     typeinfo get_type(Sym s) const {
         auto i = sym2field.find(s);
+
         if (i == sym2field.end())
-            return NONE;
+            return typeinfo();
+
         return i->second.second;
     }
 
@@ -160,67 +167,8 @@ struct Structs {
     }
 };
 
-inline Shapes& structs() {
+inline Structs& structs() {
     static Structs _ret;
-    return _ret;
-}
-
-
-struct Index {
-    typedef std::unordered_multimap< std::pair<Sym,Val>, size_t > index_t;
-    typedef std::unordered_map<Sym, index_t> shape_index_t;
-    shape_index_t idx;
-
-    void add(Sym shapeid, size_t structid) {
-
-        index_t& m = idx[shapeid];
-        const Shape& sh = shapes().get(shapeid);
-        const Struct& st = structs().get(shapeid, structid);
-
-        size_t n = 0;
-        for (const auto& i : sh.idx2field) {
-            m.insert(m.end(), std::make_pair(std::make_pair(i.first, st.v[n]), structid));
-            ++n;
-        }
-    }
-
-    void del(Sym shapeid, size_t structid) {
-
-        index_t& m = idx[shapeid];
-        const Shape& sh = shapes().get(shapeid);
-        const Struct& st = structs().get(shapeid, structid);
-
-        size_t n = 0;
-        for (const auto& i : sh.idx2field) {
-            m.erase(std::make_pair(std::make_pair(i.first, st.v[n]), structid));
-            ++n;
-        }
-    }
-
-    void change_field(Sym shapeid, size_t structid, Sym field, Val newval) {
-
-        index_t& m = idx[shapeid];
-        const Shape& sh = shapes().get(shapeid);
-        Struct& st = structs().get(shapeid, structid);
-        Int fi = sh.get_index(field);
-
-        if (fi < 0)
-            throw std::runtime_error("Invalid field in change_field");
-
-        m.erase(std::make_pair(std::make_pair(field, st.v[fi]), structid));
-        st.v[fi] = newval;
-        m.insert(m.end(), std::make_pair(std::make_pair(field, newval), structid));
-    }
-
-    std::pair<index_t::const_iterator, index_t::const_iterator>
-    find(Sym shapeid, Sym field, Val val) {
-        return idx[shapeid].equal_range(std::make_pair(field, val));
-    }
-};
-
-
-inline Index& index() {
-    static Index _ret;
     return _ret;
 }
 
@@ -236,6 +184,7 @@ enum op_t {
     DUP,
     PUSH_DUP,
 
+    CALL,
     EXIT,
 
     ADD_INT,
@@ -281,23 +230,18 @@ enum op_t {
     LT_REAL,
     LTE_REAL,
     GT_REAL,
-    GTE_REAL
+    GTE_REAL,
 
     NEW_SHAPE,
     ADD_FIELD,
     ADD_STRUCT_FIELD,
-    DEF_SHAPE
+    DEF_SHAPE,
 
     NEW_STRUCT,
 
     SET_FIELD,
-    GET_FIELD,
+    GET_FIELD
 
-    ADD_INDEX,
-    DEL_INDEX,
-    INDEX_CHANGE_FIELD,
-    INDEX_FIND,
-    INDEX_FIND2
 };
 
 
@@ -338,65 +282,61 @@ namespace {
 
 
 struct _mapper {
-    std::unordered_map<op_t,std::string> m;
+    std::unordered_map<size_t,std::string> m;
     std::unordered_map<std::string,op_t> n;
     _mapper() {
-        m[NOOP] = "NOOP";
-        m[PUSH] = "PUSH";
-        m[POP] = "POP";
-        m[SWAP] = "SWAP";
-        m[DUP] = "DUP";
-        m[PUSH_DUP] = "PUSH_DUP";
-        m[EXIT] = "EXIT";
-        m[ADD_INT] = "ADD_INT";
-        m[SUB_INT] = "SUB_INT";
-        m[MUL_INT] = "MUL_INT";
-        m[DIV_INT] = "DIV_INT";
-        m[NEG_INT] = "NEG_INT";
-        m[ADD_UINT] = "ADD_UINT";
-        m[SUB_UINT] = "SUB_UINT";
-        m[MUL_UINT] = "MUL_UINT";
-        m[DIV_UINT] = "DIV_UINT";
-        m[ADD_REAL] = "ADD_REAL";
-        m[SUB_REAL] = "SUB_REAL";
-        m[MUL_REAL] = "MUL_REAL";
-        m[DIV_REAL] = "DIV_REAL";
-        m[NEG_REAL] = "NEG_REAL";
-        m[BAND] = "BAND";
-        m[BOR] = "BOR";
-        m[BNOT] = "BNOT";
-        m[BXOR] = "BXOR";
-        m[BSHL] = "BSHL";
-        m[BSHR] = "BSHR";
-        m[INT_TO_REAL] = "INT_TO_REAL";
-        m[REAL_TO_INT] = "REAL_TO_INT";
-        m[EQ_INT] = "EQ_INT";
-        m[LT_INT] = "LT_INT";
-        m[LTE_INT] = "LTE_INT";
-        m[GT_INT] = "GT_INT";
-        m[GTE_INT] = "GTE_INT";
-        m[EQ_UINT] = "EQ_UINT";
-        m[LT_UINT] = "LT_UINT";
-        m[LTE_UINT] = "LTE_UINT";
-        m[GT_UINT] = "GT_UINT";
-        m[GTE_UINT] = "GTE_UINT";
-        m[EQ_REAL] = "EQ_REAL";
-        m[LT_REAL] = "LT_REAL";
-        m[LTE_REAL] = "LTE_REAL";
-        m[GT_REAL] = "GT_REAL";
-        m[GTE_REAL] = "GTE_REAL";
-        m[NEW_SHAPE] = "NEW_SHAPE";
-        m[ADD_FIELD] = "ADD_FIELD";
-        m[ADD_STRUCT_FIELD] = "ADD_STRUCT_FIELD";
-        m[DEF_SHAPE] = "DEF_SHAPE";
-        m[NEW_STRUCT] = "NEW_STRUCT";
-        m[SET_FIELD] = "SET_FIELD";
-        m[GET_FIELD] = "GET_FIELD";
-        m[ADD_INDEX] = "ADD_INDEX";
-        m[DEL_INDEX] = "DEL_INDEX";
-        m[INDEX_CHANGE_FIELD] = "INDEX_CHANGE_FIELD";
-        m[INDEX_FIND] = "INDEX_FIND";
-        m[INDEX_FIND2] = "INDEX_FIND2";
+        m[(size_t)NOOP] = "NOOP";
+        m[(size_t)PUSH] = "PUSH";
+        m[(size_t)POP] = "POP";
+        m[(size_t)SWAP] = "SWAP";
+        m[(size_t)DUP] = "DUP";
+        m[(size_t)PUSH_DUP] = "PUSH_DUP";
+        m[(size_t)CALL] = "CALL";
+        m[(size_t)EXIT] = "EXIT";
+        m[(size_t)ADD_INT] = "ADD_INT";
+        m[(size_t)SUB_INT] = "SUB_INT";
+        m[(size_t)MUL_INT] = "MUL_INT";
+        m[(size_t)DIV_INT] = "DIV_INT";
+        m[(size_t)NEG_INT] = "NEG_INT";
+        m[(size_t)ADD_UINT] = "ADD_UINT";
+        m[(size_t)SUB_UINT] = "SUB_UINT";
+        m[(size_t)MUL_UINT] = "MUL_UINT";
+        m[(size_t)DIV_UINT] = "DIV_UINT";
+        m[(size_t)ADD_REAL] = "ADD_REAL";
+        m[(size_t)SUB_REAL] = "SUB_REAL";
+        m[(size_t)MUL_REAL] = "MUL_REAL";
+        m[(size_t)DIV_REAL] = "DIV_REAL";
+        m[(size_t)NEG_REAL] = "NEG_REAL";
+        m[(size_t)BAND] = "BAND";
+        m[(size_t)BOR] = "BOR";
+        m[(size_t)BNOT] = "BNOT";
+        m[(size_t)BXOR] = "BXOR";
+        m[(size_t)BSHL] = "BSHL";
+        m[(size_t)BSHR] = "BSHR";
+        m[(size_t)INT_TO_REAL] = "INT_TO_REAL";
+        m[(size_t)REAL_TO_INT] = "REAL_TO_INT";
+        m[(size_t)EQ_INT] = "EQ_INT";
+        m[(size_t)LT_INT] = "LT_INT";
+        m[(size_t)LTE_INT] = "LTE_INT";
+        m[(size_t)GT_INT] = "GT_INT";
+        m[(size_t)GTE_INT] = "GTE_INT";
+        m[(size_t)EQ_UINT] = "EQ_UINT";
+        m[(size_t)LT_UINT] = "LT_UINT";
+        m[(size_t)LTE_UINT] = "LTE_UINT";
+        m[(size_t)GT_UINT] = "GT_UINT";
+        m[(size_t)GTE_UINT] = "GTE_UINT";
+        m[(size_t)EQ_REAL] = "EQ_REAL";
+        m[(size_t)LT_REAL] = "LT_REAL";
+        m[(size_t)LTE_REAL] = "LTE_REAL";
+        m[(size_t)GT_REAL] = "GT_REAL";
+        m[(size_t)GTE_REAL] = "GTE_REAL";
+        m[(size_t)NEW_SHAPE] = "NEW_SHAPE";
+        m[(size_t)ADD_FIELD] = "ADD_FIELD";
+        m[(size_t)ADD_STRUCT_FIELD] = "ADD_STRUCT_FIELD";
+        m[(size_t)DEF_SHAPE] = "DEF_SHAPE";
+        m[(size_t)NEW_STRUCT] = "NEW_STRUCT";
+        m[(size_t)SET_FIELD] = "SET_FIELD";
+        m[(size_t)GET_FIELD] = "GET_FIELD";
         
         n["NOOP"] = NOOP;
         n["PUSH"] = PUSH;
@@ -404,6 +344,7 @@ struct _mapper {
         n["SWAP"] = SWAP;
         n["DUP"] = DUP;
         n["PUSH_DUP"] = PUSH_DUP;
+        n["CALL"] = CALL;
         n["EXIT"] = EXIT;
         n["ADD_INT"] = ADD_INT;
         n["SUB_INT"] = SUB_INT;
@@ -449,11 +390,6 @@ struct _mapper {
         n["NEW_STRUCT"] = NEW_STRUCT;
         n["SET_FIELD"] = SET_FIELD;
         n["GET_FIELD"] = GET_FIELD;
-        n["ADD_INDEX"] = ADD_INDEX;
-        n["DEL_INDEX"] = DEL_INDEX;
-        n["INDEX_CHANGE_FIELD"] = INDEX_CHANGE_FIELD;
-        n["INDEX_FIND"] = INDEX_FIND;
-        n["INDEX_FIND2"] = INDEX_FIND2;
     }
 };
 
@@ -476,7 +412,7 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
 
     bool done = false;
 
-    Vm::code_t code* = &(vm.code.codes[label]);
+    VmCode::code_t* code = &(vm.code.codes[label]);
 
     while (!done) {
 
@@ -723,7 +659,7 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
             break;
         }
 
-        case GT_INT: {
+        case GTE_INT: {
             Val v2 = vm.pop();
             Val v1 = vm.pop();
             vm.stack.push_back((Int)(v1.inte >= v2.inte));
@@ -758,10 +694,10 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
             break;
         }
 
-        case GT_UINT: {
+        case GTE_UINT: {
             Val v2 = vm.pop();
             Val v1 = vm.pop();
-            vm.stack.push_back((Int)(v1.uinte >= v2.uint));
+            vm.stack.push_back((Int)(v1.uint >= v2.uint));
             break;
         }
 
@@ -793,10 +729,10 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
             break;
         }
 
-        case GT_REAL: {
+        case GTE_REAL: {
             Val v2 = vm.pop();
             Val v1 = vm.pop();
-            vm.stack.push_back((Int)(v1.reale >= v2.real));
+            vm.stack.push_back((Int)(v1.real >= v2.real));
             break;
         }
 
@@ -808,7 +744,7 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
         case ADD_FIELD: {
             Val v2 = vm.pop();
             Val v1 = vm.pop();
-            vm.tmp_shape.add_field(v1.uint, v2.uint);
+            vm.tmp_shape.add_field(v1.uint, (Type)v2.uint);
             break;
         }
 
@@ -846,88 +782,10 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
             Val v3 = vm.pop();
             Val v2 = vm.pop();
             Val v1 = vm.pop();
-            const Struct& st = structs().get(v1.uint, v2.uint);
+            Struct& st = structs().get(v1.uint, v2.uint);
             st.set_field(v3.uint, v4);
             break;
         }
-            
-        case INDEX_ADD: {
-            Val v2 = vm.pop();
-            Val v1 = vm.pop();
-            Index& ix = index();
-            ix.add(v1.uint, v2.uint);
-            break;
-        }
-
-        case INDEX_DEL: {
-            Val v2 = vm.pop();
-            Val v1 = vm.pop();
-            Index& ix = index();
-            ix.del(v1.uint, v2.uint);
-            break;
-        }
-            
-        case INDEX_CHANGE_FIELD: {
-            Val v4 = vm.pop();
-            Val v3 = vm.pop();
-            Val v2 = vm.pop();
-            Val v1 = vm.pop();
-            Index& ix = index();
-            ix.change_field(v1.uint, v2.uint, v3.uint, v5);
-            break;
-        }
-
-        case INDEX_FIND: {
-            Val v3 = vm.pop();
-            Val v2 = vm.pop();
-            Val v1 = vm.pop();
-
-            auto range = index().find(v1.uint, v2.uint, v3);
-
-            while (range.first != range.second) {
-
-                Vm vm2(vm.code);
-                vm2.stack.push_back(range.first->second);
-                vm_run(vm2, c.arg.uint);
-
-                ++(range.first);
-            }
-
-            return;
-        }
-
-        case INDEX_FIND2: {
-            Val v5 = vm.pop();
-            Val v4 = vm.pop();
-            Val v3 = vm.pop();
-            Val v2 = vm.pop();
-            Val v1 = vm.pop();
-
-            auto range1 = index().find(v1.uint, v2.uint, v3);
-            auto range2 = index().find(v1.uint, v4.uint, v5);
-
-            while (range1.first != range1.second && range2.first != range2.second) {
-
-                bool lt1 = (*(range1.first) < *(range2.second));
-                bool lt2 = (*(range2.first) < *(range1.second));
-
-                if (lt1) {
-                    ++(range1.first);
-
-                } else if (lt2) {
-                    ++(range2.first);
-
-                } else {
-                    Vm vm2(vm.code);
-                    vm2.stack.push_back(range1.first->second);
-                    vm_run(vm2, c.arg.uint);
-                }
-            }
-
-            return;
-        }
-
-
         }
 
         ++ip;
