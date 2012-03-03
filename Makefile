@@ -9,7 +9,7 @@ metalan_prime: metalan.h metalan_prime.cc metalan_prime.h
 metalan_doppel: metalan.h metalan_doppel.cc metalan_doppel.h
 	g++ -std=c++0x metalan_doppel.cc -o metalan_doppel -g
 
-picolol_vm: metalan.h atomsys.h atomsys_asm.h picolol_vm.cc picolol_vm.h
+picolol_vm: metalan.h nanom.h nanom_asm.h picolol_vm.cc picolol_vm.h
 	g++ -std=c++0x picolol_vm.cc -o picolol_vm -g
 
 

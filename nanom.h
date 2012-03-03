@@ -1,5 +1,5 @@
-#ifndef __ATOMSYS_H
-#define __ATOMSYS_H
+#ifndef __NANOM_H
+#define __NANOM_H
 
 #include <ctype.h>
 
@@ -24,7 +24,7 @@ struct hash< pair<A,B> > {
 
 
 
-namespace atomsys {
+namespace nanom {
 
 using metalan::Sym;
 using metalan::symtab;
