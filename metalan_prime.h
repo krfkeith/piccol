@@ -14,7 +14,15 @@ struct charmatcher {
                     std::string::const_iterator& b, 
                     std::string::const_iterator e) {
 
+        if (b == e)
+            return false;
+
         const std::string& str = symtab().get(sc.sym);
+
+        if (sc.type == Symcell::ATOM && str == "*") {
+            ++b;
+            return true;
+        }
 
         for (unsigned char c : str) {
             if (b == e || c != *b) {
