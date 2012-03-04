@@ -46,7 +46,6 @@ struct Picol {
             stage1 = stage2;
         }
 
-        //std::cout << "}}}" << emiter.print() << std::endl;
         stage2 = doppel.parse(emiter, stage2);
 
         std::string tmp = stage2.print();
