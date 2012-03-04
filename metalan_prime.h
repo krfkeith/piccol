@@ -60,12 +60,33 @@ struct MetalanPrime {
 
         for (const auto& n : out) {
 
-            if (n.str != symtab().get("")) {
-                ret.syms.push_back(Symcell(Symcell::QATOM, n.str));
-            }
+            const std::string& symstr = symtab().get(n.str);
 
-            if (!n.capture.empty()) {
+            // HACK
+
+            if (n.type == 0) {
+
+                if (symstr == "append" && !ret.syms.empty()) {
+                    
+                    Symcell& prev = ret.syms.back();
+                    prev.sym = symtab().get(symtab().get(prev.sym) + n.capture);
+                    continue;
+
+                } else if (symstr == "combine" && ret.syms.size() >= 2) {
+                    
+                    Symcell prev = ret.syms.back();
+                    ret.syms.pop_back();
+                    Symcell& prevprev = ret.syms.back();
+                    prevprev.sym = symtab().get(symtab().get(prevprev.sym) + 
+                                                symtab().get(prev.sym));
+                    continue;
+                }
+
                 ret.syms.push_back(Symcell(Symcell::QATOM, n.capture));
+
+            } else {
+
+                ret.syms.push_back(Symcell(Symcell::QATOM, n.str));
             }
         }
         

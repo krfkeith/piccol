@@ -1,6 +1,6 @@
 
 
-sym :- @'PUSH' * &'Sym'.
+sym :- @'PUSH' * @'Sym' &''.
 
 field_name :- 'FIELD_NAME' sym.
 
@@ -16,7 +16,16 @@ fields :- .
 
 def :- 'START_DEF' @'NEW_SHAPE' fields 'DEF_NAME' sym 'END_DEF' @'DEF_SHAPE'.
 
+
+
+val_num :- * &''.
+
+val :- 'PUSH_INT' @'PUSH' @'Int' val_num.
+val :- 'PUSH_REAL' @'PUSH' @'Real' val_num.
+val :- 'PUSH_SYM' sym.
+
 all :- def all.
+all :- val all.
 all :- .
 
 main :- all.

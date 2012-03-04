@@ -61,14 +61,15 @@ struct MetalanDoppel {
 
         for (const auto& n : out) {
 
-            if (n.str != symtab().get("")) {
-                ret.syms.push_back(Symcell(Symcell::QATOM, n.str));
-            }
+            if (n.type == 0) {
+                //
 
-            if (!n.capture.empty()) {
                 for (const auto& nn : n.capture) {
                     ret.syms.push_back(Symcell(Symcell::QATOM, nn.sym));
                 }
+
+            } else {
+                ret.syms.push_back(Symcell(Symcell::QATOM, n.str));
             }
         }
 

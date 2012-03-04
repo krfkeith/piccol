@@ -16,3 +16,5 @@ def {
   visible,
   stairs
 } Feature;
+
+'hello\tworld!';

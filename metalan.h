@@ -520,7 +520,7 @@ struct Parser {
 
 
 
-    bool apply_one(const list_t& rule, 
+    bool apply_one(const list_t& rule, const tokeniter_t capturestart,
                    tokeniter_t& b, tokeniter_t e, 
                    outlist_t& out,
                    size_t depth) {
@@ -552,7 +552,7 @@ struct Parser {
 
                 subout.push_back(outnode_t(outnode_t::CODE, sc.sym));
 
-                subout.back().capture.assign(savedb, b);
+                subout.back().capture.assign(capturestart, b);
             }
         }
 
@@ -584,7 +584,7 @@ struct Parser {
         }
         /**/
 
-        if (!apply_one(it->second.common_head, b, e, subout, depth)) {
+        if (!apply_one(it->second.common_head, savedb, b, e, subout, depth)) {
 
             /**/
             if (verbose) {
@@ -608,7 +608,7 @@ struct Parser {
             }
             /**/
 
-            if (apply_one(r, b, e, subout, depth)) {
+            if (apply_one(r, savedb, b, e, subout, depth)) {
 
                 out.splice(out.end(), subout);
 
