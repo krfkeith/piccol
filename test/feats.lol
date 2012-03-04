@@ -17,6 +17,6 @@ def {
   stairs
 } Feature;
 
-Skin{char='aa' color='light_blue'};
+Feature{ skin=Skin{char='aa' color='light_blue'} };
 
 

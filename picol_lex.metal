@@ -27,7 +27,7 @@ structdef :- spaces 'def' @'START_DEF' spaces '{' structfields '}' spaces typena
 ident_val :- @'FIND_FIELD_INDEX' ident &''.
 
 structvalfields :- spaces ident_val spaces '=' spaces val @'SET_FIELD' structvalfields.
-structvalfields :- .
+structvalfields :- spaces.
 
 typename_constructor :- @'SET_TYPE' typename &''.
 
