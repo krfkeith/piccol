@@ -31,17 +31,110 @@ struct VmAsm {
 
     void parse(const metalan::Symlist& prog) {
     
-        Sym label = metalan::symtab().get("");
+        Sym nillabel = metalan::symtab().get("");
+        Sym label = nillabel;
 
         auto p_i = prog.syms.begin();
         auto p_e = prog.syms.end();
 
+        VmCode compiletime_code;
+
+        bool cmode = false;
+        auto& cmode_code= compiletime_code.codes[nillabel];
+
+        std::vector<Sym> shapestack;
+
         while (p_i != p_e) {
+
+            const std::string& op_name = metalan::symtab().get(p_i->sym);
+
+            if (op_name == "_cmode_on") {
+                cmode = true;
+
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_cmode_off") {
+                cmode = false;
+                Opcode op;
+                op.op = EXIT;
+                cmode_code.push_back(op);
+
+                Vm vm(compiletime_code);
+                vm_run(vm, nillabel);
+
+                cmode_code.clear();
+
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_push_type") {
+                ++p_i;
+
+                if (p_i == p_e)
+                    throw std::runtime_error("End of input in _push_type");
+
+                shapestack.push_back(p_i->sym);
+                
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_pop_type") {
+
+                if (shapestack.empty())
+                    throw std::runtime_error("Sanity error: _pop_type before _push_type");
+
+                shapestack.pop_back();
+
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_type_size") {
+
+                if (shapestack.empty())
+                    throw std::runtime_error("Sanity error: _type_size before _push_type");
+
+                Opcode op;
+                op.op = PUSH;
+                op.arg.uint = shapes().get(shapestack.back()).size();
+
+                code.codes[label].push_back(op);
+
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_fieldname_deref") {
+
+                if (shapestack.empty())
+                    throw std::runtime_error("Sanity error: _fieldname_deref before _push_type");
+
+                ++p_i;
+
+                if (p_i == p_e)
+                    throw std::runtime_error("End of input in _fieldname_deref");
+
+                Sym fieldsym = p_i->sym;
+
+                auto offrange = shapes().get(shapestack.back()).get_index(fieldsym);
+
+                Opcode op;
+                op.op = PUSH;
+                op.arg.uint = offrange.first;
+
+                code.codes[label].push_back(op);
+
+                op.arg.uint = offrange.second;
+
+                code.codes[label].push_back(op);
+
+                ++p_i;
+                continue;
+            }
+
 
             auto& c = code.codes[label];
 
             Opcode op;
-            const std::string& op_name = metalan::symtab().get(p_i->sym);
 
             op.op = opcodecode(op_name);
 
@@ -86,6 +179,10 @@ struct VmAsm {
             }
             
             c.push_back(op);
+
+            if (cmode) {
+                cmode_code.push_back(op);
+            }
 
         }
     }

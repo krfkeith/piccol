@@ -112,6 +112,35 @@ struct Symlist {
         syms.swap(sl.syms);
     }
 
+    bool operator==(const Symlist& a) const {
+
+        list_t::const_iterator b = syms.begin();
+        list_t::const_iterator e = syms.end();
+        list_t::const_iterator ab = a.syms.begin();
+        list_t::const_iterator ae = a.syms.end();
+
+
+        while (1) {
+
+            if (b == e || ab == ae) {
+                if (b == e && ab == ae) {
+                    break;
+                } else {
+                    return false;
+                }
+            }
+
+            if (*b != *ab) {
+                return false;
+            }
+
+            ++b;
+            ++ab;
+        }
+
+        return true;
+    }
+
     std::string print() {
         std::string ret;
 

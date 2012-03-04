@@ -14,24 +14,34 @@ field :-  field_name 'EMPTY_TYPE'            @'PUSH' @'Int' @'1' @'DEF_FIELD'.
 fields :- field fields.
 fields :- .
 
-def :- 'START_DEF' @'NEW_SHAPE' fields 'DEF_NAME' sym 'END_DEF' @'DEF_SHAPE'.
+def :- 'START_DEF' @'_cmode_on' @'NEW_SHAPE' fields 'DEF_NAME' sym 'END_DEF' @'DEF_SHAPE' @'_cmode_off'.
 
 
-
-structfield :- 'FIND_FIELD_INDEX' @'_fieldname_deref' val_literal val 'SET_FIELD' @'ADD_FIELD'.
-
-structfields :- structfield structfields.
-structfields :- .
 
 val_literal :- * &''.
 
 val :- 'PUSH_INT' @'PUSH' @'Int' val_literal.
 val :- 'PUSH_REAL' @'PUSH' @'Real' val_literal.
 val :- 'PUSH_SYM' sym.
-val :- 'SET_TYPE' @'_push_type' val_literal 'START_STRUCT' @'NEW_STRUCT' structfields 'END_STRUCT' @'DEF_STRUCT'.
+val :- structval.
+
+
+structfield :- 'FIND_FIELD_INDEX' @'_fieldname_deref' val_literal val 'SET_FIELD' @'_type_size' @'SET_FIELDS'.
+
+structfields :- structfield structfields.
+structfields :- .
+
+
+structval :- 'SET_TYPE' @'_push_type' val_literal 
+             'START_STRUCT' @'_type_size' @'NEW_STRUCT' 
+             structfields 
+             'END_STRUCT' @'_pop_type'
+             .
+
+
 
 all :- def all.
-all :- val all.
+all :- structval all.
 all :- .
 
 main :- all.

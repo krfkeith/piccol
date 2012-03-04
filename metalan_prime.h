@@ -41,11 +41,12 @@ struct charmatcher {
 struct MetalanPrime {
 
     typedef Parser<std::string, charmatcher> parser_t;
-    parser_t parser;
 
     MetalanPrime() {}
 
     Symlist parse(Symlist& code, const std::string& inp) {
+
+        parser_t parser;
 
         parser_t::outlist_t out;
         std::string unprocessed;

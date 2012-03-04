@@ -35,11 +35,12 @@ struct symcellmatcher {
 struct MetalanDoppel {
 
     typedef Parser<Symlist::list_t, symcellmatcher> parser_t;
-    parser_t parser;
 
     MetalanDoppel() {}
 
     Symlist parse(Symlist& code, const Symlist& inp) {
+
+        parser_t parser;
 
         parser_t::outlist_t out;
         Symlist::list_t unprocessed;

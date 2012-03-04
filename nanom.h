@@ -54,51 +54,66 @@ enum Type {
     STRUCT = 6
 };
 
+
 struct Shape {
     struct typeinfo {
         Type type;
         Sym shape;
+        size_t ix_from;
+        size_t ix_to;
 
-        typeinfo() : type(NONE), shape(0) {}
+        typeinfo() : type(NONE), shape(0), ix_from(0), ix_to(0) {}
     };
 
-    std::unordered_map< Sym, std::pair<size_t,typeinfo> > sym2field;
-    std::vector< std::pair<Sym,typeinfo> > idx2field;
+    std::unordered_map<Sym, typeinfo> sym2field;
 
-    typeinfo get_type(Sym s) const {
+    size_t nfields;
+
+    Shape() : nfields(0) {}
+
+    const typeinfo& get_type(Sym s) const {
         auto i = sym2field.find(s);
 
-        if (i == sym2field.end())
-            return typeinfo();
+        if (i == sym2field.end()) {
+            static typeinfo notype;
+            return notype;
+        }
 
-        return i->second.second;
+        return i->second;
     }
 
-    Int get_index(Sym s) const {
+    std::pair<size_t,size_t> get_index(Sym s) const {
         auto i = sym2field.find(s);
         if (i == sym2field.end())
-            return -1;
-        return i->second.first;
+            return std::make_pair(0,0);
+        return std::make_pair(i->second.ix_from, i->second.ix_to);
     }
 
-    void add_field(Sym s, Type t, Sym shape=0) {
+    void add_field(Sym s, Type t, Sym shape=0, size_t sh_size=0) {
         if (sym2field.count(s) != 0) {
             throw std::runtime_error("Cannot add duplicate field to shape.");
         }
 
-        typeinfo ti;
+        typeinfo& ti = sym2field[s];
+
         ti.type = t;
         ti.shape = shape;
+        ti.ix_from = nfields;
 
-        idx2field.push_back(std::make_pair(s, ti));
-        sym2field[s] = std::make_pair(idx2field.size()-1, ti);
+        if (t == STRUCT) {
+            nfields += sh_size;
+
+        } else {
+            ++nfields;
+        }
+
+        ti.ix_to = nfields;
     }
 
-    typeinfo get_type(const std::string& s) const { return get_type(symtab().get(s)); }
-    Int get_index(const std::string& s) const { return get_index(symtab().get(s)); }
-    void add_field(const std::string& s, Type t, Sym shape=0) { add_field(symtab().get(s), t, shape); }
+    const typeinfo& get_type(const std::string& s) const { return get_type(symtab().get(s)); }
+    std::pair<size_t,size_t> get_index(const std::string& s) const { return get_index(symtab().get(s)); }
 
-    size_t nfields() const { return idx2field.size(); }
+    size_t size() const { return nfields; }
 };
 
 struct Shapes {
@@ -146,27 +161,6 @@ struct Struct {
     }
 };
 
-struct Structs {
-    std::unordered_map<size_t, Struct> structs;
-
-    Struct& get(size_t structid) {
-        return structs[structid];
-    }
-
-    size_t add(Struct& str) {
-
-        size_t ret = structs.size()+1;
-        Struct& s = structs[ret];
-        s.v.swap(str.v);
-
-        return ret;
-    }
-};
-
-inline Structs& structs() {
-    static Structs _ret;
-    return _ret;
-}
 
 
 
@@ -234,7 +228,7 @@ enum op_t {
     DEF_SHAPE,
 
     NEW_STRUCT,
-    ADD_FIELD,
+    SET_FIELDS,
     DEF_STRUCT
 
 };
@@ -259,7 +253,6 @@ struct Vm {
     VmCode& code;
 
     Shape tmp_shape;
-    std::vector<Struct> tmp_struct;
 
     Vm(VmCode& c) : code(c) {}
 
@@ -332,7 +325,7 @@ struct _mapper {
         m[(size_t)DEF_STRUCT_FIELD] = "DEF_STRUCT_FIELD";
         m[(size_t)DEF_SHAPE] = "DEF_SHAPE";
         m[(size_t)NEW_STRUCT] = "NEW_STRUCT";
-        m[(size_t)ADD_FIELD] = "ADD_FIELD";
+        m[(size_t)SET_FIELDS] = "SET_FIELDS";
         m[(size_t)DEF_STRUCT] = "DEF_STRUCT";
         
         n["NOOP"] = NOOP;
@@ -385,7 +378,7 @@ struct _mapper {
         n["DEF_STRUCT_FIELD"] = DEF_STRUCT_FIELD;
         n["DEF_SHAPE"] = DEF_SHAPE;
         n["NEW_STRUCT"] = NEW_STRUCT;
-        n["ADD_FIELD"] = ADD_FIELD;
+        n["SET_FIELDS"] = SET_FIELDS;
         n["DEF_STRUCT"] = DEF_STRUCT;
     }
 };
@@ -405,7 +398,7 @@ const op_t opcodecode(const std::string& opc) {
 }
 
 
-inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
+inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
 
     bool done = false;
 
@@ -419,14 +412,14 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
 
         Opcode& c = (*code)[ip];
 
-        /*
-        std::cout << "/" << ip << " " << opcodename(c.op) << "(" << c.arg.inte << ") "
-                  << " ||\t\t\t";
-        for (const auto& ii : vm.stack) {
-            std::cout << " " << ii.inte;
+        if (verbose) {
+            std::cout << ">" << ip << " " << opcodename(c.op) << "(" << c.arg.inte << ") "
+                      << " ||\t\t\t";
+            for (const auto& ii : vm.stack) {
+                std::cout << " " << ii.inte;
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
-        */
 
         switch (c.op) {
         case NOOP:
@@ -748,7 +741,8 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
         case DEF_STRUCT_FIELD: {
             Val v2 = vm.pop();
             Val v1 = vm.pop();
-            vm.tmp_shape.add_field(v1.uint, STRUCT, v2.uint);
+            const Shape& sh = shapes().get(v2.uint);
+            vm.tmp_shape.add_field(v1.uint, STRUCT, v2.uint, sh.size());
             break;
         }
 
@@ -760,21 +754,32 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
 
         case NEW_STRUCT: {
             Val v = vm.pop();
-            vm.tmp_struct.emplace_back(v.uint);
+            vm.stack.insert(vm.stack.end(), v.uint, Val());
             break;
         }
 
-        case ADD_FIELD: {
-            Val v2 = vm.pop();
-            Val v1 = vm.pop();
-            vm.tmp_struct.back().set_field(v1.uint, v2);
+        case SET_FIELDS: {
+            Val strusize = vm.pop();
+            Val offs_end = vm.pop();
+            Val offs_beg = vm.pop();
+
+            size_t topsize = (offs_end.uint - offs_beg.uint);
+            auto tope = vm.stack.end();
+            auto topi = tope - topsize;
+            auto stri = topi - strusize.uint + offs_beg.uint;
+
+            for (auto i = topi; i != tope; ++i) {
+                *stri = *i;
+            }
+
+            vm.stack.resize(vm.stack.size() - topsize);
             break;
         } 
 
         case DEF_STRUCT: {
-            size_t snum = structs().add(vm.tmp_struct.back());
-            vm.stack.push_back(snum);
-            vm.tmp_struct.pop_back();
+            //size_t snum = structs().add(vm.tmp_struct.back());
+            //vm.stack.push_back(snum);
+            //vm.tmp_struct.pop_back();
             break;
         }
 
@@ -792,58 +797,3 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0) {
 #endif
 
 
-/*
-
-NEW_SHAPE
-PUSH('slot')
-PUSH(SYM)
-ADD_FIELD
-PUSH('name')
-PUSH(SYM
-ADD_FIELD
-PUSH('coord_x')
-PUSH(INT)
-ADD_FIELD
-PUSH('coord_y')
-PUSH(INT)
-ADD_FIELD
-PUSH('invslot')
-PUSH(SYM)
-ADD_FIELD
-PUSH('item')
-DEF_SHAPE
-
-PUSH('item')
-NEW_STRUCT
-
-PUSH_DUP('item')
-PUSH('slot')
-PUSH('b')
-SET_FIELD
-
-PUSH_DUP('item')
-PUSH('coord_x')
-PUSH(-1)
-SET_FIELD
-
-PUSH_DUP('item')
-PUSH('coord_y')
-PUSH(-1)
-SET_FIELD
-
-PUSH_DUP('item')
-PUSH('invslot')
-PUSH(-1)
-SET_FIELD
-
-PUSH_DUP('item')
-INDEX_ADD
-
-POP
-
-...
-
-
-
-
- */

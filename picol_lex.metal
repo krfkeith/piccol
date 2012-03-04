@@ -61,7 +61,7 @@ val :- nilval @'PUSH_INT' @'0'.
 val :- trueval @'PUSH_INT' @'1'.
 val :- structval.
 
-expr :- spaces val spaces ';'.
+expr :- spaces structval spaces ';'.
 
 
 all :- structdef all.

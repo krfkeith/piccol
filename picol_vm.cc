@@ -34,24 +34,32 @@ int main(int argc, char** argv) {
     picol::Picol l;
 
     std::ifstream lfile("picol_lex.metal");
-    std::ifstream pfile("picol_parse.metal");
+    std::ifstream mfile("picol_morph.metal");
+    std::ifstream efile("picol_emit.metal");
 
     if (!lfile)
         throw std::runtime_error("Could not open 'picol_lex.metal'");
 
-    if (!pfile)
-        throw std::runtime_error("Could not open 'picol_parse.metal'");
+    if (!mfile)
+        throw std::runtime_error("Could not open 'picol_morph.metal'");
+
+    if (!efile)
+        throw std::runtime_error("Could not open 'picol_emit.metal'");
 
     std::string lexer;
-    std::string parser;
+    std::string morpher;
+    std::string emiter;
 
     lexer.assign(std::istreambuf_iterator<char>(lfile),
                  std::istreambuf_iterator<char>());
 
-    parser.assign(std::istreambuf_iterator<char>(pfile),
+    morpher.assign(std::istreambuf_iterator<char>(mfile),
+                   std::istreambuf_iterator<char>());
+
+    emiter.assign(std::istreambuf_iterator<char>(efile),
                   std::istreambuf_iterator<char>());
 
-    l.load(lexer, parser, inp);
+    l.load(lexer, morpher, emiter, inp);
 
     return 0;
 }
