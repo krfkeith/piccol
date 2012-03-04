@@ -1,14 +1,14 @@
-#ifndef __PICOLOL_VM_H
-#define __PICOLOL_VM_H
+#ifndef __PICOL_VM_H
+#define __PICOL_VM_H
 
 #include "nanom_asm.h"
 
 #include "metalan_prime.h"
 #include "metalan_doppel.h"
 
-namespace picolol {
+namespace picol {
 
-struct Picolol {
+struct Picol {
 
     void load(const std::string& lexer_, const std::string& parser_, const std::string& inp) {
 
@@ -23,7 +23,7 @@ struct Picolol {
 
         metalan::Symlist stage1 = prime.parse(lexer, inp);
 
-        //std::cout << "[" << stage1.print() << std::endl;
+        std::cout << "[" << stage1.print() << "]" << std::endl;
 
         metalan::Symlist stage2 = doppel.parse(parser, stage1);
 

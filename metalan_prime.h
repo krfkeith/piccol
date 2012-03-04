@@ -60,10 +60,11 @@ struct MetalanPrime {
 
         for (const auto& n : out) {
 
-            ret.syms.push_back(Symcell(Symcell::QATOM, n.str));
+            if (n.str != symtab().get("")) {
+                ret.syms.push_back(Symcell(Symcell::QATOM, n.str));
+            }
 
             if (!n.capture.empty()) {
-                ret.syms.push_back(Symcell(Symcell::ATOM, ":"));
                 ret.syms.push_back(Symcell(Symcell::QATOM, n.capture));
             }
         }

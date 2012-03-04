@@ -1,5 +1,5 @@
 
-all: metalan_prime metalan_doppel picolol_vm
+all: metalan_prime metalan_doppel picol_vm
 
 NANOM = nanom.h nanom_vm.h nanom_asm.h nanom_stringlib.h
 
@@ -11,7 +11,7 @@ metalan_prime: metalan.h metalan_prime.cc metalan_prime.h
 metalan_doppel: metalan.h metalan_doppel.cc metalan_doppel.h
 	g++ $(CFLAGS) metalan_doppel.cc -o metalan_doppel 
 
-picolol_vm: metalan.h nanom.h nanom_asm.h picolol_vm.cc picolol_vm.h metalan_prime.h metalan_doppel.h
-	g++ $(CFLAGS) picolol_vm.cc -o picolol_vm 
+picol_vm: metalan.h nanom.h nanom_asm.h picol_vm.cc picol_vm.h metalan_prime.h metalan_doppel.h
+	g++ $(CFLAGS) picol_vm.cc -o picol_vm 
 
 

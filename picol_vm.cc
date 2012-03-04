@@ -3,7 +3,7 @@
 #include <fstream>
 #include <streambuf>
 
-#include "picolol_vm.h"
+#include "picol_vm.h"
 
 
 int main(int argc, char** argv) {
@@ -31,16 +31,16 @@ int main(int argc, char** argv) {
                    std::istreambuf_iterator<char>());
     }
 
-    picolol::Picolol l;
+    picol::Picol l;
 
-    std::ifstream lfile("picolol_lex.metal");
-    std::ifstream pfile("picolol_parse.metal");
+    std::ifstream lfile("picol_lex.metal");
+    std::ifstream pfile("picol_parse.metal");
 
     if (!lfile)
-        throw std::runtime_error("Could not open 'picolol_lex.metal'");
+        throw std::runtime_error("Could not open 'picol_lex.metal'");
 
     if (!pfile)
-        throw std::runtime_error("Could not open 'picolol_parse.metal'");
+        throw std::runtime_error("Could not open 'picol_parse.metal'");
 
     std::string lexer;
     std::string parser;
