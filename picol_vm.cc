@@ -7,10 +7,6 @@
 
 void printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Struct& struc) {
 
-    for (const auto& i : struc.v) {
-        std::cout << "// " << metalan::symtab().get(i.uint) << std::endl;
-    }
-
     std::cout << "{" << std::endl;
     for (const auto& i : shape.sym2field) {
 

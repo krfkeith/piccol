@@ -439,7 +439,7 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
             std::cout << ">" << ip << " " << opcodename(c.op) << "(" << c.arg.inte << ") "
                       << " ||\t\t\t";
             for (const auto& ii : vm.stack) {
-                std::cout << " " << ii.inte;
+                std::cout << " " << ii.inte << ":" << symtab().get(ii.uint);
             }
             std::cout << std::endl;
         }
@@ -791,7 +791,7 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
             auto topi = tope - topsize;
             auto stri = topi - strusize.uint + offs_beg.uint;
 
-            for (auto i = topi; i != tope; ++i) {
+            for (auto i = topi; i != tope; ++i, ++stri) {
                 *stri = *i;
             }
 

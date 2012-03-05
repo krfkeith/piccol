@@ -1,6 +1,8 @@
 #ifndef __NANOM_ASM_H
 #define __NANOM_ASM_H
 
+#include <cinttypes>
+
 #include "metalan.h"
 
 #include "nanom.h"
@@ -24,13 +26,13 @@ inline Real string_to_real(const std::string& s) {
 
 inline std::string int_to_string(Int i) {
     static char buff[1024];
-    ::snprintf(buff, 1023, "%lld", i);
+    ::snprintf(buff, 1023, "%"PRIi64, i);
     return buff;
 }
 
 inline std::string uint_to_string(UInt i) {
     static char buff[1024];
-    ::snprintf(buff, 1023, "%llu", i);
+    ::snprintf(buff, 1023, "%"PRIu64, i);
     return buff;
 }
 

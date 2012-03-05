@@ -3,7 +3,7 @@ all: metalan_prime metalan_doppel picol_vm
 
 NANOM = nanom.h nanom_vm.h nanom_asm.h nanom_stringlib.h
 
-CFLAGS = -std=c++0x -g -Wall 
+CFLAGS = -std=c++0x -g -Wall
 
 metalan_prime: metalan.h metalan_prime.cc metalan_prime.h
 	g++ $(CFLAGS) metalan_prime.cc -o metalan_prime 
