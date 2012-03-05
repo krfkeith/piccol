@@ -36,7 +36,7 @@ struct Picol {
             throw std::runtime_error(std::string("Error in stage 1 (picol_lex): ") + e.what());
         }
 
-        std::cout << "[" << stage1.print() << "]" << std::endl;
+        //std::cout << "[" << stage1.print() << "]" << std::endl;
 
         metalan::Symlist stage2;
 
@@ -52,9 +52,9 @@ struct Picol {
                 throw std::runtime_error(std::string("Error in stage 2 (picol_morph): ") + e.what());
             }
 
-            std::string tmp = stage2.print();
-            std::cout << "------------------------------------------" << std::endl;
-            std::cout << tmp << std::endl;
+            //std::string tmp = stage2.print();
+            //std::cout << "------------------------------------------" << std::endl;
+            //std::cout << tmp << std::endl;
 
             if (stage1 == stage2) 
                 break;
@@ -70,14 +70,14 @@ struct Picol {
         }
 
         std::string tmp = stage2.print();
-        std::cout << "==============================================" << std::endl;
-        std::cout << tmp << std::endl;
+        //std::cout << "==============================================" << std::endl;
+        //std::cout << tmp << std::endl;
 
         nanom::VmAsm as;
         as.parse(stage2);
 
-        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-        std::cout << as.print() << std::endl;
+        //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        //std::cout << as.print() << std::endl;
     }
 
 };
