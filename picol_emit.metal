@@ -27,6 +27,7 @@ val :- structval.
 
 
 structfield :- val 'SELECT_FIELD' @'_fieldname_deref' val_literal
+               'CHECK_TYPE' @'_fieldtype_check' val_literal val_literal
                'SET_FIELD' @'_type_size' @'SET_FIELDS'.
 
 structfields :- structfield structfields.

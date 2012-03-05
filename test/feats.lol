@@ -17,6 +17,7 @@ def {
   stairs
 } Feature;
 
-Feature{ skin=Skin{char='aa' color='light_blue'} };
+Feature{ skin=Skin{char='aa' color='light_blue'} 
+         stairs=true visible=nil};
 
 

@@ -135,6 +135,13 @@ struct VmAsm {
 
                 auto offrange = shapes().get(shapestack.back()).get_index(fieldsym);
 
+                if (offrange.first == offrange.second) {
+
+                    throw std::runtime_error("Unknown struct field: " + 
+                                             symtab().get(shapestack.back()) + "." +
+                                             symtab().get(fieldsym));
+                }
+
                 Opcode op;
                 op.op = PUSH;
                 op.arg.uint = offrange.first;
@@ -144,6 +151,73 @@ struct VmAsm {
                 op.arg.uint = offrange.second;
 
                 code.codes[label].push_back(op);
+
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_fieldtype_check") {
+
+                if (shapestack.empty())
+                    throw std::runtime_error("Sanity error: _fieldname_deref before _push_type");
+
+                ++p_i;
+                if (p_i == p_e)
+                    throw std::runtime_error("End of input in _fieldname_deref");
+
+                Sym fieldsym = p_i->sym;
+
+                ++p_i;
+                if (p_i == p_e)
+                    throw std::runtime_error("End of input in _fieldname_deref");
+
+                Sym typesym = p_i->sym;
+                const std::string& typestr = symtab().get(typesym);
+
+                const auto& typeinfo = shapes().get(shapestack.back()).get_type(fieldsym);
+                bool ok = false;
+                std::string fieldtypename;
+
+                switch (typeinfo.type) {
+                case BOOL:
+                case INT:
+                case UINT:
+                    if (typestr == "Int" || typestr == "UInt") {
+                        ok = true;
+                    }
+                    fieldtypename = "<integer>";
+                    break;
+
+                case REAL:
+                    if (typestr == "Real") {
+                        ok = true;
+                    }
+                    fieldtypename = "<real>";
+                    break;
+
+                case SYMBOL:
+                    if (typestr == "Sym") {
+                        ok = true;
+                    }
+                    fieldtypename = "<symbol>";
+                    break;
+
+                case STRUCT:
+                    if (typesym == typeinfo.shape) {
+                        ok = true;
+                    }
+                    fieldtypename = symtab().get(typeinfo.shape);
+                    break;
+
+                case NONE:
+                    break;
+                }
+
+                if (!ok) {
+                    throw std::runtime_error("Type checking failed: " +
+                                             symtab().get(shapestack.back()) + "." +
+                                             symtab().get(fieldsym) + " has type " + 
+                                             fieldtypename + " but you assigned a " + typestr);
+                }
 
                 ++p_i;
                 continue;

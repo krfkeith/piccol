@@ -533,12 +533,13 @@ struct Parser {
         } else if (b->sym == symtab().get("comment")) {
 
             did_expand = true;
-            
+
             while (1) {
                 if (b->type == Symcell::ATOM && b->sym == symtab().get(".")) {
                     ++b;
                     return b;
                 }
+                ++b;
             }
         }
 
