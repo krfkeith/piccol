@@ -78,6 +78,9 @@ struct Picol {
 
         //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
         //std::cout << as.print() << std::endl;
+
+        nanom::Vm vm(as.code);
+        nanom::vm_run(vm, metalan::symtab().get(""));
     }
 
 };

@@ -56,6 +56,7 @@ struct VmAsm {
         auto p_e = prog.syms.end();
 
         VmCode compiletime_code;
+        Vm vm(compiletime_code);
 
         bool cmode = false;
         auto& cmode_code= compiletime_code.codes[nillabel];
@@ -78,7 +79,6 @@ struct VmAsm {
                 op.op = EXIT;
                 cmode_code.push_back(op);
 
-                Vm vm(compiletime_code);
                 vm_run(vm, nillabel);
 
                 cmode_code.clear();
@@ -114,7 +114,7 @@ struct VmAsm {
 
                 Opcode op;
                 op.op = PUSH;
-                op.arg.uint = shapes().get(shapestack.back()).size();
+                op.arg.uint = vm.shapes.get(shapestack.back()).size();
 
                 code.codes[label].push_back(op);
 
@@ -133,7 +133,7 @@ struct VmAsm {
 
                 Sym fieldsym = p_i->sym;
 
-                auto offrange = shapes().get(shapestack.back()).get_index(fieldsym);
+                auto offrange = vm.shapes.get(shapestack.back()).get_index(fieldsym);
 
                 if (offrange.first == offrange.second) {
 
@@ -173,12 +173,18 @@ struct VmAsm {
                 Sym typesym = p_i->sym;
                 const std::string& typestr = symtab().get(typesym);
 
-                const auto& typeinfo = shapes().get(shapestack.back()).get_type(fieldsym);
+                const auto& typeinfo = vm.shapes.get(shapestack.back()).get_type(fieldsym);
                 bool ok = false;
                 std::string fieldtypename;
 
                 switch (typeinfo.type) {
                 case BOOL:
+                    if (typestr == "Bool") {
+                        ok = true;
+                    }
+                    fieldtypename = "<bool>";
+                    break;
+
                 case INT:
                 case UINT:
                     if (typestr == "Int" || typestr == "UInt") {
@@ -255,7 +261,7 @@ struct VmAsm {
                 if (arg_type == "Sym") {
                     op.arg = p_i->sym;
 
-                } else if (arg_type == "Int") {
+                } else if (arg_type == "Int" || arg_type == "Bool") {
                     op.arg = string_to_int(metalan::symtab().get(p_i->sym));
 
                 } else if (arg_type == "UInt") {

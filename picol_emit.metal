@@ -9,7 +9,7 @@ field :-  field_name 'FIELD_TYPE' 'Int'  @'PUSH' @'Int' @'3' @'DEF_FIELD'.
 field :-  field_name 'FIELD_TYPE' 'UInt' @'PUSH' @'Int' @'4' @'DEF_FIELD'.
 field :-  field_name 'FIELD_TYPE' 'Real' @'PUSH' @'Int' @'5' @'DEF_FIELD'.
 field :-  field_name 'FIELD_TYPE' sym    @'DEF_STRUCT_FIELD'.
-field :-  field_name 'EMPTY_TYPE'            @'PUSH' @'Int' @'1' @'DEF_FIELD'.
+field :-  field_name 'EMPTY_TYPE'        @'PUSH' @'Int' @'1' @'DEF_FIELD'.
 
 fields :- field fields.
 fields :- .
@@ -22,6 +22,7 @@ val_literal :- * &''.
 
 val :- 'PUSH_INT' @'PUSH' @'Int' val_literal.
 val :- 'PUSH_REAL' @'PUSH' @'Real' val_literal.
+val :- 'PUSH_BOOL' @'PUSH' @'Bool' val_literal.
 val :- 'PUSH_SYM' sym.
 val :- structval.
 
@@ -44,6 +45,6 @@ structval :- 'SET_TYPE' @'_push_type' val_literal
 
 all :- def all.
 all :- structval all.
-all :- .
+all :- @'EXIT'.
 
 main :- all.

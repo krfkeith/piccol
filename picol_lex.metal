@@ -2,6 +2,8 @@
 :- include 'system.metal'
 
 ident_x :- any_letter ident_x.
+ident_x :- digit ident_x.
+ident_x :- '_' ident_x.
 ident_x :- .
 
 ident :- locase_letter ident_x.
@@ -21,7 +23,8 @@ structfields :- spaces ident_field opttype structfields_x.
 
 typename_def :- typename @'DEF_NAME' &''.
 
-structdef :- spaces 'def' @'START_DEF' spaces '{' structfields '}' spaces typename_def spaces ';' @'END_DEF'.
+structdef :- spaces 'def' @'START_DEF' spaces '{' structfields '}' 
+             spaces typename_def spaces ';' @'END_DEF'.
 
 
 ident_struct_field :- ident &''.
@@ -59,8 +62,8 @@ trueval :- 'true'.
 val :- @'PUSH_REAL' realval.
 val :- @'PUSH_INT' intval &''.
 val :- @'PUSH_SYM' symval.
-val :- nilval @'PUSH_INT' @'0'.
-val :- trueval @'PUSH_INT' @'1'.
+val :- nilval @'PUSH_BOOL' @'0'.
+val :- trueval @'PUSH_BOOL' @'1'.
 val :- structval.
 
 expr :- spaces structval spaces ';'.

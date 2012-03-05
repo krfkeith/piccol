@@ -11,9 +11,9 @@
 
    b) Insert a tag to check that field types match:
 
-   PUSH_[INT|REAL|SYM] <val> SELECT_FIELD <name> SET_FIELD
+   PUSH_[INT|REAL|SYM|BOOL] <val> SELECT_FIELD <name> SET_FIELD
     ==>
-   PUSH_[INT|REAL|SYM] <val> SELECT_FIELD <name> CHECK_TYPE <name> [Int|Real|Sym] SET_FIELD
+   PUSH_[INT|REAL|SYM|BOOL] <val> SELECT_FIELD <name> CHECK_TYPE <name> [Int|Real|Sym|Bool] SET_FIELD
 
    SET_TYPE <type> <struct> SELECT_FIELD <name> SET_FIELD
     ==>
@@ -21,9 +21,10 @@
 
 }.
 
-swap_val :- 'PUSH_INT' * &''.
+swap_val :- 'PUSH_INT'  * &''.
 swap_val :- 'PUSH_REAL' * &''.
-swap_val :- 'PUSH_SYM' * &''.
+swap_val :- 'PUSH_SYM'  * &''.
+swap_val :- 'PUSH_BOOL' * &''.
 swap_val :- swap_structval.
 
 swap_structval :- 'SET_TYPE' * 'START_STRUCT' &'' swap_structfields 'END_STRUCT' @'END_STRUCT'.
@@ -49,6 +50,9 @@ typetag_real :- 'PUSH_REAL' * 'SELECT_FIELD' typetag_name &'' 'SET_FIELD'
 typetag_sym :- 'PUSH_SYM' * 'SELECT_FIELD' typetag_name &'' 'SET_FIELD'
                 @'CHECK_TYPE' &'pop' @'Sym' @'SET_FIELD'.
 
+typetag_bool :- 'PUSH_BOOL' * 'SELECT_FIELD' typetag_name &'' 'SET_FIELD'
+                @'CHECK_TYPE' &'pop' @'Bool' @'SET_FIELD'.
+
 typetag_structfields :- typetag_field typetag_structfields.
 typetag_structfields :- .
 
@@ -67,6 +71,7 @@ typetag_struct :- 'SET_TYPE' @'SET_TYPE'
 typetag_field :- typetag_int.
 typetag_field :- typetag_real.
 typetag_field :- typetag_sym.
+typetag_field :- typetag_bool.
 typetag_field :- typetag_struct.
 
 all :- swap_struct_field all.

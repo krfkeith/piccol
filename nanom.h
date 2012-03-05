@@ -110,8 +110,13 @@ struct Shape {
         ti.ix_to = nfields;
     }
 
-    const typeinfo& get_type(const std::string& s) const { return get_type(symtab().get(s)); }
-    std::pair<size_t,size_t> get_index(const std::string& s) const { return get_index(symtab().get(s)); }
+    const typeinfo& get_type(const std::string& s) const { 
+        return get_type(symtab().get(s)); 
+    }
+
+    std::pair<size_t,size_t> get_index(const std::string& s) const { 
+        return get_index(symtab().get(s)); 
+    }
 
     size_t size() const { return nfields; }
 };
@@ -138,11 +143,6 @@ struct Shapes {
         shapes.insert(i, std::make_pair(shapeid, sh));
     }
 };
-
-inline Shapes& shapes() {
-    static Shapes _ret;
-    return _ret;
-}
 
 
 struct Struct {
@@ -229,7 +229,8 @@ enum op_t {
 
     NEW_STRUCT,
     SET_FIELDS,
-    DEF_STRUCT
+
+    SYSCALL_STRUCT
 
 };
 
@@ -251,6 +252,8 @@ struct Vm {
     std::vector< std::pair<Sym,size_t> > frame;
 
     VmCode& code;
+
+    Shapes shapes;
 
     Shape tmp_shape;
 
@@ -326,7 +329,7 @@ struct _mapper {
         m[(size_t)DEF_SHAPE] = "DEF_SHAPE";
         m[(size_t)NEW_STRUCT] = "NEW_STRUCT";
         m[(size_t)SET_FIELDS] = "SET_FIELDS";
-        m[(size_t)DEF_STRUCT] = "DEF_STRUCT";
+        m[(size_t)SYSCALL_STRUCT] = "SYSCALL_STRUCT";
         
         n["NOOP"] = NOOP;
         n["PUSH"] = PUSH;
@@ -379,7 +382,7 @@ struct _mapper {
         n["DEF_SHAPE"] = DEF_SHAPE;
         n["NEW_STRUCT"] = NEW_STRUCT;
         n["SET_FIELDS"] = SET_FIELDS;
-        n["DEF_STRUCT"] = DEF_STRUCT;
+        n["SYSCALL_STRUCT"] = SYSCALL_STRUCT;
     }
 };
 
@@ -741,14 +744,14 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
         case DEF_STRUCT_FIELD: {
             Val v2 = vm.pop();
             Val v1 = vm.pop();
-            const Shape& sh = shapes().get(v2.uint);
+            const Shape& sh = vm.shapes.get(v2.uint);
             vm.tmp_shape.add_field(v1.uint, STRUCT, v2.uint, sh.size());
             break;
         }
 
         case DEF_SHAPE: {
             Val v = vm.pop();
-            shapes().add(v.uint, vm.tmp_shape);
+            vm.shapes.add(v.uint, vm.tmp_shape);
             break;
         }
 
@@ -776,10 +779,14 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
             break;
         } 
 
-        case DEF_STRUCT: {
-            //size_t snum = structs().add(vm.tmp_struct.back());
-            //vm.stack.push_back(snum);
-            //vm.tmp_struct.pop_back();
+        case SYSCALL_STRUCT: {
+            Val strusize = vm.pop();
+            Struct tmp;
+            auto tope = vm.stack.end();
+            auto topb = tope - strusize.uint;
+            tmp.v.assign(topb, tope);
+            //
+            vm.stack.resize(vm.stack.size() - strusize.uint);
             break;
         }
 
