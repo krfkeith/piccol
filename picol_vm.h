@@ -42,7 +42,14 @@ struct Picol {
             stage1 = prime.parse(lexer, inp);
 
         } catch (std::exception& e) {
-            throw std::runtime_error(std::string("Error in stage 1 (picol_lex): ") + e.what());
+            std::string msg = e.what();
+
+            if (msg.size() > 200) {
+                msg.resize(200); 
+                msg += "...";
+            }
+
+            throw std::runtime_error(std::string("Error in stage 1 (picol_lex): ") + msg);
         }
 
         //std::cout << "[" << stage1.print() << "]" << std::endl;

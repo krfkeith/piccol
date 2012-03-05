@@ -57,6 +57,7 @@ symval_x :- * &'append' symval_x.
 symval :- @'' {'} symval_x.
 
 nilval :- 'nil'.
+nilval :- 'false'.
 trueval :- 'true'.
 
 val :- @'PUSH_REAL' realval.
@@ -68,9 +69,13 @@ val :- structval.
 
 expr :- spaces structval spaces ';' @'SYSCALL'.
 
+comment_x :- '\n'.
+comment_x :- * comment_x.
+comment :- spaces '#' comment_x.
 
 all :- structdef all.
 all :- expr all.
+all :- comment all.
 all :- spaces.
 
 main :- all.
