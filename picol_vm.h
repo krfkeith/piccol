@@ -6,6 +6,22 @@
 #include "metalan_prime.h"
 #include "metalan_doppel.h"
 
+#include <sys/time.h>
+struct bm {
+    struct timeval b;
+    bm() {
+        gettimeofday(&b, NULL);
+    }
+    ~bm() {
+        struct timeval e;
+        gettimeofday(&e, NULL);
+        size_t a = (e.tv_sec*1e6 + e.tv_usec);
+        size_t q = (b.tv_sec*1e6 + b.tv_usec);
+        std::cout << ((double)a-(double)q)/1e6 << std::endl;
+    }
+};
+
+
 namespace picol {
 
 struct Picol {
@@ -39,6 +55,7 @@ struct Picol {
         metalan::Symlist stage1;
 
         try {
+            bm _b;
             stage1 = prime.parse(lexer, inp);
 
         } catch (std::exception& e) {
@@ -61,6 +78,7 @@ struct Picol {
                 // Make a copy of the ruleset, since Metalan::parse will clobber the 
                 // ruleset argument.
 
+                bm _b;
                 metalan::Symlist tmp = morpher;                
                 stage2 = doppel.parse(tmp, stage1);
 
@@ -79,6 +97,7 @@ struct Picol {
         }
 
         try {
+            bm _b;
             stage2 = doppel.parse(emiter, stage2);
 
         } catch (std::exception& e) {
@@ -89,11 +108,13 @@ struct Picol {
         //std::cout << "==============================================" << std::endl;
         //std::cout << tmp << std::endl;
 
+        bm _b;
         as.parse(stage2);
 
         //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
         //std::cout << as.print() << std::endl;
 
+        bm _b2;
         nanom::vm_run(vm, metalan::symtab().get(""));
     }
 
