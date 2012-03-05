@@ -107,6 +107,20 @@ struct VmAsm {
                 ++p_i;
                 continue;
 
+            } else if (op_name == "_top_type") {
+
+                if (shapestack.empty())
+                    throw std::runtime_error("Sanity error: _top_type before _push_type");
+
+                Opcode op;
+                op.op = PUSH;
+                op.arg.uint = shapestack.back();
+
+                code.codes[label].push_back(op);
+
+                ++p_i;
+                continue;
+
             } else if (op_name == "_type_size") {
 
                 if (shapestack.empty())

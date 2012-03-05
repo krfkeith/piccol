@@ -66,7 +66,7 @@ val :- nilval @'PUSH_BOOL' @'0'.
 val :- trueval @'PUSH_BOOL' @'1'.
 val :- structval.
 
-expr :- spaces structval spaces ';'.
+expr :- spaces structval spaces ';' @'SYSCALL'.
 
 
 all :- structdef all.

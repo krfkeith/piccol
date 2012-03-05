@@ -10,6 +10,15 @@ namespace picol {
 
 struct Picol {
 
+    nanom::VmAsm as;
+    nanom::Vm vm;
+
+    Picol() : vm(as.code) {}
+
+    void register_callback(const std::string& obj, nanom::syscall_callback_t cb) {
+        vm.register_callback(metalan::symtab().get(obj), cb);
+    }
+
     void load(const std::string& lexer_, 
               const std::string& morpher_,
               const std::string& emiter_, 
@@ -73,13 +82,11 @@ struct Picol {
         //std::cout << "==============================================" << std::endl;
         //std::cout << tmp << std::endl;
 
-        nanom::VmAsm as;
         as.parse(stage2);
 
         //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
         //std::cout << as.print() << std::endl;
 
-        nanom::Vm vm(as.code);
         nanom::vm_run(vm, metalan::symtab().get(""));
     }
 

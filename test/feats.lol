@@ -49,6 +49,6 @@ def {
 } Feature;
 
 Feature{ skin=Skin{char='aa' color='light_blue'} 
-         stairs=true visible=nil};
+         stairs=true visible=nil special='hello'};
 
 

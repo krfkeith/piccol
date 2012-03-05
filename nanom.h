@@ -124,7 +124,7 @@ struct Shape {
 struct Shapes {
     std::unordered_map<Sym,Shape> shapes;
 
-    const Shape& get(Sym shapeid) {
+    const Shape& get(Sym shapeid) const {
         auto i = shapes.find(shapeid);
 
         if (i == shapes.end())
@@ -146,10 +146,15 @@ struct Shapes {
 
 
 struct Struct {
-    std::vector<Val> v;
+    typedef std::vector<Val> value_type;
+    value_type v;
 
     Struct(size_t n = 0) {
         v.resize(n);
+    }
+
+    Struct(Struct&& s) {
+        v.swap(s.v);
     }
 
     const Val& get_field(size_t i) const {
@@ -158,6 +163,12 @@ struct Struct {
 
     void set_field(size_t i, Val val) {
         v[i] = val;
+    }
+
+    Struct substruct(size_t b, size_t i) const {
+        Struct ret;
+        ret.v.assign(v.begin() + b, v.begin() + i);
+        return ret;
     }
 };
 
@@ -245,6 +256,8 @@ struct VmCode {
     std::unordered_map<Sym, code_t> codes;
 };
 
+typedef void (*syscall_callback_t)(const Shapes&, const Shape&, const Struct&);
+
 
 struct Vm {
 
@@ -255,9 +268,16 @@ struct Vm {
 
     Shapes shapes;
 
+    std::unordered_map<Sym, syscall_callback_t> callbacks;
+
     Shape tmp_shape;
 
+
     Vm(VmCode& c) : code(c) {}
+
+    void register_callback(Sym s, syscall_callback_t cb) {
+        callbacks[s] = cb;
+    }
 
     Val pop() {
         Val ret = stack.back();
@@ -780,13 +800,24 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
         } 
 
         case SYSCALL_STRUCT: {
-            Val strusize = vm.pop();
+            Val shapeid = vm.pop();
+            const Shape& shape = vm.shapes.get(shapeid.uint);
+
             Struct tmp;
             auto tope = vm.stack.end();
-            auto topb = tope - strusize.uint;
+            auto topb = tope - shape.size();
             tmp.v.assign(topb, tope);
-            //
-            vm.stack.resize(vm.stack.size() - strusize.uint);
+            
+            auto i = vm.callbacks.find(shapeid.uint);
+            if (i == vm.callbacks.end()) {
+                throw std::runtime_error("Callback for '" + 
+                                         symtab().get(shapeid.uint) + 
+                                         "' undefined");
+            }
+
+            (i->second)(vm.shapes, shape, tmp);
+
+            vm.stack.resize(vm.stack.size() - shape.size());
             break;
         }
 
@@ -795,8 +826,6 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
         ++ip;
     }
 }
-
-
 
 }
 

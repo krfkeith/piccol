@@ -35,16 +35,19 @@ structfields :- structfield structfields.
 structfields :- .
 
 
-structval :- 'SET_TYPE' @'_push_type' val_literal 
-             'START_STRUCT' @'_type_size' @'NEW_STRUCT' 
-             structfields 
-             'END_STRUCT' @'_pop_type'
-             .
+structval_head :- 'SET_TYPE' @'_push_type' val_literal 
+                  'START_STRUCT' @'_type_size' @'NEW_STRUCT' 
+                  structfields 
+                  'END_STRUCT'
+                  .
 
+structval :- structval_head @'_pop_type'.
+
+structval_toplevel :- structval_head 'SYSCALL' @'_top_type' @'SYSCALL_STRUCT' @'_pop_type'.
 
 
 all :- def all.
-all :- structval all.
+all :- structval_toplevel all.
 all :- @'EXIT'.
 
 main :- all.
