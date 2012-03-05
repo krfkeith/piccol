@@ -38,9 +38,10 @@ struct MetalanDoppel {
 
     MetalanDoppel() {}
 
-    Symlist parse(Symlist& code, const Symlist& inp) {
+    Symlist parse(Symlist& code, const Symlist& inp, bool verbose = false) {
 
         parser_t parser;
+        parser.verbose = verbose;
 
         parser_t::outlist_t out;
         Symlist::list_t unprocessed;
@@ -60,10 +61,39 @@ struct MetalanDoppel {
 
         Symlist ret;
 
-        for (const auto& n : out) {
+        std::vector<Symlist::list_t> capture_stack;
+
+        /*
+         * Special commands:
+         * 
+         * 'push' : Push current capture on a stack, do not emit any symbols.
+         * 'pop'  : Pop a capture from the stack and emit the symbols is contains. 
+         *          The current capture will be ignored.
+         */
+
+        for (auto& n : out) {
 
             if (n.type == 0) {
-                //
+
+                const std::string& symstr = symtab().get(n.str);
+
+                if (symstr == "push") {
+
+                    capture_stack.push_back(Symlist::list_t());
+                    capture_stack.back().swap(n.capture);
+
+                } else if (symstr == "pop") {
+
+                    if (capture_stack.empty())
+                        continue;
+                    
+                    for (const auto& nn : capture_stack.back()) {
+                        ret.syms.push_back(Symcell(Symcell::QATOM, nn.sym));
+                    }
+
+                    capture_stack.pop_back();
+                    continue;
+                }
 
                 for (const auto& nn : n.capture) {
                     ret.syms.push_back(Symcell(Symcell::QATOM, nn.sym));
@@ -77,7 +107,7 @@ struct MetalanDoppel {
         return ret;
     }
 
-    std::string parse(const std::string& code, const std::string& inp) {
+    std::string parse(const std::string& code, const std::string& inp, bool verbose = false) {
 
         Symlist code_;
         code_.parse(code);
@@ -85,7 +115,7 @@ struct MetalanDoppel {
         Symlist sl;
         sl.parse(inp);
 
-        Symlist ret = parse(code_, sl);
+        Symlist ret = parse(code_, sl, verbose);
         return ret.print();
     }
 };

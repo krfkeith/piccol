@@ -24,9 +24,11 @@ typename_def :- typename @'DEF_NAME' &''.
 structdef :- spaces 'def' @'START_DEF' spaces '{' structfields '}' spaces typename_def spaces ';' @'END_DEF'.
 
 
-ident_val :- @'FIND_FIELD_INDEX' ident &''.
+ident_struct_field :- ident &''.
 
-structvalfields :- spaces ident_val spaces '=' spaces val @'SET_FIELD' structvalfields.
+structvalfields :- spaces @'SELECT_FIELD' ident_struct_field spaces '=' spaces val 
+                   @'SET_FIELD' structvalfields.
+
 structvalfields :- spaces.
 
 typename_constructor :- @'SET_TYPE' typename &''.

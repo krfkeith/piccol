@@ -22,6 +22,24 @@ inline Real string_to_real(const std::string& s) {
     return (Real)::strtod(s.c_str(), NULL);
 }
 
+inline std::string int_to_string(Int i) {
+    static char buff[1024];
+    ::snprintf(buff, 1023, "%lld", i);
+    return buff;
+}
+
+inline std::string uint_to_string(UInt i) {
+    static char buff[1024];
+    ::snprintf(buff, 1023, "%llu", i);
+    return buff;
+}
+
+inline std::string real_to_string(Real i) {
+    static char buff[1024];
+    ::snprintf(buff, 1023, "%g", i);
+    return buff;
+}
+
 }
 
 
@@ -145,7 +163,8 @@ struct VmAsm {
             ++p_i;
             
             if (op.op == PUSH ||
-                op.op == PUSH_DUP) {
+                op.op == PUSH_DUP ||
+                op.op == CALL) {
 
                 if (p_i == p_e) {
                     throw std::runtime_error("End of input while looking for opcode argument");
@@ -187,6 +206,30 @@ struct VmAsm {
         }
     }
 
+
+    std::string print() {
+
+        metalan::Symlist tmp;
+
+        for (const auto& i : code.codes) {
+
+            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, 
+                                                i.first));
+
+            for (const auto& j : i.second) {
+
+                tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, 
+                                                    opcodename(j.op)));
+
+                if (j.op == PUSH || j.op == PUSH_DUP || j.op == CALL) {
+                    tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, 
+                                                        int_to_string(j.arg.uint)));
+                }
+            }
+        }
+
+        return tmp.print();
+    }
 
 
     void parse(const std::string& pr) {

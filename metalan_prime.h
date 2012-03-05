@@ -44,9 +44,10 @@ struct MetalanPrime {
 
     MetalanPrime() {}
 
-    Symlist parse(Symlist& code, const std::string& inp) {
+    Symlist parse(Symlist& code, const std::string& inp, bool verbose = false) {
 
         parser_t parser;
+        parser.verbose = verbose;
 
         parser_t::outlist_t out;
         std::string unprocessed;
@@ -58,6 +59,17 @@ struct MetalanPrime {
         }
 
         Symlist ret;
+
+        /*
+         * Special commands:
+         * 
+         * 'append'  : Append the current capture to a previously emitted symbol. 
+         *             The previously emitted symbol will be modified in-place.
+         * 'combine' : Append the previously emitted symbol to the symbol emitted before it.
+         *             This second-to-last symbols will be modified in-place.
+         *             The current capture will be ignored.
+         */
+        
 
         for (const auto& n : out) {
 
@@ -94,12 +106,12 @@ struct MetalanPrime {
         return ret;
     }
 
-    std::string parse(const std::string& code, const std::string& inp) {
+    std::string parse(const std::string& code, const std::string& inp, bool verbose = false) {
 
         Symlist code_;
         code_.parse(code);
 
-        Symlist ret = parse(code_, inp);
+        Symlist ret = parse(code_, inp, verbose);
         return ret.print();
     }
 };

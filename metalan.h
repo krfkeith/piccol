@@ -108,6 +108,8 @@ struct Symlist {
 
     Symlist() {}
 
+    Symlist(const Symlist& sl) : syms(sl.syms) {}
+
     Symlist(Symlist&& sl) {
         syms.swap(sl.syms);
     }

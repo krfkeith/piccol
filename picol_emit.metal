@@ -26,7 +26,8 @@ val :- 'PUSH_SYM' sym.
 val :- structval.
 
 
-structfield :- 'FIND_FIELD_INDEX' @'_fieldname_deref' val_literal val 'SET_FIELD' @'_type_size' @'SET_FIELDS'.
+structfield :- val 'SELECT_FIELD' @'_fieldname_deref' val_literal
+               'SET_FIELD' @'_type_size' @'SET_FIELDS'.
 
 structfields :- structfield structfields.
 structfields :- .
