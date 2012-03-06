@@ -3,7 +3,7 @@
 #include <fstream>
 #include <streambuf>
 
-#include "picol_vm.h"
+#include "piccol_vm.h"
 
 void printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Struct& struc) {
 
@@ -66,20 +66,20 @@ int main(int argc, char** argv) {
                    std::istreambuf_iterator<char>());
     }
 
-    picol::Picol l;
+    piccol::Piccol l;
 
-    std::ifstream lfile("picol_lex.metal");
-    std::ifstream mfile("picol_morph.metal");
-    std::ifstream efile("picol_emit.metal");
+    std::ifstream lfile("piccol_lex.metal");
+    std::ifstream mfile("piccol_morph.metal");
+    std::ifstream efile("piccol_emit.metal");
 
     if (!lfile)
-        throw std::runtime_error("Could not open 'picol_lex.metal'");
+        throw std::runtime_error("Could not open 'piccol_lex.metal'");
 
     if (!mfile)
-        throw std::runtime_error("Could not open 'picol_morph.metal'");
+        throw std::runtime_error("Could not open 'piccol_morph.metal'");
 
     if (!efile)
-        throw std::runtime_error("Could not open 'picol_emit.metal'");
+        throw std::runtime_error("Could not open 'piccol_emit.metal'");
 
     std::string lexer;
     std::string morpher;
