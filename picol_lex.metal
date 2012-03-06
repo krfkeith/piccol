@@ -27,6 +27,9 @@ structdef :- spaces 'def' @'START_DEF' spaces '{' structfields '}'
              spaces typename_def spaces ';' @'END_DEF'.
 
 
+
+
+
 ident_struct_field :- ident &'push'.
 
 structvalfields :- spaces ident_struct_field spaces '=' spaces val_or_call 
@@ -72,6 +75,7 @@ val :- structval.
 
 typename_call :- typename &''.
 
+val_or_call :- val spaces '->' spaces @'CALL' typename_call.
 val_or_call :- val.
 
 

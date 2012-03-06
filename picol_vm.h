@@ -104,7 +104,7 @@ struct Picol {
             throw std::runtime_error(std::string("Error in stage 3 (picol_emit): ") + e.what());
         }
 
-        std::string tmp = stage2.print();
+        //std::string tmp = stage2.print();
         //std::cout << "==============================================" << std::endl;
         //std::cout << tmp << std::endl;
 
@@ -115,7 +115,7 @@ struct Picol {
         //std::cout << as.print() << std::endl;
 
         bm _b2;
-        nanom::vm_run(vm, metalan::symtab().get(""));
+        nanom::vm_run(vm);
     }
 
 };

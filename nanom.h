@@ -212,9 +212,6 @@ enum op_t {
     BSHL,
     BSHR,
 
-    INT_TO_REAL,
-    REAL_TO_INT,
-
     EQ_INT,
     LT_INT,
     LTE_INT,
@@ -241,7 +238,8 @@ enum op_t {
     NEW_STRUCT,
     SET_FIELDS,
 
-    SYSCALL_STRUCT
+    SYSCALL_STRUCT,
+    SYSCALL_PRIMITIVE
 
 };
 
@@ -253,22 +251,32 @@ struct Opcode {
 
 struct VmCode {
     typedef std::vector<Opcode> code_t;
-    std::unordered_map<Sym, code_t> codes;
+    typedef std::pair<Sym,Sym> label_t;
+
+    std::unordered_map<label_t, code_t> codes;
+
+    static label_t toplevel_label() {
+        Sym none = symtab().get("");
+        return std::make_pair(none, none);
+    }
 };
 
 typedef void (*syscall_callback_t)(const Shapes&, const Shape&, const Struct&);
+typedef void (*sysfunc_callback_t)(const Shapes&, const Shape&, const Shape&,
+                                   const Struct&, Struct&);
 
 
 struct Vm {
 
     std::vector<Val> stack;
-    std::vector< std::pair<Sym,size_t> > frame;
+    std::vector< std::pair<VmCode::label_t, size_t> > frame;
 
     VmCode& code;
 
     Shapes shapes;
 
     std::unordered_map<Sym, syscall_callback_t> callbacks;
+    std::unordered_map<VmCode::label_t, sysfunc_callback_t> func_callbacks;
 
     Shape tmp_shape;
 
@@ -277,6 +285,10 @@ struct Vm {
 
     void register_callback(Sym s, syscall_callback_t cb) {
         callbacks[s] = cb;
+    }
+
+    void register_callback(VmCode::label_t s, sysfunc_callback_t cb) {
+        func_callbacks[s] = cb;
     }
 
     Val pop() {
@@ -326,8 +338,6 @@ struct _mapper {
         m[(size_t)BXOR] = "BXOR";
         m[(size_t)BSHL] = "BSHL";
         m[(size_t)BSHR] = "BSHR";
-        m[(size_t)INT_TO_REAL] = "INT_TO_REAL";
-        m[(size_t)REAL_TO_INT] = "REAL_TO_INT";
         m[(size_t)EQ_INT] = "EQ_INT";
         m[(size_t)LT_INT] = "LT_INT";
         m[(size_t)LTE_INT] = "LTE_INT";
@@ -350,6 +360,7 @@ struct _mapper {
         m[(size_t)NEW_STRUCT] = "NEW_STRUCT";
         m[(size_t)SET_FIELDS] = "SET_FIELDS";
         m[(size_t)SYSCALL_STRUCT] = "SYSCALL_STRUCT";
+        m[(size_t)SYSCALL_PRIMITIVE] = "SYSCALL_PRIMITIVE";
         
         n["NOOP"] = NOOP;
         n["PUSH"] = PUSH;
@@ -379,8 +390,6 @@ struct _mapper {
         n["BXOR"] = BXOR;
         n["BSHL"] = BSHL;
         n["BSHR"] = BSHR;
-        n["INT_TO_REAL"] = INT_TO_REAL;
-        n["REAL_TO_INT"] = REAL_TO_INT;
         n["EQ_INT"] = EQ_INT;
         n["LT_INT"] = LT_INT;
         n["LTE_INT"] = LTE_INT;
@@ -403,6 +412,7 @@ struct _mapper {
         n["NEW_STRUCT"] = NEW_STRUCT;
         n["SET_FIELDS"] = SET_FIELDS;
         n["SYSCALL_STRUCT"] = SYSCALL_STRUCT;
+        n["SYSCALL_PRIMITIVE"] = SYSCALL_PRIMITIVE;
     }
 };
 
@@ -421,7 +431,16 @@ const op_t opcodecode(const std::string& opc) {
 }
 
 
-inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
+inline void vm_run(Vm& vm, 
+                   VmCode::label_t label = VmCode::toplevel_label(), 
+                   size_t ip = 0, 
+                   bool verbose = false) {
+
+    Sym int_primitive = symtab().get("Int");
+    Sym real_primitive = symtab().get("Real");
+    Sym uint_primitive = symtab().get("UInt");
+    Sym bool_primitive = symtab().get("Bool");
+    Sym sym_primitive = symtab().get("Sym");
 
     bool done = false;
 
@@ -492,11 +511,44 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
         }
 
         case CALL: {
-            vm.frame.push_back(std::make_pair(label, ip+1));
-            label = c.arg.uint;
-            code = &(vm.code.codes[label]);
-            ip = 0;
-            continue;
+            Val totype = vm.pop();
+            Val fromtype = vm.pop();
+
+            const Shape& shape = vm.shapes.get(fromtype.uint);
+
+            Struct tmp;
+            auto tope = vm.stack.end();
+            auto topb = tope - shape.size();
+            tmp.v.assign(topb, tope);
+            vm.stack.resize(vm.stack.size() - shape.size());
+            
+            auto i = vm.code.codes.find(label);
+
+            if (i != vm.code.codes.end()) {
+
+                vm.frame.push_back(std::make_pair(label, ip+1));
+                label = std::make_pair(fromtype.uint, totype.uint);
+                code = &(i->second);
+                ip = 0;
+                continue;
+
+            } else {
+                Struct ret;
+
+                auto j = vm.func_callbacks.find(std::make_pair(fromtype.uint, totype.uint));
+
+                if (j == vm.func_callbacks.end()) {
+                    throw std::runtime_error("Callback for '" + 
+                                             symtab().get(fromtype.uint) + "->" +
+                                             symtab().get(totype.uint) + "' undefined");
+                }
+
+                (j->second)(vm.shapes, shape, vm.shapes.get(totype.uint), tmp, ret);
+
+                vm.stack.insert(vm.stack.end(), ret.v.begin(), ret.v.end());
+            }
+
+            break;
         }
             
         case ADD_INT: {
@@ -635,14 +687,6 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
             vm.stack.push_back(v1.uint >> v2.uint);
             break;
         }
-
-        case INT_TO_REAL:
-            vm.stack.back().real = (Real)vm.stack.back().inte;
-            break;
-
-        case REAL_TO_INT:
-            vm.stack.back().inte = (Int)vm.stack.back().real;
-            break;
 
         case EQ_INT: {
             Val v2 = vm.pop();
@@ -818,6 +862,40 @@ inline void vm_run(Vm& vm, Sym label, size_t ip = 0, bool verbose = false) {
             (i->second)(vm.shapes, shape, tmp);
 
             vm.stack.resize(vm.stack.size() - shape.size());
+            break;
+        }
+
+        case SYSCALL_PRIMITIVE: {
+            Sym totype = vm.pop().uint;
+            Sym fromtype = vm.pop().uint;
+            Val from = vm.pop();
+            Val ret;
+
+            if (fromtype == int_primitive && totype == real_primitive) {
+                ret.real = (Real)from.inte;
+
+            } else if (fromtype == real_primitive && totype == int_primitive) {
+                ret.inte = (Int)from.real;
+
+            } else if (fromtype == int_primitive && totype == sym_primitive) {
+                ret.uint = symtab().get(std::string(1, (char)from.inte));
+
+            } else if (fromtype == uint_primitive && totype == sym_primitive) {
+                ret.uint = symtab().get(std::string(1, (unsigned char)from.uint));
+
+            } else if ((fromtype == bool_primitive && totype == int_primitive) ||
+                       (fromtype == bool_primitive && totype == uint_primitive) || 
+                       (fromtype == int_primitive && totype == bool_primitive) ||
+                       (fromtype == uint_primitive && totype == bool_primitive)) {
+                ret.uint = (bool)from.uint;
+
+            } else {
+                throw std::runtime_error("Don't know how to convert " + 
+                                         symtab().get(fromtype) + "->" +
+                                         symtab().get(totype));
+            }
+            
+            vm.stack.push_back(ret);
             break;
         }
 

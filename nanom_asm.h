@@ -51,8 +51,8 @@ struct VmAsm {
 
     void parse(const metalan::Symlist& prog) {
     
-        Sym nillabel = metalan::symtab().get("");
-        Sym label = nillabel;
+        VmCode::label_t nillabel = VmCode::toplevel_label();
+        VmCode::label_t label = nillabel;
 
         auto p_i = prog.syms.begin();
         auto p_e = prog.syms.end();
@@ -259,8 +259,7 @@ struct VmAsm {
             ++p_i;
             
             if (op.op == PUSH ||
-                op.op == PUSH_DUP ||
-                op.op == CALL) {
+                op.op == PUSH_DUP) {
 
                 if (p_i == p_e) {
                     throw std::runtime_error("End of input while looking for opcode argument");
@@ -310,14 +309,17 @@ struct VmAsm {
         for (const auto& i : code.codes) {
 
             tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, 
-                                                i.first));
+                                                i.first.first));
+
+            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, 
+                                                i.first.second));
 
             for (const auto& j : i.second) {
 
                 tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, 
                                                     opcodename(j.op)));
 
-                if (j.op == PUSH || j.op == PUSH_DUP || j.op == CALL) {
+                if (j.op == PUSH || j.op == PUSH_DUP) {
                     tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, 
                                                         int_to_string(j.arg.uint)));
                 }
