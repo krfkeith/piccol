@@ -854,7 +854,7 @@ inline void vm_run(Vm& vm,
             
             auto i = vm.callbacks.find(shapeid.uint);
             if (i == vm.callbacks.end()) {
-                throw std::runtime_error("Callback for '" + 
+                throw std::runtime_error("Toplevel callback for '" + 
                                          symtab().get(shapeid.uint) + 
                                          "' undefined");
             }

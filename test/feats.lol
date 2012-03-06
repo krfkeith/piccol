@@ -1,4 +1,6 @@
 
+def {} Void;
+
 def {
   x: Int
   y: Int
@@ -303,10 +305,33 @@ Feature{ tag='monolith' walkable=true visible=true skin=Skin{char=8->Sym color='
 
 
 
-# def SetFeature { xy: Coord feat: Sym };
 
-def {} Null;
-def {xy:Coord null:Null null2:Null f:Real} Test;
-Test{ xy=Coord{x=1 y=2} null=Null{} f=1.2345};
+def { xy:Coord feat:Feature } FeatAt;
+def { xy:Coord feat:Void }    NoFeatAt;
+def { xy:Coord walkable }     GridSetWalk;
+def { xy:Coord height:Int }   GridSetHeight;
+def { xy:Coord water }        GridSetWater;
 
+def { tag:Sym } Featsym;
+
+
+fun { xy:Coord feat:Feature } SetFeature {
+  if feat.nofeature 
+     NoFeatAt{xy=xy};
+  else 
+     FeatAt{xy=xy feat=feat};
+
+  GridSetWalk{xy=xy walkable=feat.walkable};
+  GridSetHeight{xy=xy height=feat.height};
+  GridSetWater{xy=xy water=feat.water->Bool};
+};
+
+
+fun { xy:Coord feat:Sym } SetFeatsym {
+  SetFeature{xy=xy feat=Featsym{tag=feat}->Feature};
+};
+
+fun { xy:Coord } SetRenderprops {
+  xxx Coord{xy=xy}->Feature xxx;
+};
 
