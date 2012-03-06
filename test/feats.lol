@@ -67,7 +67,8 @@ Feature{ tag='4' walkable=true visible=true skin=Skin{char='>' color='dark_gray'
 Feature{ tag='5' walkable=true visible=true skin=Skin{char='>' color='light_gray'}
          stairs=1 name='a hole in the floor' branch='e'};
 
-Feature{ tag='6' walkable=true visible=true skin=Skin{char='175' color='white'}
+Feature{ tag='6' walkable=true visible=true 
+         skin=Skin{ char='175' color='white'} 
          stairs=1 name='a hole in the floor' branch='s'};
 
 Feature{ tag='8' walkable=true visible=true skin=Skin{char='175' color='red'}

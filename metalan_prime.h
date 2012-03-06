@@ -60,6 +60,8 @@ struct MetalanPrime {
 
         Symlist ret;
 
+        std::vector<std::string> capture_stack;
+
         /*
          * Special commands:
          * 
@@ -67,6 +69,9 @@ struct MetalanPrime {
          *             The previously emitted symbol will be modified in-place.
          * 'combine' : Append the previously emitted symbol to the symbol emitted before it.
          *             This second-to-last symbols will be modified in-place.
+         *             The current capture will be ignored.
+         * 'push'    : Push current capture on a stack, do not emit any symbols.
+         * 'pop'     : Pop a capture from the stack and emit the symbols is contains. 
          *             The current capture will be ignored.
          */
         
@@ -92,6 +97,20 @@ struct MetalanPrime {
                     Symcell& prevprev = ret.syms.back();
                     prevprev.sym = symtab().get(symtab().get(prevprev.sym) + 
                                                 symtab().get(prev.sym));
+                    continue;
+
+                } else if (symstr == "push") {
+
+                    capture_stack.push_back(n.capture);
+                    continue;
+
+                } else if (symstr == "pop") {
+
+                    if (capture_stack.empty())
+                        continue;
+
+                    ret.syms.push_back(Symcell(Symcell::QATOM, capture_stack.back()));
+                    capture_stack.pop_back();
                     continue;
                 }
 

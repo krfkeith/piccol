@@ -20,12 +20,11 @@ def :- 'START_DEF' @'_cmode_on' @'NEW_SHAPE' fields 'DEF_NAME' sym 'END_DEF' @'D
 
 val_literal :- * &''.
 
-val :- 'PUSH_INT' @'PUSH' @'Int' val_literal.
-val :- 'PUSH_REAL' @'PUSH' @'Real' val_literal.
-val :- 'PUSH_BOOL' @'PUSH' @'Bool' val_literal.
-val :- 'PUSH_SYM' sym.
+val :- 'SET_TYPE' 'Int'  'PUSH' @'PUSH' @'Int'  val_literal.
+val :- 'SET_TYPE' 'Real' 'PUSH' @'PUSH' @'Real' val_literal.
+val :- 'SET_TYPE' 'Bool' 'PUSH' @'PUSH' @'Bool' val_literal.
+val :- 'SET_TYPE' 'Sym'  'PUSH' sym.
 val :- structval.
-
 
 structfield :- val 'SELECT_FIELD' @'_fieldname_deref' val_literal
                'CHECK_TYPE' @'_fieldtype_check' val_literal val_literal

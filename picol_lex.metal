@@ -27,16 +27,18 @@ structdef :- spaces 'def' @'START_DEF' spaces '{' structfields '}'
              spaces typename_def spaces ';' @'END_DEF'.
 
 
-ident_struct_field :- ident &''.
+ident_struct_field :- ident &'push'.
 
-structvalfields :- spaces @'SELECT_FIELD' ident_struct_field spaces '=' spaces val 
-                   @'SET_FIELD' structvalfields.
+structvalfields :- spaces ident_struct_field spaces '=' spaces val_or_call 
+                   @'SELECT_FIELD' &'pop' @'SET_FIELD' 
+                   structvalfields.
 
 structvalfields :- spaces.
 
 typename_constructor :- @'SET_TYPE' typename &''.
 
 structval :- typename_constructor spaces '{' @'START_STRUCT' structvalfields '}' @'END_STRUCT'.
+
 
 uintval_x :- digit uintval_x.
 uintval_x :- .
@@ -60,12 +62,18 @@ nilval :- 'nil'.
 nilval :- 'false'.
 trueval :- 'true'.
 
-val :- @'PUSH_REAL' realval.
-val :- @'PUSH_INT' intval &''.
-val :- @'PUSH_SYM' symval.
-val :- nilval @'PUSH_BOOL' @'0'.
-val :- trueval @'PUSH_BOOL' @'1'.
+val :- @'SET_TYPE' @'Real' @'PUSH' realval.
+val :- @'SET_TYPE' @'Int'  @'PUSH' intval &''.
+val :- @'SET_TYPE' @'Sym'  @'PUSH' symval.
+val :- nilval  @'SET_TYPE' @'Bool' @'PUSH' @'0'.
+val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
 val :- structval.
+
+
+typename_call :- typename &''.
+
+val_or_call :- val.
+
 
 expr :- spaces structval spaces ';' @'SYSCALL'.
 
