@@ -62,7 +62,7 @@ struct Shape {
         size_t ix_from;
         size_t ix_to;
 
-        typeinfo() : type(NONE), shape(0), ix_from(0), ix_to(0) {}
+        typeinfo() : type(NONE), shape(0), ix_from(1), ix_to(0) {}
     };
 
     std::unordered_map<Sym, typeinfo> sym2field;
@@ -85,7 +85,7 @@ struct Shape {
     std::pair<size_t,size_t> get_index(Sym s) const {
         auto i = sym2field.find(s);
         if (i == sym2field.end())
-            return std::make_pair(0,0);
+            return std::make_pair(1,0);
         return std::make_pair(i->second.ix_from, i->second.ix_to);
     }
 

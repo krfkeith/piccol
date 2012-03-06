@@ -16,10 +16,8 @@ typename_field :- typename @'FIELD_TYPE' &''.
 opttype :- spaces ':' spaces typename_field.
 opttype :- spaces @'EMPTY_TYPE'.
 
-structfields_x :- spaces ident_field opttype structfields_x.
-structfields_x :- spaces .
-
-structfields :- spaces ident_field opttype structfields_x.
+structfields :- spaces ident_field opttype structfields.
+structfields :- spaces .
 
 typename_def :- typename @'DEF_NAME' &''.
 

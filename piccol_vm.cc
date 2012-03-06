@@ -95,6 +95,7 @@ int main(int argc, char** argv) {
                   std::istreambuf_iterator<char>());
 
     l.register_callback("Feature", printer);
+    l.register_callback("Test", printer);
     
     l.load(lexer, morpher, emiter, inp);
 

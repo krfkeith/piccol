@@ -151,7 +151,7 @@ struct VmAsm {
 
                 auto offrange = vm.shapes.get(shapestack.back()).get_index(fieldsym);
 
-                if (offrange.first == offrange.second) {
+                if (offrange.first > offrange.second) {
 
                     throw std::runtime_error("Unknown struct field: " + 
                                              symtab().get(shapestack.back()) + "." +

@@ -303,4 +303,10 @@ Feature{ tag='monolith' walkable=true visible=true skin=Skin{char=8->Sym color='
 
 
 
+# def SetFeature { xy: Coord feat: Sym };
+
+def {} Null;
+def {xy:Coord null:Null null2:Null f:Real} Test;
+Test{ xy=Coord{x=1 y=2} null=Null{} f=1.2345};
+
 
