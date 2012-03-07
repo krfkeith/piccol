@@ -76,6 +76,7 @@ struct Symcell {
         ATOM,
         QATOM,
         VAR,
+        ESCAPE,
         ACTION_DATA,
         ACTION_CODE
     };
@@ -410,6 +411,7 @@ struct Parser {
         static Sym dot = symtab().get(".");
         static Sym at = symtab().get("@");
         static Sym amp = symtab().get("&");
+        static Sym backslash = symtab().get("\\");
 
         Sym head = consume(Symcell::VAR, 0, b, e, "Rule head must be a variable");
         consume(Symcell::ATOM, colon, b, e, "Invalid rule syntax");
@@ -435,10 +437,12 @@ struct Parser {
                     ++b;
                     return b;
 
-                } else if (b->sym == at || b->sym == amp) {
+                } else if (b->sym == at || b->sym == amp || b->sym == backslash) {
 
                     bool ishead = (b == rstart);
-                    bool isdata = (b->sym == at);
+                    bool isat = (b->sym == at);
+                    bool isamp = (b->sym == amp);
+                    bool isbackslash = (b->sym == backslash);
 
                     b = l.erase(b);
                     if (b == e)
@@ -447,7 +451,7 @@ struct Parser {
                     if (ishead)
                         rstart = b;
 
-                    if (b->type == Symcell::VAR) {
+                    if (b->type == Symcell::VAR && !isbackslash) {
                         auto i = actions.find(b->sym);
 
                         if (i == actions.end())
@@ -457,7 +461,15 @@ struct Parser {
                         b->sym = i->second;
                     }
 
-                    b->type = (isdata ? Symcell::ACTION_DATA : Symcell::ACTION_CODE);
+                    if (isat) {
+                        b->type = Symcell::ACTION_DATA;
+
+                    } else if (isamp) {
+                        b->type = Symcell::ACTION_CODE;
+
+                    } else if (isbackslash) {
+                        b->type = Symcell::ESCAPE;
+                    }
 
                 }
             }
@@ -562,7 +574,7 @@ struct Parser {
 
         for (const Symcell& sc : rule) {
 
-            if (sc.type == Symcell::ATOM || sc.type == Symcell::QATOM) {
+            if (sc.type == Symcell::ATOM || sc.type == Symcell::QATOM || sc.type == Symcell::ESCAPE) {
 
                 if (!(MATCHER()(sc, b, e))) {
                     b = savedb;

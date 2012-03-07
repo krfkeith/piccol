@@ -16,7 +16,7 @@ struct symcellmatcher {
 
         if (b == e) return false;
 
-        if (sc.type == Symcell::ATOM && sc.sym == symtab().get("*")) {
+        if (sc.type == Symcell::ESCAPE && sc.sym == symtab().get("*")) {
             ++b;
             return true;
         }

@@ -314,7 +314,7 @@ def { xy:Coord water }        GridSetWater;
 
 def { tag:Sym } Featsym;
 
-
+/*
 fun { xy:Coord feat:Feature } SetFeature {
   if feat.nofeature 
      NoFeatAt{xy=xy};
@@ -334,4 +334,4 @@ fun { xy:Coord feat:Sym } SetFeatsym {
 fun { xy:Coord } SetRenderprops {
   xxx Coord{xy=xy}->Feature xxx;
 };
-
+*/

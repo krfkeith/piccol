@@ -4,6 +4,7 @@
 
 #include "metalan.h"
 
+#include <ctype.h>
 
 namespace metalan {
 
@@ -19,9 +20,36 @@ struct charmatcher {
 
         const std::string& str = symtab().get(sc.sym);
 
-        if (sc.type == Symcell::ATOM && str == "*") {
-            ++b;
-            return true;
+        if (sc.type == Symcell::ESCAPE) {
+
+            if (str == "*") {
+                ++b;
+                return true;
+
+            } else if (str == "digit") {
+                if (::isdigit(*b)) {
+                    ++b;
+                    return true;
+                } else {
+                    return false;
+                }
+
+            } else if (str == "locase") {
+                if (::islower(*b)) {
+                    ++b;
+                    return true;
+                } else {
+                    return false;
+                }
+
+            } else if (str == "upcase") {
+                if (::isupper(*b)) {
+                    ++b;
+                    return true;
+                } else {
+                    return false;
+                }
+            }
         }
 
         for (unsigned char c : str) {
