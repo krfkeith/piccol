@@ -22,7 +22,7 @@ struct charmatcher {
 
         if (sc.type == Symcell::ESCAPE) {
 
-            if (str == "*") {
+            if (str == "any") {
                 ++b;
                 return true;
 

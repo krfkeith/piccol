@@ -70,7 +70,7 @@ symval_x :- {\\} {'} @{'}  &'combine' symval_x.
 symval_x :- {\\} {t} @{\t} &'combine' symval_x.
 symval_x :- {\\} {n} @{\n} &'combine' symval_x.
 symval_x :- {'}.
-symval_x :- \* &'append' symval_x.
+symval_x :- \any &'append' symval_x.
 symval :- @'' {'} symval_x.
 
 nilval :- 'nil'.
@@ -94,9 +94,9 @@ val_or_call :- val.
 expr :- spaces structval spaces ';' @'SYSCALL'.
 
 comment_x :- '\n'.
-comment_x :- \* comment_x.
+comment_x :- \any comment_x.
 comment_xx :- '*/'.
-comment_xx :- \* comment_xx.
+comment_xx :- \any comment_xx.
 
 comment :- spaces '#' comment_x.
 comment :- spaces '/*' comment_xx.

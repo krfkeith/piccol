@@ -1,6 +1,6 @@
 
 
-sym :- @'PUSH' \* @'Sym' &''.
+sym :- @'PUSH' \any @'Sym' &''.
 
 field_name :- 'FIELD_NAME' sym.
 
@@ -18,7 +18,7 @@ def :- 'START_DEF' @'_cmode_on' @'NEW_SHAPE' fields 'DEF_NAME' sym 'END_DEF' @'D
 
 
 
-val_literal :- \* &''.
+val_literal :- \any &''.
 
 primitive_type :- 'Int' &''.
 primitive_type :- 'Real' &''.
