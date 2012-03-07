@@ -83,7 +83,7 @@ structvalfields :- spaces.
 structval :- @'SET_TYPE' typename_here spaces '{' @'START_STRUCT' structvalfields '}' @'END_STRUCT'.
 
 
-dots :- '.' ident dots.
+dots :- '.' ident.
 dots :- .
 
 var_dots :- ident dots.
