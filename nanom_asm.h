@@ -49,197 +49,277 @@ struct VmAsm {
 
     VmCode code;
 
+    VmAsm() : 
+        nillabel(VmCode::toplevel_label()),
+        vm(compiletime_code), 
+        cmode(false),
+        cmode_code(compiletime_code.codes[nillabel]),
+        label(nillabel)
+        {}
+
+    VmCode::label_t nillabel;
+
+private:
+
+    metalan::Symlist::list_t::const_iterator p_i;
+    metalan::Symlist::list_t::const_iterator p_e;
+
+    VmCode compiletime_code;
+    Vm vm;
+
+    bool cmode;
+    VmCode::code_t& cmode_code;
+
+    std::vector<Sym> shapestack;
+    std::vector<VmCode::label_t> labelstack;
+    VmCode::label_t label;
+
+    void cmode_on() {
+        cmode = true;
+    }
+
+    void cmode_off() {
+        cmode = false;
+        Opcode op;
+        op.op = EXIT;
+        cmode_code.push_back(op);
+
+        vm_run(vm, nillabel);
+
+        cmode_code.clear();
+    }
+
+    void push_type() {
+        ++p_i;
+
+        if (p_i == p_e)
+            throw std::runtime_error("End of input in _push_type");
+
+        shapestack.push_back(p_i->sym);
+    }
+
+    void pop_type() {
+        if (shapestack.empty())
+            throw std::runtime_error("Sanity error: _pop_type before _push_type");
+
+        shapestack.pop_back();
+    }
+
+    void top_type() {
+        if (shapestack.empty())
+            throw std::runtime_error("Sanity error: _top_type before _push_type");
+
+        Opcode op;
+        op.op = PUSH;
+        op.arg.uint = shapestack.back();
+
+        code.codes[label].push_back(op);
+    }
+
+    void push_funlabel() {
+        ++p_i;
+
+        if (p_i == p_e)
+            throw std::runtime_error("End of input in _push_funlabel");
+
+        labelstack.push_back(std::make_pair(p_i->sym, nillabel.second));
+        label = labelstack.back();
+    }
+
+    void pop_funlabel() {
+        if (labelstack.empty())
+            throw std::runtime_error("Sanity error: _pop_funlabel before _push_funlabel");
+
+        labelstack.pop_back();
+
+        if (labelstack.empty()) {
+            label = nillabel;
+        } else {
+            label = labelstack.back();
+        }
+    }
+
+    void type_size() {
+        if (shapestack.empty())
+            throw std::runtime_error("Sanity error: _type_size before _push_type");
+
+        Opcode op;
+        op.op = PUSH;
+        op.arg.uint = vm.shapes.get(shapestack.back()).size();
+
+        code.codes[label].push_back(op);
+    }
+
+    void fieldname_deref() {
+        if (shapestack.empty())
+            throw std::runtime_error("Sanity error: _fieldname_deref before _push_type");
+
+        ++p_i;
+
+        if (p_i == p_e)
+            throw std::runtime_error("End of input in _fieldname_deref");
+
+        Sym fieldsym = p_i->sym;
+
+        auto offrange = vm.shapes.get(shapestack.back()).get_index(fieldsym);
+
+        if (offrange.first > offrange.second) {
+
+            throw std::runtime_error("Unknown struct field: " + 
+                                     symtab().get(shapestack.back()) + "." +
+                                     symtab().get(fieldsym));
+        }
+
+        Opcode op;
+        op.op = PUSH;
+        op.arg.uint = offrange.first;
+
+        code.codes[label].push_back(op);
+
+        op.arg.uint = offrange.second;
+
+        code.codes[label].push_back(op);
+    }
+
+    void fieldtype_check() {
+        if (shapestack.empty())
+            throw std::runtime_error("Sanity error: _fieldname_deref before _push_type");
+
+        ++p_i;
+        if (p_i == p_e)
+            throw std::runtime_error("End of input in _fieldname_deref");
+
+        Sym fieldsym = p_i->sym;
+
+        ++p_i;
+        if (p_i == p_e)
+            throw std::runtime_error("End of input in _fieldname_deref");
+
+        Sym typesym = p_i->sym;
+        const std::string& typestr = symtab().get(typesym);
+
+        const auto& typeinfo = vm.shapes.get(shapestack.back()).get_type(fieldsym);
+        bool ok = false;
+        std::string fieldtypename;
+
+        switch (typeinfo.type) {
+        case BOOL:
+            if (typestr == "Bool") {
+                ok = true;
+            }
+            fieldtypename = "<bool>";
+            break;
+
+        case INT:
+        case UINT:
+            if (typestr == "Int" || typestr == "UInt") {
+                ok = true;
+            }
+            fieldtypename = "<integer>";
+            break;
+
+        case REAL:
+            if (typestr == "Real") {
+                ok = true;
+            }
+            fieldtypename = "<real>";
+            break;
+
+        case SYMBOL:
+            if (typestr == "Sym") {
+                ok = true;
+            }
+            fieldtypename = "<symbol>";
+            break;
+
+        case STRUCT:
+            if (typesym == typeinfo.shape) {
+                ok = true;
+            }
+            fieldtypename = symtab().get(typeinfo.shape);
+            break;
+
+        case NONE:
+            break;
+        }
+
+        if (!ok) {
+            throw std::runtime_error("Type checking failed: " +
+                                     symtab().get(shapestack.back()) + "." +
+                                     symtab().get(fieldsym) + " has type " + 
+                                     fieldtypename + " but you assigned a " + typestr);
+        }
+    }
+
+public:
+
     void parse(const metalan::Symlist& prog) {
     
-        VmCode::label_t nillabel = VmCode::toplevel_label();
-        VmCode::label_t label = nillabel;
+        p_i = prog.syms.begin();
+        p_e = prog.syms.end();
+        label = nillabel;
 
-        auto p_i = prog.syms.begin();
-        auto p_e = prog.syms.end();
-
-        VmCode compiletime_code;
-        Vm vm(compiletime_code);
-
-        bool cmode = false;
-        auto& cmode_code= compiletime_code.codes[nillabel];
-
-        std::vector<Sym> shapestack;
 
         while (p_i != p_e) {
 
             const std::string& op_name = metalan::symtab().get(p_i->sym);
 
             if (op_name == "_cmode_on") {
-                cmode = true;
+                cmode_on();
 
                 ++p_i;
                 continue;
 
             } else if (op_name == "_cmode_off") {
-                cmode = false;
-                Opcode op;
-                op.op = EXIT;
-                cmode_code.push_back(op);
-
-                vm_run(vm, nillabel);
-
-                cmode_code.clear();
+                cmode_off();
 
                 ++p_i;
                 continue;
 
             } else if (op_name == "_push_type") {
-                ++p_i;
+                push_type();
 
-                if (p_i == p_e)
-                    throw std::runtime_error("End of input in _push_type");
-
-                shapestack.push_back(p_i->sym);
-                
                 ++p_i;
                 continue;
 
             } else if (op_name == "_pop_type") {
-
-                if (shapestack.empty())
-                    throw std::runtime_error("Sanity error: _pop_type before _push_type");
-
-                shapestack.pop_back();
+                pop_type();
 
                 ++p_i;
                 continue;
 
             } else if (op_name == "_top_type") {
+                top_type();
 
-                if (shapestack.empty())
-                    throw std::runtime_error("Sanity error: _top_type before _push_type");
+                ++p_i;
+                continue;
 
-                Opcode op;
-                op.op = PUSH;
-                op.arg.uint = shapestack.back();
+            } else if (op_name == "_push_funlabel") {
+                push_funlabel();
 
-                code.codes[label].push_back(op);
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_pop_funlabel") {
+                pop_funlabel();
 
                 ++p_i;
                 continue;
 
             } else if (op_name == "_type_size") {
-
-                if (shapestack.empty())
-                    throw std::runtime_error("Sanity error: _type_size before _push_type");
-
-                Opcode op;
-                op.op = PUSH;
-                op.arg.uint = vm.shapes.get(shapestack.back()).size();
-
-                code.codes[label].push_back(op);
+                type_size();
 
                 ++p_i;
                 continue;
 
             } else if (op_name == "_fieldname_deref") {
-
-                if (shapestack.empty())
-                    throw std::runtime_error("Sanity error: _fieldname_deref before _push_type");
-
-                ++p_i;
-
-                if (p_i == p_e)
-                    throw std::runtime_error("End of input in _fieldname_deref");
-
-                Sym fieldsym = p_i->sym;
-
-                auto offrange = vm.shapes.get(shapestack.back()).get_index(fieldsym);
-
-                if (offrange.first > offrange.second) {
-
-                    throw std::runtime_error("Unknown struct field: " + 
-                                             symtab().get(shapestack.back()) + "." +
-                                             symtab().get(fieldsym));
-                }
-
-                Opcode op;
-                op.op = PUSH;
-                op.arg.uint = offrange.first;
-
-                code.codes[label].push_back(op);
-
-                op.arg.uint = offrange.second;
-
-                code.codes[label].push_back(op);
+                fieldname_deref();
 
                 ++p_i;
                 continue;
 
             } else if (op_name == "_fieldtype_check") {
-
-                if (shapestack.empty())
-                    throw std::runtime_error("Sanity error: _fieldname_deref before _push_type");
-
-                ++p_i;
-                if (p_i == p_e)
-                    throw std::runtime_error("End of input in _fieldname_deref");
-
-                Sym fieldsym = p_i->sym;
-
-                ++p_i;
-                if (p_i == p_e)
-                    throw std::runtime_error("End of input in _fieldname_deref");
-
-                Sym typesym = p_i->sym;
-                const std::string& typestr = symtab().get(typesym);
-
-                const auto& typeinfo = vm.shapes.get(shapestack.back()).get_type(fieldsym);
-                bool ok = false;
-                std::string fieldtypename;
-
-                switch (typeinfo.type) {
-                case BOOL:
-                    if (typestr == "Bool") {
-                        ok = true;
-                    }
-                    fieldtypename = "<bool>";
-                    break;
-
-                case INT:
-                case UINT:
-                    if (typestr == "Int" || typestr == "UInt") {
-                        ok = true;
-                    }
-                    fieldtypename = "<integer>";
-                    break;
-
-                case REAL:
-                    if (typestr == "Real") {
-                        ok = true;
-                    }
-                    fieldtypename = "<real>";
-                    break;
-
-                case SYMBOL:
-                    if (typestr == "Sym") {
-                        ok = true;
-                    }
-                    fieldtypename = "<symbol>";
-                    break;
-
-                case STRUCT:
-                    if (typesym == typeinfo.shape) {
-                        ok = true;
-                    }
-                    fieldtypename = symtab().get(typeinfo.shape);
-                    break;
-
-                case NONE:
-                    break;
-                }
-
-                if (!ok) {
-                    throw std::runtime_error("Type checking failed: " +
-                                             symtab().get(shapestack.back()) + "." +
-                                             symtab().get(fieldsym) + " has type " + 
-                                             fieldtypename + " but you assigned a " + typestr);
-                }
+                fieldtype_check();
 
                 ++p_i;
                 continue;

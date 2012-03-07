@@ -83,7 +83,17 @@ struct MetalanPrime {
         bool ok = parser.parse(code, inp, out, unprocessed);
 
         if (!ok) {
-            throw std::runtime_error("Parse failed. Unconsumed input: " + unprocessed);
+            std::string ext = std::string(parser.largest_extent, inp.end());
+
+            if (ext.size() > 20)
+                ext.resize(20);
+
+            if (unprocessed.size() > 50)
+                unprocessed.resize(50);
+
+            throw std::runtime_error("Parse failed at:\n<<<\n" + ext +
+                                     "\n>>>\nUnconsumed input:\n<<<\n" + unprocessed +
+                                     "\n>>>\n");
         }
 
         Symlist ret;

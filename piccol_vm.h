@@ -60,14 +60,7 @@ struct Piccol {
             stage1 = prime.parse(lexer, inp);
 
         } catch (std::exception& e) {
-            std::string msg = e.what();
-
-            if (msg.size() > 200) {
-                msg.resize(200); 
-                msg += "...";
-            }
-
-            throw std::runtime_error(std::string("Error in stage 1 (piccol_lex): ") + msg);
+            throw std::runtime_error(std::string("Error in stage 1 (piccol_lex): ") + e.what());
         }
 
         //std::cout << "[" << stage1.print() << "]" << std::endl;
@@ -119,6 +112,13 @@ struct Piccol {
         nanom::vm_run(vm);
     }
 
+    void run(metalan::Sym s1) {
+        nanom::vm_run(vm, std::make_pair(s1, as.nillabel.second));
+    }
+
+    void run(const std::string& s) {
+        run(metalan::symtab().get(s));
+    }
 };
 
 }

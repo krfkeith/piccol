@@ -372,9 +372,11 @@ struct Parser {
     std::unordered_map< Sym, Sym > actions;
 
 
+    tokeniter_t largest_extent;
+    size_t largest_depth;
     bool verbose;
 
-    Parser() : verbose(false) {}
+    Parser() : largest_depth(0), verbose(false) {}
 
 
 
@@ -615,6 +617,11 @@ struct Parser {
         if (it == rules.end())
             throw std::runtime_error("Unknown rule referenced: '" + rule + "'");
 
+        if (depth > largest_depth) {
+            largest_extent = b;
+            largest_depth = depth;
+        }
+
         tokeniter_t savedb = b;
         outlist_t subout;
 
@@ -703,6 +710,9 @@ struct Parser {
 
         tokeniter_t sb = inp.begin();
         tokeniter_t se = inp.end();
+
+        largest_extent = sb;
+        largest_depth = 0;
 
         bool ok = apply("main", sb, se, out);
 

@@ -3,7 +3,16 @@ space :- ' '.
 space :- '\n'.
 space :- '\t'.
 
+comment_x :- '\n'.
+comment_x :- \any comment_x.
+comment_xx :- '*/'.
+comment_xx :- \any comment_xx.
+
+comment :- '#' comment_x.
+comment :- '/*' comment_xx.
+
 spaces :- space spaces.
+spaces :- comment spaces.
 spaces :- .
 
 any_letter :- \upcase.
@@ -24,35 +33,20 @@ ident :- locase_letter ident_x.
 
 typename :- upcase_letter ident_x.
 
-ident_field :- ident @'FIELD_NAME' &''.
-typename_field :- typename @'FIELD_TYPE' &''.
+ident_here :- ident &''.
+typename_here :- typename &''.
 
-opttype :- spaces ':' spaces typename_field.
+opttype :- spaces ':' spaces @'FIELD_TYPE' typename_here.
 opttype :- spaces @'EMPTY_TYPE'.
 
-structfields :- spaces ident_field opttype structfields.
+structfields :- spaces @'FIELD_NAME' ident_here opttype structfields.
 structfields :- spaces .
 
-typename_def :- typename @'DEF_NAME' &''.
-
 structdef :- spaces 'def' @'START_DEF' spaces '{' structfields '}' 
-             spaces typename_def spaces ';' @'END_DEF'.
+             spaces @'DEF_NAME' typename_here spaces ';' @'END_DEF'.
 
 
 
-
-
-ident_struct_field :- ident &'push'.
-
-structvalfields :- spaces ident_struct_field spaces '=' spaces val_or_call 
-                   @'SELECT_FIELD' &'pop' @'SET_FIELD' 
-                   structvalfields.
-
-structvalfields :- spaces.
-
-typename_constructor :- @'SET_TYPE' typename &''.
-
-structval :- typename_constructor spaces '{' @'START_STRUCT' structvalfields '}' @'END_STRUCT'.
 
 
 uintval_x :- digit uintval_x.
@@ -77,33 +71,57 @@ nilval :- 'nil'.
 nilval :- 'false'.
 trueval :- 'true'.
 
+
+ident_struct_field :- ident &'push'.
+
+structvalfields :- spaces ident_struct_field spaces '=' spaces val_or_call 
+                   @'SELECT_FIELD' &'pop' @'SET_FIELD' 
+                   structvalfields.
+
+structvalfields :- spaces.
+
+structval :- @'SET_TYPE' typename_here spaces '{' @'START_STRUCT' structvalfields '}' @'END_STRUCT'.
+
+
+dots :- '.' ident dots.
+dots :- .
+
+var_dots :- ident dots.
+
+
 val :- @'SET_TYPE' @'Real' @'PUSH' realval.
 val :- @'SET_TYPE' @'Int'  @'PUSH' intval &''.
 val :- @'SET_TYPE' @'Sym'  @'PUSH' symval.
 val :- nilval  @'SET_TYPE' @'Bool' @'PUSH' @'0'.
 val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
 val :- structval.
+val :- var_dots.
 
 
-typename_call :- typename &''.
-
-val_or_call :- val spaces '->' spaces @'CALL' typename_call.
+val_or_call :- val spaces '->' spaces @'CALL' typename_here.
 val_or_call :- val.
 
 
 expr :- spaces structval spaces ';' @'SYSCALL'.
 
-comment_x :- '\n'.
-comment_x :- \any comment_x.
-comment_xx :- '*/'.
-comment_xx :- \any comment_xx.
 
-comment :- spaces '#' comment_x.
-comment :- spaces '/*' comment_xx.
+condexpr :- var_dots.
+
+opt_else :- spaces 'else' spaces expr.
+opt_else :- .
+
+conditional :- spaces 'if' spaces condexpr spaces expr opt_else.
+
+statements :- expr statements.
+statements :- conditional statements.
+statements :- .
+
+
+fun :- spaces 'fun' spaces @'SET_TYPE' typename_here @'START_FUN' spaces '{' spaces
+       statements spaces '}' @'END_FUN' spaces ';'.
 
 all :- structdef all.
-all :- expr all.
-all :- comment all.
+all :- fun all.
 all :- spaces.
 
 main :- all.

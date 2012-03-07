@@ -50,7 +50,10 @@ def {
 
 } Feature;
 
+def {} FeaturesInit;
  
+fun FeaturesInit {
+
 Feature{ tag='>' walkable=true visible=true skin=Skin{char='>' color='white'} 
          stairs=1 name='a hole in the floor'};
 
@@ -303,8 +306,7 @@ Feature{ tag='signcth6' walkable=true visible=true skin=Skin{char=250->Sym color
 Feature{ tag='monolith' walkable=true visible=true skin=Skin{char=8->Sym color='light_gray'}
          special='monolith' name='the Monolith'};
 
-
-
+};
 
 def { xy:Coord feat:Feature } FeatAt;
 def { xy:Coord feat:Void }    NoFeatAt;

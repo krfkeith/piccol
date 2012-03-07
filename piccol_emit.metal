@@ -54,9 +54,14 @@ structval :- structval_head @'_pop_type'.
 
 structval_toplevel :- structval_head 'SYSCALL' @'_top_type' @'SYSCALL_STRUCT' @'_pop_type'.
 
+statements :- structval_toplevel statements.
+statements :- .
+
+fun :- 'SET_TYPE' @'_push_funlabel' val_literal 'START_FUN' statements 'END_FUN' @'_pop_funlabel'.
+
 
 all :- def all.
-all :- structval_toplevel all.
+all :- fun all.
 all :- @'EXIT'.
 
 main :- all.

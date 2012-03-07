@@ -99,5 +99,7 @@ int main(int argc, char** argv) {
     
     l.load(lexer, morpher, emiter, inp);
 
+    l.run("FeaturesInit");
+
     return 0;
 }
