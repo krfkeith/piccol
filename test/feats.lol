@@ -1,5 +1,4 @@
 
-def {} Void;
 
 def {
   x: Int

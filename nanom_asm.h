@@ -122,7 +122,14 @@ private:
         if (p_i == p_e)
             throw std::runtime_error("End of input in _push_funlabel");
 
-        labelstack.push_back(std::make_pair(p_i->sym, nillabel.second));
+        Sym from = p_i->sym;
+
+        ++p_i;
+
+        if (p_i == p_e)
+            throw std::runtime_error("End of input in _push_funlabel");
+
+        labelstack.push_back(std::make_pair(from, p_i->sym));
         label = labelstack.back();
     }
 
@@ -388,11 +395,9 @@ public:
 
         for (const auto& i : code.codes) {
 
-            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, 
-                                                i.first.first));
-
-            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, 
-                                                i.first.second));
+            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, "LABEL"));
+            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, i.first.first));
+            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, i.first.second));
 
             for (const auto& j : i.second) {
 

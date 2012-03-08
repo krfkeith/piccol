@@ -32,8 +32,8 @@ struct Piccol {
 
     Piccol() : vm(as.code) {}
 
-    void register_callback(const std::string& obj, nanom::syscall_callback_t cb) {
-        vm.register_callback(metalan::symtab().get(obj), cb);
+    void register_callback(const std::string& obj, nanom::callback_t cb) {
+        vm.register_callback(std::make_pair(metalan::symtab().get(obj), metalan::symtab().get("Void")), cb);
     }
 
     void load(const std::string& lexer_, 
@@ -105,15 +105,15 @@ struct Piccol {
         bm _b("assembling");
         as.parse(stage2);
 
-        //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-        //std::cout << as.print() << std::endl;
+        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        std::cout << as.print() << std::endl;
 
         bm _b2("running");
-        nanom::vm_run(vm);
+        nanom::vm_run(vm, as.nillabel);
     }
 
     void run(metalan::Sym s1) {
-        nanom::vm_run(vm, std::make_pair(s1, as.nillabel.second));
+        nanom::vm_run(vm, std::make_pair(s1, metalan::symtab().get("Void")));
     }
 
     void run(const std::string& s) {

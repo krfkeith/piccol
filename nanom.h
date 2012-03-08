@@ -238,7 +238,6 @@ enum op_t {
     NEW_STRUCT,
     SET_FIELDS,
 
-    SYSCALL_STRUCT,
     SYSCALL_PRIMITIVE
 
 };
@@ -261,34 +260,38 @@ struct VmCode {
     }
 };
 
-typedef void (*syscall_callback_t)(const Shapes&, const Shape&, const Struct&);
-typedef void (*sysfunc_callback_t)(const Shapes&, const Shape&, const Shape&,
-                                   const Struct&, Struct&);
+typedef void (*callback_t)(const Shapes&, const Shape&, const Shape&, const Struct&, Struct&);
 
 
 struct Vm {
 
+    struct frame_t {
+        VmCode::label_t prev_label;
+        size_t prev_ip;
+        size_t stack_ix;
+        size_t struct_size;
+
+        frame_t() : prev_ip(0), stack_ix(0), struct_size(0) {}
+        frame_t(const VmCode::label_t& l, size_t i, size_t s, size_t ss) : 
+            prev_label(l), prev_ip(i), stack_ix(s), struct_size(ss) {}
+    };
+
     std::vector<Val> stack;
-    std::vector< std::pair<VmCode::label_t, size_t> > frame;
+    std::vector<frame_t> frame;
 
     VmCode& code;
 
     Shapes shapes;
 
-    std::unordered_map<Sym, syscall_callback_t> callbacks;
-    std::unordered_map<VmCode::label_t, sysfunc_callback_t> func_callbacks;
+    std::unordered_map<VmCode::label_t, callback_t> callbacks;
 
     Shape tmp_shape;
 
 
     Vm(VmCode& c) : code(c) {}
 
-    void register_callback(Sym s, syscall_callback_t cb) {
+    void register_callback(VmCode::label_t s, callback_t cb) {
         callbacks[s] = cb;
-    }
-
-    void register_callback(VmCode::label_t s, sysfunc_callback_t cb) {
-        func_callbacks[s] = cb;
     }
 
     Val pop() {
@@ -359,7 +362,6 @@ struct _mapper {
         m[(size_t)DEF_SHAPE] = "DEF_SHAPE";
         m[(size_t)NEW_STRUCT] = "NEW_STRUCT";
         m[(size_t)SET_FIELDS] = "SET_FIELDS";
-        m[(size_t)SYSCALL_STRUCT] = "SYSCALL_STRUCT";
         m[(size_t)SYSCALL_PRIMITIVE] = "SYSCALL_PRIMITIVE";
         
         n["NOOP"] = NOOP;
@@ -411,7 +413,6 @@ struct _mapper {
         n["DEF_SHAPE"] = DEF_SHAPE;
         n["NEW_STRUCT"] = NEW_STRUCT;
         n["SET_FIELDS"] = SET_FIELDS;
-        n["SYSCALL_STRUCT"] = SYSCALL_STRUCT;
         n["SYSCALL_PRIMITIVE"] = SYSCALL_PRIMITIVE;
     }
 };
@@ -445,6 +446,8 @@ inline void vm_run(Vm& vm,
     bool done = false;
 
     VmCode::code_t* code = &(vm.code.codes[label]);
+
+    vm.frame.emplace_back(label, 0, 0, vm.stack.size());
 
     while (!done) {
 
@@ -498,14 +501,20 @@ inline void vm_run(Vm& vm,
         }
 
         case EXIT: {
-            if (vm.frame.size() == 0) {
-                return;
-            } else {
-                auto symip = vm.frame.back();
+            const auto& fp = vm.frame.back();
+            auto sb = vm.stack.begin() + fp.stack_ix;
+            auto se = sb + fp.struct_size;
+            vm.stack.erase(sb, se);
+
+            if (vm.frame.size() == 1) {
                 vm.frame.pop_back();
-                label = symip.first;
+                return;
+
+            } else {
+                label = fp.prev_label;
+                ip = fp.prev_ip;
                 code = &(vm.code.codes[label]);
-                ip = symip.second;
+                vm.frame.pop_back();
                 continue;
             }
         }
@@ -515,29 +524,32 @@ inline void vm_run(Vm& vm,
             Val fromtype = vm.pop();
 
             const Shape& shape = vm.shapes.get(fromtype.uint);
-
-            Struct tmp;
-            auto tope = vm.stack.end();
-            auto topb = tope - shape.size();
-            tmp.v.assign(topb, tope);
-            vm.stack.resize(vm.stack.size() - shape.size());
             
-            auto i = vm.code.codes.find(label);
+            VmCode::label_t l = std::make_pair(fromtype.uint, totype.uint);
+            auto i = vm.code.codes.find(l);
 
             if (i != vm.code.codes.end()) {
 
-                vm.frame.push_back(std::make_pair(label, ip+1));
-                label = std::make_pair(fromtype.uint, totype.uint);
+                vm.frame.emplace_back(label, ip+1, vm.stack.size() - shape.size(), shape.size());
+
+                label = l;
                 code = &(i->second);
                 ip = 0;
                 continue;
 
             } else {
+
+                Struct tmp;
+                auto tope = vm.stack.end();
+                auto topb = tope - shape.size();
+                tmp.v.assign(topb, tope);
+                vm.stack.resize(vm.stack.size() - shape.size());
+
                 Struct ret;
 
-                auto j = vm.func_callbacks.find(std::make_pair(fromtype.uint, totype.uint));
+                auto j = vm.callbacks.find(std::make_pair(fromtype.uint, totype.uint));
 
-                if (j == vm.func_callbacks.end()) {
+                if (j == vm.callbacks.end()) {
                     throw std::runtime_error("Callback for '" + 
                                              symtab().get(fromtype.uint) + "->" +
                                              symtab().get(totype.uint) + "' undefined");
@@ -842,28 +854,6 @@ inline void vm_run(Vm& vm,
             vm.stack.resize(vm.stack.size() - topsize);
             break;
         } 
-
-        case SYSCALL_STRUCT: {
-            Val shapeid = vm.pop();
-            const Shape& shape = vm.shapes.get(shapeid.uint);
-
-            Struct tmp;
-            auto tope = vm.stack.end();
-            auto topb = tope - shape.size();
-            tmp.v.assign(topb, tope);
-            
-            auto i = vm.callbacks.find(shapeid.uint);
-            if (i == vm.callbacks.end()) {
-                throw std::runtime_error("Toplevel callback for '" + 
-                                         symtab().get(shapeid.uint) + 
-                                         "' undefined");
-            }
-
-            (i->second)(vm.shapes, shape, tmp);
-
-            vm.stack.resize(vm.stack.size() - shape.size());
-            break;
-        }
 
         case SYSCALL_PRIMITIVE: {
             Sym totype = vm.pop().uint;
