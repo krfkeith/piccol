@@ -303,8 +303,14 @@ Feature{ tag='signcth6' walkable=true visible=true skin=Skin{char=250->Sym color
          name='eldritch engravings'};
 
 Feature{ tag='monolith' walkable=true visible=true skin=Skin{char=8->Sym color='light_gray'}
-         special='monolith' name='the Monolith'};
+         special='monolith' name='the Monolith' };
 
+Coord{x=1144 y=1244}->Coord;
+Coord{x=2144 y=2244}->Coord;
+};
+
+fun Coord->Coord {
+Feature{name='TEST'};
 };
 
 def { xy:Coord feat:Feature } FeatAt;

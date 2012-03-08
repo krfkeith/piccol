@@ -373,10 +373,10 @@ struct Parser {
 
 
     tokeniter_t largest_extent;
-    size_t largest_depth;
+    size_t largest_length;
     bool verbose;
 
-    Parser() : largest_depth(0), verbose(false) {}
+    Parser() : largest_length(0), verbose(false) {}
 
 
 
@@ -569,24 +569,27 @@ struct Parser {
     bool apply_one(const list_t& rule, const tokeniter_t capturestart,
                    tokeniter_t& b, tokeniter_t e, 
                    outlist_t& out,
-                   size_t depth) {
+                   size_t depth, size_t& length) {
 
         tokeniter_t savedb = b;
+        size_t savedl = length;
         outlist_t subout;
 
         for (const Symcell& sc : rule) {
 
             if (sc.type == Symcell::ATOM || sc.type == Symcell::QATOM || sc.type == Symcell::ESCAPE) {
 
-                if (!(MATCHER()(sc, b, e))) {
+                if (!(MATCHER()(sc, b, e, length))) {
                     b = savedb;
+                    length = savedl;
                     return false;
                 }
 
             } else if (sc.type == Symcell::VAR) {
 
-                if (!apply(symtab().get(sc.sym), b, e, subout, depth + 1)) {
+                if (!apply(symtab().get(sc.sym), b, e, subout, length, depth + 1)) {
                     b = savedb;
+                    length = savedl;
                     return false;
                 }
 
@@ -610,6 +613,7 @@ struct Parser {
     bool apply(const std::string& rule, 
                tokeniter_t& b, tokeniter_t e, 
                outlist_t& out, 
+               size_t& length,
                size_t depth = 0) {
 
         auto it = rules.find(symtab().get(rule));
@@ -617,12 +621,13 @@ struct Parser {
         if (it == rules.end())
             throw std::runtime_error("Unknown rule referenced: '" + rule + "'");
 
-        if (depth > largest_depth) {
+        if (length >= largest_length) {
             largest_extent = b;
-            largest_depth = depth;
+            largest_length = length;
         }
 
         tokeniter_t savedb = b;
+        size_t savedl = length;
         outlist_t subout;
 
         /**/
@@ -635,7 +640,8 @@ struct Parser {
         }
         /**/
 
-        if (!apply_one(it->second.common_head, savedb, b, e, subout, depth)) {
+        if (!apply_one(it->second.common_head, savedb, b, e, subout, 
+                       depth, length)) {
 
             /**/
             if (verbose) {
@@ -659,7 +665,8 @@ struct Parser {
             }
             /**/
 
-            if (apply_one(r, savedb, b, e, subout, depth)) {
+            if (apply_one(r, savedb, b, e, subout, 
+                          depth, length)) {
 
                 out.splice(out.end(), subout);
 
@@ -675,6 +682,7 @@ struct Parser {
         }
 
         b = savedb;
+        length = savedl;
 
         /**/
         if (verbose) {
@@ -712,9 +720,10 @@ struct Parser {
         tokeniter_t se = inp.end();
 
         largest_extent = sb;
-        largest_depth = 0;
+        largest_length = 0;
 
-        bool ok = apply("main", sb, se, out);
+        size_t length = 0;
+        bool ok = apply("main", sb, se, out, length);
 
         if (!ok || sb != se) {
             unprocessed.assign(sb, se);

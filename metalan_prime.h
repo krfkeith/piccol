@@ -13,7 +13,7 @@ struct charmatcher {
 
     bool operator()(const Symcell& sc, 
                     std::string::const_iterator& b, 
-                    std::string::const_iterator e) {
+                    std::string::const_iterator e, size_t& n) {
 
         if (b == e)
             return false;
@@ -24,11 +24,13 @@ struct charmatcher {
 
             if (str == "any") {
                 ++b;
+                ++n;
                 return true;
 
             } else if (str == "digit") {
                 if (::isdigit(*b)) {
                     ++b;
+                    ++n;
                     return true;
                 } else {
                     return false;
@@ -37,6 +39,7 @@ struct charmatcher {
             } else if (str == "locase") {
                 if (::islower(*b)) {
                     ++b;
+                    ++n;
                     return true;
                 } else {
                     return false;
@@ -45,6 +48,7 @@ struct charmatcher {
             } else if (str == "upcase") {
                 if (::isupper(*b)) {
                     ++b;
+                    ++n;
                     return true;
                 } else {
                     return false;
@@ -58,6 +62,7 @@ struct charmatcher {
             }
 
             ++b;
+            ++n;
         }
 
         return true;

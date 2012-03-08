@@ -12,12 +12,13 @@ typedef Symlist::list_t::const_iterator symlist_iter;
 
 struct symcellmatcher {
 
-    bool operator()(const Symcell& sc, symlist_iter& b, symlist_iter e) {
+    bool operator()(const Symcell& sc, symlist_iter& b, symlist_iter e, size_t& n) {
 
         if (b == e) return false;
 
         if (sc.type == Symcell::ESCAPE && sc.sym == symtab().get("any")) {
             ++b;
+            ++n;
             return true;
         }
 
@@ -26,6 +27,7 @@ struct symcellmatcher {
         }
 
         ++b;
+        ++n;
         return true;
     }
 };

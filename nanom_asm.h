@@ -131,6 +131,12 @@ private:
 
         labelstack.push_back(std::make_pair(from, p_i->sym));
         label = labelstack.back();
+
+        if (code.codes.count(label) != 0) {
+            throw std::runtime_error("Function defined twice: " + 
+                                     symtab().get(label.first) + "->" +
+                                     symtab().get(label.second));
+        }
     }
 
     void pop_funlabel() {

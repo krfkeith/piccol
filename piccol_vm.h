@@ -113,7 +113,7 @@ struct Piccol {
     }
 
     void run(metalan::Sym s1) {
-        nanom::vm_run(vm, std::make_pair(s1, metalan::symtab().get("Void")));
+        nanom::vm_run(vm, std::make_pair(s1, metalan::symtab().get("Void")), 0, true);
     }
 
     void run(const std::string& s) {
