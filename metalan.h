@@ -316,8 +316,22 @@ struct Parser {
     struct rule_t {
         list_t common_head;
         std::vector<list_t> alternatives;
+        std::vector<bool> tailcallflags;
 
-        void optimize() {
+        void optimize(Sym thisrule) {
+
+            tailcallflags.resize(alternatives.size());
+
+            size_t n = 0;
+            for (list_t& l : alternatives) {
+                tailcallflags[n] = false;
+
+                if (!l.empty() && l.back().type == Symcell::VAR && l.back().sym == thisrule) {
+                    tailcallflags[n] = true;
+                    l.pop_back();
+                }
+                ++n;
+            }
 
             if (alternatives.size() < 2) {
                 return;
@@ -621,14 +635,18 @@ struct Parser {
         if (it == rules.end())
             throw std::runtime_error("Unknown rule referenced: '" + rule + "'");
 
+        tokeniter_t savedb = b;
+        size_t savedl = length;
+        outlist_t subout;
+
+      tailcall:
+
+        tokeniter_t capturestart = b;
+
         if (length >= largest_length) {
             largest_extent = b;
             largest_length = length;
         }
-
-        tokeniter_t savedb = b;
-        size_t savedl = length;
-        outlist_t subout;
 
         /**/
         if (verbose) {
@@ -640,7 +658,7 @@ struct Parser {
         }
         /**/
 
-        if (!apply_one(it->second.common_head, savedb, b, e, subout, 
+        if (!apply_one(it->second.common_head, capturestart, b, e, subout, 
                        depth, length)) {
 
             /**/
@@ -653,6 +671,7 @@ struct Parser {
             return false;
         }
 
+        size_t n = 0;
         for (const list_t& r : it->second.alternatives) {
 
             /**/
@@ -665,8 +684,7 @@ struct Parser {
             }
             /**/
 
-            if (apply_one(r, savedb, b, e, subout, 
-                          depth, length)) {
+            if (apply_one(r, capturestart, b, e, subout, depth, length)) {
 
                 out.splice(out.end(), subout);
 
@@ -677,8 +695,14 @@ struct Parser {
                 }
                 /**/
 
+                if (it->second.tailcallflags[n]) {
+                    goto tailcall;
+                }
+
                 return true;
             }
+
+            ++n;
         }
 
         b = savedb;
@@ -713,7 +737,7 @@ struct Parser {
         }
 
         for (auto& r : rules) {
-            r.second.optimize();
+            r.second.optimize(r.first);
         }
 
         tokeniter_t sb = inp.begin();

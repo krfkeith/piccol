@@ -52,7 +52,7 @@ structval_head :- 'SET_TYPE' @'_push_type' val_literal
 
 structval :- structval_head @'_pop_type'.
 
-structval_toplevel :- structval_head 'CALL' @'_top_type' @'_pop_type' sym @'CALL'.
+structval_toplevel :- structval_head 'CALL' sym @'_top_type' @'_pop_type' @'_push_type' val_literal @'_top_type' @'CALL'.
 
 statements :- structval_toplevel statements.
 statements :- .

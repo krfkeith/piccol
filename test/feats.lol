@@ -11,12 +11,11 @@ def {
 } Skin;
 
 def {
-  tag: Sym
-  skin: Skin
+} Featflags;
+
+def {
   name: Sym
 
-  walkable 
-  visible
   sticky
   s_shrine
   b_shrine
@@ -24,9 +23,7 @@ def {
   shootable 
   warm
   healingfountain
-  nofeature
   confuse
-  lit
   pois2
   bb_shrine
   permanent
@@ -36,32 +33,72 @@ def {
   queasy: Real 
   fire: Real
 
-  back: Sym
   resource: Sym
   sign: Sym
   special: Sym
   branch: Sym 
 
-  water: Int
   stairs: Int
   lightbonus: Int
-  height: Int
 
+} FeatureFlags;
+
+def {
+  lit
+  set_water
+  clear_water
+  height: Int
+  walkable 
+  visible
+} FeatureGridprops;
+
+def {
+  props: FeatureGridprops
+} FeatureNone;
+
+def {
+  flags: FeatureFlags
+  props: FeatureGridprops
+  back: Sym
+} FeatureNoSkin;
+
+def {
+  flags: FeatureFlags
+  props: FeatureGridprops
+  skin: Skin
 } Feature;
 
-def {} FeaturesInit;
- 
-fun FeaturesInit {
 
-Feature{ tag='>' walkable=true visible=true skin=Skin{char='>' color='white'} 
-         stairs=1 name='a hole in the floor'};
+def { tag: Sym feat: Feature       } Feattag;
+def { tag: Sym feat: FeatureNone   } Featnonetag;
+def { tag: Sym feat: FeatureNoSkin } Featnoskintag;
 
-Feature{ tag='1' walkable=true visible=true skin=Skin{char='>' color='lime'} 
-         stairs=1 name='a hole in the floor' branch='a'};
 
-Feature{ tag='2' walkable=true visible=true skin=Skin{char='>' color='crimson'}
-         stairs=1 name='a hole in the floor' branch='b'};
+floor_gridprops Void->FeatureGridprops :- 
+   FeatureGridprops{ lit=false set_water=false clear_water=false walkable=true visible=true height=-10 }.
 
+
+init_featstock Void -> Void :-
+
+Feattag { tag='>' 
+          feat=Feature{ props=floor_gridprops 
+                        skin=Skin{char='>' color='white'} 
+                        flags=FeatureFlags{stairs=1 name='a hole in the floor'} }
+} set_featstock
+
+Feattag{ tag='1' 
+         feat=Feature{ props=floor_gridprops 
+                       skin=Skin{char='>' color='lime'} 
+                       flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='a'} }
+} set_featstock
+
+Feattag{ tag='2' 
+         feat=Feature{ props=floor_gridprops
+                       skin=Skin{char='>' color='crimson'}
+                       flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='b'} }
+} set_featstock
+
+/*
 Feature{ tag='3' walkable=true visible=true skin=Skin{char='>' color='sky'}
          stairs=1 name='a hole in the floor' branch='c'};
 
@@ -218,18 +255,30 @@ Feature{ tag='!f' walkable=true visible=true skin=Skin{char=24->Sym color='desat
 Feature{ tag='w' walkable=true visible=true skin=Skin{char='-' color='sky'}
          water=1 name='a pool of water'};
 
-Feature{ tag='W' walkable=true visible=true nofeature=true 
-         water=1};
+*/
 
-Feature{ tag='.' walkable=true visible=true nofeature=true 
-         water=-1};
+Featnonetag{ tag='W' 
+             props=FeatureGridprops{ walkable=true visible=true set_water=true lit=false clear_water=false height=-10 }
+} set_featstock
 
-Feature{ tag='e' walkable=true visible=true skin=Skin{} back='desaturated_green'
-         poison=0.5 name='a cloud of Ebola virus'};
+Featnonetag{ tag='.' 
+             props=FeatureGridprops{ walkable=true visible=true set_water=false lit=false clear_water=true height=-10 }
+} set_featstock
 
-Feature{ tag='f' walkable=true visible=true skin=Skin{} back='gray'
-         confuse=true name='confusing smoke'};
 
+Featnoskintag{ tag='e' 
+               feat=FeatureNoSkin{ props=floor_gridprops 
+                                   back='desaturated_green'
+                                   flags=FeatureFlags{ poison=0.5 name='a cloud of Ebola virus' } }
+} set_featstock
+
+Featnoskintag{ tag='f' 
+               feat=FeatureNoSkin{ props=floor_gridprops
+                                   back='gray'
+                                   flags=FeatureFlags{ confuse=true name='confusing smoke' } }
+} set_featstock
+
+/*
 Feature{ tag='g' walkable=true visible=true skin=Skin{} back='dark_green'
          poison=0.25 pois2=true name='spores of black mold'};
 
@@ -305,40 +354,101 @@ Feature{ tag='signcth6' walkable=true visible=true skin=Skin{char=250->Sym color
 Feature{ tag='monolith' walkable=true visible=true skin=Skin{char=8->Sym color='light_gray'}
          special='monolith' name='the Monolith' };
 
-Coord{x=1144 y=1244}->Coord;
-Coord{x=2144 y=2244}->Coord;
-};
+*/
 
-fun Coord->Coord {
-Feature{name='TEST'};
-};
+.
 
-def { xy:Coord feat:Feature } FeatAt;
-def { xy:Coord feat:Void }    NoFeatAt;
-def { xy:Coord walkable }     GridSetWalk;
-def { xy:Coord height:Int }   GridSetHeight;
-def { xy:Coord water }        GridSetWater;
 
-def { tag:Sym } Featsym;
+def { xy:Coord walkable }     Walkable;
+def { xy:Coord height:Int }   Height;
+def { xy:Coord water }        Water;
+
 
 /*
-fun { xy:Coord feat:Feature } SetFeature {
-  if feat.nofeature 
-     NoFeatAt{xy=xy};
-  else 
-     FeatAt{xy=xy feat=feat};
 
-  GridSetWalk{xy=xy walkable=feat.walkable};
-  GridSetHeight{xy=xy height=feat.height};
-  GridSetWater{xy=xy water=feat.water->Bool};
-};
+set_gridprops GridProps->Void callback;
+
+add_featmap Featpoint->Void callback;
+del_featmap Coord->Void callback;
+get_featmap Coord->Feature callback;
+in_featmap  Coord->Bool callback;
+
+get_featstock Tag->Feature callback;
+set_featstock Featsym->Void callback;
 
 
-fun { xy:Coord feat:Sym } SetFeatsym {
-  SetFeature{xy=xy feat=Featsym{tag=feat}->Feature};
-};
 
-fun { xy:Coord } SetRenderprops {
-  xxx Coord{xy=xy}->Feature xxx;
-};
+: set_feature [Featpoint->Void] {
+  GridProps{xy=$xy walkable=$feat.walkable height=$feat.height water=$feat.water->Bool} set_gridprops 
+  $feat.nofeature ? { Coord{xy=$xy} del_featmap }
+                    { add_featmap }
+}
+
+
+: set_featsym [Tagpoint->Void] {
+Featpoint{xy=$xy feat=Tag{tag=$tag} get_featstock} set_feature
+}
+
+set_renderprops Coord XY -> Void :-
+
+[ get_featmap -> Feature FEAT, 
+  XyBool{xy=XY on=FEAT.lit} set_is_lit, 
+  XySym [ FEAT.back->Sym, {xy=XY sym=FEAT.back} ]
+        [ {xy=XY sym='black'} ] set_back
+
+
+        x, y = xy
+
+        feat = None
+        if xy in self.d.featmap:
+            feat = self.d.featmap[xy]
+
+        if feat and feat.lit:
+            dg.render_set_is_lit(x, y, True)
+        else:
+            dg.render_set_is_lit(x, y, False)
+
+        if feat and feat.back:
+            dg.render_set_back(x, y, feat.back)
+        else:
+            dg.render_set_back(x, y, libtcod.black)
+
+        fore = self.theme[self.d.branch][0]
+        fore2 = fore
+        fore_i = 0
+        is_terrain = False
+        c = ' '
+
+        walkable = dg.grid_is_walk(x, y)
+        if feat and feat.skin:
+            c, fore = feat.skin
+
+        elif walkable:
+            if dg.grid_is_water(x, y):
+                c = 251
+                fore = libtcod.light_azure
+                fore2 = libtcod.dark_azure
+                fore_i = 1
+            else:
+                c = 250
+                is_terrain = True
+
+        else:
+            if dg.grid_is_water(x,y):
+                fore = libtcod.desaturated_blue
+            c = 176
+            is_terrain = True
+
+        dg.render_set_skin(x, y, fore, c, fore2, fore_i, is_terrain)
+
+        ## 
+        if feat:
+            dg.render_set_is_viewblock(x, y, not feat.visible, 0)
+            dg.render_set_is_walkblock(x, y, not feat.walkable, 0)
+        else:
+            dg.render_set_is_viewblock(x, y, not walkable, 0)
+            dg.render_set_is_walkblock(x, y, not walkable, 0)
+
+
+
 */

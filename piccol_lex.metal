@@ -83,12 +83,6 @@ structvalfields :- spaces.
 structval :- @'SET_TYPE' typename_here spaces '{' @'START_STRUCT' structvalfields '}' @'END_STRUCT'.
 
 
-dots :- '.' ident.
-dots :- .
-
-var_dots :- @'SELECT_FIELD' ident &'' @'GET_FIELD' dots.
-:-comment CHECK_DEREF_TYPE ident_fromfield ident_tofield.
-
 
 val :- @'SET_TYPE' @'Real' @'PUSH' realval.
 val :- @'SET_TYPE' @'Int'  @'PUSH' intval &''.
@@ -96,35 +90,29 @@ val :- @'SET_TYPE' @'Sym'  @'PUSH' symval.
 val :- nilval  @'SET_TYPE' @'Bool' @'PUSH' @'0'.
 val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
 val :- structval.
-val :- var_dots.
 
 
-val_or_call :- val spaces '->' spaces @'CALL' typename_here.
+val_or_call :- val spaces '->' spaces @'CALL' @'_cast' typename_here.
 val_or_call :- val.
+val_or_call :- funcall.
 
 
-opt_call :- '->' @'CALL' typename_here.
-opt_call :- @'CALL' @'Void'.
+expr :- spaces structval.
 
-expr :- spaces structval spaces opt_call ';'.
-
-
-condexpr :- var_dots.
-
-opt_else :- spaces 'else' spaces expr.
-opt_else :- .
-
-conditional :- spaces 'if' spaces condexpr spaces expr opt_else.
+funcall :- spaces @'CALL' ident_here spaces '->' spaces typename_here.
+funcall :- spaces @'CALL' ident_here @'Void'.
 
 statements :- expr statements.
-statements :- conditional statements.
-statements :- .
+statements :- funcall statements.
+statements :- spaces '.' .
 
-opt_totype :- spaces '->' spaces typename_here.
-opt_totype :- @'Void'.
 
-fun :- spaces 'fun' spaces @'FUN_TYPE' typename_here opt_totype @'START_FUN' spaces '{' spaces
-       statements spaces '}' @'END_FUN' spaces ';'.
+fun :- spaces @'FUN_TYPE' ident_here
+       spaces typename_here spaces '->' 
+       spaces typename_here 
+       spaces ':-' 
+       @'START_FUN' statements @'END_FUN'.
+
 
 all :- structdef all.
 all :- fun all.

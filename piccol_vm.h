@@ -32,8 +32,11 @@ struct Piccol {
 
     Piccol() : vm(as.code) {}
 
-    void register_callback(const std::string& obj, nanom::callback_t cb) {
-        vm.register_callback(std::make_pair(metalan::symtab().get(obj), metalan::symtab().get("Void")), cb);
+    void register_callback(const std::string& name, const std::string& obj, nanom::callback_t cb) {
+        vm.register_callback(nanom::label_t(metalan::symtab().get(name),
+                                            metalan::symtab().get(obj), 
+                                            metalan::symtab().get("Void")), 
+                             cb);
     }
 
     void load(const std::string& lexer_, 
@@ -73,7 +76,7 @@ struct Piccol {
                 // ruleset argument.
 
                 bm _b("transformation");
-                metalan::Symlist tmp = morpher;                
+                metalan::Symlist tmp = morpher;
                 stage2 = doppel.parse(tmp, stage1);
 
             } catch (std::exception& e) {
@@ -112,12 +115,12 @@ struct Piccol {
         nanom::vm_run(vm, as.nillabel);
     }
 
-    void run(metalan::Sym s1) {
-        nanom::vm_run(vm, std::make_pair(s1, metalan::symtab().get("Void")), 0, true);
+    void run(metalan::Sym name, metalan::Sym s1) {
+        nanom::vm_run(vm, nanom::label_t(name, s1, metalan::symtab().get("Void")), 0, true);
     }
 
-    void run(const std::string& s) {
-        run(metalan::symtab().get(s));
+    void run(const std::string& name, const std::string& s) {
+        run(metalan::symtab().get(name), metalan::symtab().get(s));
     }
 };
 

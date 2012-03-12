@@ -248,17 +248,46 @@ struct Opcode {
     Val arg;
 };
 
+
+struct label_t {
+    Sym name;
+    Sym fromshape;
+    Sym toshape;
+    label_t(Sym a=0, Sym b=0, Sym c=0) : name(a), fromshape(b), toshape(c) {}
+    
+    bool operator==(const label_t& l) const {
+        return (name == l.name && fromshape == l.fromshape && toshape == l.toshape);
+    }
+};
+
+}
+
+
+namespace std {
+template <>
+struct hash<nanom::label_t> {
+    size_t operator()(const nanom::label_t& l) const {
+        return (hash<nanom::Sym>()(l.name) ^ 
+                hash<nanom::Sym>()(l.fromshape) ^
+                hash<nanom::Sym>()(l.toshape));
+    }
+};
+}
+
+
+namespace nanom {
+
 struct VmCode {
     typedef std::vector<Opcode> code_t;
-    typedef std::pair<Sym,Sym> label_t;
-
+     
     std::unordered_map<label_t, code_t> codes;
 
     static label_t toplevel_label() {
         Sym none = symtab().get("");
-        return std::make_pair(none, none);
+        return label_t(none, none, none);
     }
 };
+
 
 typedef void (*callback_t)(const Shapes&, const Shape&, const Shape&, const Struct&, Struct&);
 
@@ -266,13 +295,13 @@ typedef void (*callback_t)(const Shapes&, const Shape&, const Shape&, const Stru
 struct Vm {
 
     struct frame_t {
-        VmCode::label_t prev_label;
+        label_t prev_label;
         size_t prev_ip;
         size_t stack_ix;
         size_t struct_size;
 
         frame_t() : prev_ip(0), stack_ix(0), struct_size(0) {}
-        frame_t(const VmCode::label_t& l, size_t i, size_t s, size_t ss) : 
+        frame_t(const label_t& l, size_t i, size_t s, size_t ss) : 
             prev_label(l), prev_ip(i), stack_ix(s), struct_size(ss) {}
     };
 
@@ -283,14 +312,14 @@ struct Vm {
 
     Shapes shapes;
 
-    std::unordered_map<VmCode::label_t, callback_t> callbacks;
+    std::unordered_map<label_t, callback_t> callbacks;
 
     Shape tmp_shape;
 
 
     Vm(VmCode& c) : code(c) {}
 
-    void register_callback(VmCode::label_t s, callback_t cb) {
+    void register_callback(label_t s, callback_t cb) {
         callbacks[s] = cb;
     }
 
@@ -433,7 +462,7 @@ const op_t opcodecode(const std::string& opc) {
 
 
 inline void vm_run(Vm& vm, 
-                   VmCode::label_t label = VmCode::toplevel_label(), 
+                   label_t label = VmCode::toplevel_label(), 
                    size_t ip = 0, 
                    bool verbose = false) {
 
@@ -522,10 +551,11 @@ inline void vm_run(Vm& vm,
         case CALL: {
             Val totype = vm.pop();
             Val fromtype = vm.pop();
+            Val name = vm.pop();
 
             const Shape& shape = vm.shapes.get(fromtype.uint);
             
-            VmCode::label_t l = std::make_pair(fromtype.uint, totype.uint);
+            label_t l(name.uint, fromtype.uint, totype.uint);
             auto i = vm.code.codes.find(l);
 
             if (i != vm.code.codes.end()) {
@@ -547,7 +577,7 @@ inline void vm_run(Vm& vm,
 
                 Struct ret;
 
-                auto j = vm.callbacks.find(std::make_pair(fromtype.uint, totype.uint));
+                auto j = vm.callbacks.find(l);
 
                 if (j == vm.callbacks.end()) {
                     throw std::runtime_error("Callback for '" + 

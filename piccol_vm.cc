@@ -95,12 +95,12 @@ int main(int argc, char** argv) {
     emiter.assign(std::istreambuf_iterator<char>(efile),
                   std::istreambuf_iterator<char>());
 
-    l.register_callback("Feature", printer);
-    l.register_callback("Test", printer);
+    l.register_callback("add_featstock", "Feature", printer);
+    l.register_callback("test", "Test", printer);
     
     l.load(lexer, morpher, emiter, inp);
 
-    l.run("FeaturesInit");
+    l.run("init_featstock", "Void");
 
     return 0;
 }

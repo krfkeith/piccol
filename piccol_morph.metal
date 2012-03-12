@@ -8,7 +8,7 @@
    SET_TYPE <type> <val> SELECT_FIELD <name> CHECK_TYPE <name> <type> SET_FIELD
 
 
-   SET_TYPE <type1> <val> CALL <type2> 
+   SET_TYPE <type1> <val> CALL <name> <type2> 
     ==>
    use <type2> instead of <type1>, transform "CALL <type2>" to "CALL <type1> <type2>".
 
@@ -32,7 +32,7 @@ typetag_name_x :- \any &'' &'push'.
 
 typetag_type :- 'SET_TYPE' @'SET_TYPE' typetag_name_x.
 
-typetag_opt_call :- 'CALL' @'CALL' &'pop' typetag_name_x.
+typetag_opt_call :- 'CAST' @'CAST' &'pop' typetag_name_x.
 typetag_opt_call :- .
 
 typetag_set_field :- 'SELECT_FIELD' @'SELECT_FIELD'

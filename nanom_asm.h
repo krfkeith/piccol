@@ -57,7 +57,7 @@ struct VmAsm {
         label(nillabel)
         {}
 
-    VmCode::label_t nillabel;
+    label_t nillabel;
 
 private:
 
@@ -71,8 +71,8 @@ private:
     VmCode::code_t& cmode_code;
 
     std::vector<Sym> shapestack;
-    std::vector<VmCode::label_t> labelstack;
-    VmCode::label_t label;
+    std::vector<label_t> labelstack;
+    label_t label;
 
     void cmode_on() {
         cmode = true;
@@ -122,6 +122,13 @@ private:
         if (p_i == p_e)
             throw std::runtime_error("End of input in _push_funlabel");
 
+        Sym name = p_i->sym;
+
+        ++p_i;
+
+        if (p_i == p_e)
+            throw std::runtime_error("End of input in _push_funlabel");
+
         Sym from = p_i->sym;
 
         ++p_i;
@@ -129,13 +136,14 @@ private:
         if (p_i == p_e)
             throw std::runtime_error("End of input in _push_funlabel");
 
-        labelstack.push_back(std::make_pair(from, p_i->sym));
+        labelstack.emplace_back(name, from, p_i->sym);
         label = labelstack.back();
 
         if (code.codes.count(label) != 0) {
             throw std::runtime_error("Function defined twice: " + 
-                                     symtab().get(label.first) + "->" +
-                                     symtab().get(label.second));
+                                     symtab().get(label.name) + " " +
+                                     symtab().get(label.fromshape) + "->" +
+                                     symtab().get(label.toshape));
         }
     }
 
@@ -402,8 +410,9 @@ public:
         for (const auto& i : code.codes) {
 
             tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, "LABEL"));
-            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, i.first.first));
-            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, i.first.second));
+            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, i.first.name));
+            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, i.first.fromshape));
+            tmp.syms.push_back(metalan::Symcell(metalan::Symcell::VAR, i.first.toshape));
 
             for (const auto& j : i.second) {
 
