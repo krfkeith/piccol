@@ -125,7 +125,13 @@ all :- structdef all.
 all :- fun all.
 all :- spaces.
 
-prelude :- @'START_DEF' @'DEF_NAME' @'Void' @'END_DEF'.
+prelude :- @'START_DEF' @'DEF_NAME' @'Void' @'END_DEF'
+           @'START_DEF' @'FIELD_NAME' @'0' @'FIELD_TYPE' @'Int'  @'DEF_NAME' @'Int' @'END_DEF'
+           @'START_DEF' @'FIELD_NAME' @'0' @'FIELD_TYPE' @'UInt' @'DEF_NAME' @'UInt' @'END_DEF'
+           @'START_DEF' @'FIELD_NAME' @'0' @'FIELD_TYPE' @'Sym'  @'DEF_NAME' @'Sym' @'END_DEF'
+           @'START_DEF' @'FIELD_NAME' @'0' @'FIELD_TYPE' @'Bool' @'DEF_NAME' @'Bool' @'END_DEF'
+           @'START_DEF' @'FIELD_NAME' @'0' @'FIELD_TYPE' @'Real' @'DEF_NAME' @'Real' @'END_DEF'.
+
 
 main :- prelude all.
 

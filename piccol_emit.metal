@@ -4,6 +4,7 @@ sym :- @'PUSH' \any @'Sym' &''.
 
 field_name :- 'FIELD_NAME' sym.
 
+field :-  field_name 'FIELD_TYPE' 'Bool' @'PUSH' @'Int' @'1' @'DEF_FIELD'.
 field :-  field_name 'FIELD_TYPE' 'Sym'  @'PUSH' @'Int' @'2' @'DEF_FIELD'.
 field :-  field_name 'FIELD_TYPE' 'Int'  @'PUSH' @'Int' @'3' @'DEF_FIELD'.
 field :-  field_name 'FIELD_TYPE' 'UInt' @'PUSH' @'Int' @'4' @'DEF_FIELD'.
