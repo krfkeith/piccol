@@ -66,8 +66,6 @@ struct Piccol {
             throw std::runtime_error(std::string("Error in stage 1 (piccol_lex): ") + e.what());
         }
 
-        //std::cout << "[" << stage1.print() << "]" << std::endl;
-
         metalan::Symlist stage2;
 
         while (1) {
@@ -83,10 +81,6 @@ struct Piccol {
                 throw std::runtime_error(std::string("Error in stage 2 (piccol_morph): ") + e.what());
             }
 
-            //std::string tmp = stage2.print();
-            //std::cout << "------------------------------------------" << std::endl;
-            //std::cout << tmp << std::endl;
-
             if (stage1 == stage2) 
                 break;
 
@@ -101,15 +95,11 @@ struct Piccol {
             throw std::runtime_error(std::string("Error in stage 3 (piccol_emit): ") + e.what());
         }
 
-        //std::string tmp = stage2.print();
-        //std::cout << "==============================================" << std::endl;
-        //std::cout << tmp << std::endl;
+        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        std::cout << stage2.print() << std::endl;
 
         bm _b("assembling");
         as.parse(stage2);
-
-        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-        std::cout << as.print() << std::endl;
 
         bm _b2("running");
         nanom::vm_run(vm, as.nillabel);

@@ -182,12 +182,17 @@ private:
 
         Sym fieldsym = p_i->sym;
 
-        auto offrange = vm.shapes.get(shapestack.back()).get_index(fieldsym);
+        if (shapestack.size() < 2) 
+            throw std::runtime_error("Invalid _fieldname_deref");
+
+        Sym structshape = shapestack[shapestack.size()-2];
+
+        auto offrange = vm.shapes.get(structshape).get_index(fieldsym);
 
         if (offrange.first > offrange.second) {
 
             throw std::runtime_error("Unknown struct field: " + 
-                                     symtab().get(shapestack.back()) + "." +
+                                     symtab().get(structshape) + "." +
                                      symtab().get(fieldsym));
         }
 
@@ -212,14 +217,14 @@ private:
 
         Sym fieldsym = p_i->sym;
 
-        ++p_i;
-        if (p_i == p_e)
-            throw std::runtime_error("End of input in _fieldname_deref");
+        if (shapestack.size() < 2) 
+            throw std::runtime_error("Invalid _fieldtype_check");
 
-        Sym typesym = p_i->sym;
-        const std::string& typestr = symtab().get(typesym);
+        Sym structshape = shapestack[shapestack.size()-2];
+        Sym valtype = shapestack.back();
+        const std::string& typestr = symtab().get(valtype);
 
-        const auto& typeinfo = vm.shapes.get(shapestack.back()).get_type(fieldsym);
+        const auto& typeinfo = vm.shapes.get(structshape).get_type(fieldsym);
         bool ok = false;
         std::string fieldtypename;
 
@@ -254,7 +259,7 @@ private:
             break;
 
         case STRUCT:
-            if (typesym == typeinfo.shape) {
+            if (valtype == typeinfo.shape) {
                 ok = true;
             }
             fieldtypename = symtab().get(typeinfo.shape);
@@ -266,7 +271,7 @@ private:
 
         if (!ok) {
             throw std::runtime_error("Type checking failed: " +
-                                     symtab().get(shapestack.back()) + "." +
+                                     symtab().get(structshape) + "." +
                                      symtab().get(fieldsym) + " has type " + 
                                      fieldtypename + " but you assigned a " + typestr);
         }
@@ -284,6 +289,11 @@ public:
         while (p_i != p_e) {
 
             const std::string& op_name = metalan::symtab().get(p_i->sym);
+
+            std::cout << "!" << op_name << std::endl;
+            for (const auto& s : shapestack) 
+                std::cout << " " << symtab().get(s);
+            std::cout << std::endl;
 
             if (op_name == "_cmode_on") {
                 cmode_on();

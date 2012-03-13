@@ -25,41 +25,50 @@ primitive_type :- 'Real' &''.
 primitive_type :- 'Bool' &''.
 primitive_type :- 'Sym' &''.
 
-val :- 'SET_TYPE' @'PUSH' primitive_type 'PUSH' val_literal.
-val :- structval.
+primitive_type_x :- primitive_type &'push'.
 
-val_or_call :- val 'CALL' 
-               @'PUSH' @'Sym' primitive_type 
-               @'PUSH' @'Sym' primitive_type @'SYSCALL_PRIMITIVE'.
+val :- 'SET_TYPE' @'PUSH' primitive_type_x 'PUSH' val_literal @'_push_type' &'pop'.
 
-val_or_vall :- val 'CALL' sym sym @'CALL'.
-val_or_call :- val.
+val_primitive :- val 'CALL' '$cast'
+                 @'PUSH' @'Sym' primitive_type 
+                 @'PUSH' @'Sym' @'_pop_type' primitive_type_x @'SYSCALL_PRIMITIVE'.
+val_primitive :- val.
+
+val_or_call :- val_primitive.
+val_or_call :- statements.
 
 structfield :- val_or_call 
                'SELECT_FIELD' @'_fieldname_deref' val_literal
-               'CHECK_TYPE' @'_fieldtype_check' val_literal val_literal
+               'CHECK_TYPE' @'_fieldtype_check' val_literal @'_pop_type'
                'SET_FIELD' @'_type_size' @'SET_FIELDS'.
 
 structfields :- structfield structfields.
 structfields :- .
 
 
-structval_head :- 'SET_TYPE' @'_push_type' val_literal 
-                  'START_STRUCT' @'_type_size' @'NEW_STRUCT' 
-                  structfields 
-                  'END_STRUCT'
-                  .
+structval :- 'SET_TYPE' @'_push_type' val_literal 
+             'START_STRUCT' @'_type_size' @'NEW_STRUCT' 
+             structfields 
+             'END_STRUCT'
+             .
 
-structval :- structval_head @'_pop_type'.
+funcall :- 'CALL' 
+           sym 
+           @'_top_type' @'_pop_type' 
+           @'_push_type' val_literal @'_top_type' 
+           @'CALL'.
 
-structval_toplevel :- structval_head 'CALL' sym @'_top_type' @'_pop_type' @'_push_type' val_literal @'_top_type' @'CALL'.
 
-statements :- structval_toplevel statements.
-statements :- .
+statements_x :- structval statements_x.
+statements_x :- funcall statements_x.
+statements_x :- .
+
+statements :- @'_push_type' @'Void' funcall statements_x.
+statements :- statements_x.
 
 fun :- 'FUN_TYPE' @'_push_funlabel' val_literal val_literal val_literal
        'START_FUN' statements 
-       'END_FUN' @'EXIT' @'_pop_funlabel'.
+       'END_FUN' @'EXIT' @'_pop_type' @'_pop_funlabel'.
 
 
 all :- def all.

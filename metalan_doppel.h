@@ -52,13 +52,15 @@ struct MetalanDoppel {
 
         if (!ok) {
             
-            std::string err;
-            for (const auto& s : unprocessed) {
-                err += symtab().get(s.sym);
-                err += " ";
-            }
+            Symlist unpr;
+            unpr.syms.swap(unprocessed);
 
-            throw std::runtime_error("Parse failed. Unconsumed input: " + err);
+            Symlist ext;
+            ext.syms.assign(parser.largest_extent, inp.syms.end());
+
+            throw std::runtime_error("Parse failed at:\n<<<\n" + ext.print(15) +
+                                     "\n>>>\nUnconsumed input:\n<<<\n" + unpr.print(145) + 
+                                     "\n>>>\n");
         }
 
         Symlist ret;

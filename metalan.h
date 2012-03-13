@@ -144,11 +144,16 @@ struct Symlist {
         return true;
     }
 
-    std::string print() {
+    std::string print(size_t nmax=0) {
         std::string ret;
-
+        
+        size_t n = 0;
         for (const Symcell& s : syms) {
 
+            if (nmax && n > nmax) {
+                break;
+            }
+            
             if (s.type == Symcell::VAR || s.type == Symcell::ATOM) {
                 ret += symtab().get(s.sym);
                 ret += "\n";
@@ -167,6 +172,7 @@ struct Symlist {
 
                 ret += "'\n";
             }
+            ++n;
         }
 
         return ret;

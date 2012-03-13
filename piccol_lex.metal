@@ -89,29 +89,29 @@ val :- @'SET_TYPE' @'Int'  @'PUSH' intval &''.
 val :- @'SET_TYPE' @'Sym'  @'PUSH' symval.
 val :- nilval  @'SET_TYPE' @'Bool' @'PUSH' @'0'.
 val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
-val :- structval.
+
+val_primitive :- val spaces '->' spaces @'CALL' @'$cast' typename_here.
+val_primitive :- val.
+
+val_or_call :- val_primitive.
+val_or_call :- structval.
+val_or_call :- '(' spaces statements spaces ')'.
 
 
-val_or_call :- val spaces '->' spaces @'CALL' @'_cast' typename_here.
-val_or_call :- val.
-val_or_call :- funcall.
+funcall :- @'CALL' ident_here spaces '->' spaces typename_here.
+funcall :- @'CALL' ident_here @'Void'.
 
-
-expr :- spaces structval.
-
-funcall :- spaces @'CALL' ident_here spaces '->' spaces typename_here.
-funcall :- spaces @'CALL' ident_here @'Void'.
-
-statements :- expr statements.
-statements :- funcall statements.
-statements :- spaces '.' .
+statements :- structval spaces statements.
+statements :- funcall spaces statements.
+statements :- .
 
 
 fun :- spaces @'FUN_TYPE' ident_here
        spaces typename_here spaces '->' 
        spaces typename_here 
        spaces ':-' 
-       @'START_FUN' statements @'END_FUN'.
+       @'START_FUN' spaces statements 
+       spaces '.' @'END_FUN'.
 
 
 all :- structdef all.

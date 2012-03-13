@@ -53,10 +53,6 @@ def {
 } FeatureGridprops;
 
 def {
-  props: FeatureGridprops
-} FeatureNone;
-
-def {
   flags: FeatureFlags
   props: FeatureGridprops
   back: Sym
@@ -69,9 +65,9 @@ def {
 } Feature;
 
 
-def { tag: Sym feat: Feature       } Feattag;
-def { tag: Sym feat: FeatureNone   } Featnonetag;
-def { tag: Sym feat: FeatureNoSkin } Featnoskintag;
+def { tag: Sym feat:  Feature          } Feattag;
+def { tag: Sym props: FeatureGridprops } Featnonetag;
+def { tag: Sym feat:  FeatureNoSkin    } Featnoskintag;
 
 
 floor_gridprops Void->FeatureGridprops :- 
@@ -81,19 +77,19 @@ floor_gridprops Void->FeatureGridprops :-
 init_featstock Void -> Void :-
 
 Feattag { tag='>' 
-          feat=Feature{ props=floor_gridprops 
+          feat=Feature{ props=(floor_gridprops->FeatureGridprops)
                         skin=Skin{char='>' color='white'} 
                         flags=FeatureFlags{stairs=1 name='a hole in the floor'} }
 } set_featstock
 
 Feattag{ tag='1' 
-         feat=Feature{ props=floor_gridprops 
+         feat=Feature{ props=(floor_gridprops->FeatureGridprops)
                        skin=Skin{char='>' color='lime'} 
                        flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='a'} }
 } set_featstock
 
 Feattag{ tag='2' 
-         feat=Feature{ props=floor_gridprops
+         feat=Feature{ props=(floor_gridprops->FeatureGridprops)
                        skin=Skin{char='>' color='crimson'}
                        flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='b'} }
 } set_featstock
@@ -258,22 +254,24 @@ Feature{ tag='w' walkable=true visible=true skin=Skin{char='-' color='sky'}
 */
 
 Featnonetag{ tag='W' 
-             props=FeatureGridprops{ walkable=true visible=true set_water=true lit=false clear_water=false height=-10 }
+             props=FeatureGridprops{ walkable=true visible=true set_water=true lit=false 
+                                     clear_water=false height=-10 }
 } set_featstock
 
 Featnonetag{ tag='.' 
-             props=FeatureGridprops{ walkable=true visible=true set_water=false lit=false clear_water=true height=-10 }
+             props=FeatureGridprops{ walkable=true visible=true set_water=false lit=false 
+                                     clear_water=true height=-10 }
 } set_featstock
 
 
 Featnoskintag{ tag='e' 
-               feat=FeatureNoSkin{ props=floor_gridprops 
+               feat=FeatureNoSkin{ props=(floor_gridprops->FeatureGridprops)
                                    back='desaturated_green'
                                    flags=FeatureFlags{ poison=0.5 name='a cloud of Ebola virus' } }
 } set_featstock
 
 Featnoskintag{ tag='f' 
-               feat=FeatureNoSkin{ props=floor_gridprops
+               feat=FeatureNoSkin{ props=(floor_gridprops->FeatureGridprops)
                                    back='gray'
                                    flags=FeatureFlags{ confuse=true name='confusing smoke' } }
 } set_featstock
