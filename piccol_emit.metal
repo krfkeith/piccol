@@ -57,7 +57,7 @@ structval_toplevel :- structval_head 'CALL' sym @'_top_type' @'_pop_type' @'_pus
 statements :- structval_toplevel statements.
 statements :- .
 
-fun :- 'FUN_TYPE' @'_push_funlabel' val_literal val_literal
+fun :- 'FUN_TYPE' @'_push_funlabel' val_literal val_literal val_literal
        'START_FUN' statements 
        'END_FUN' @'EXIT' @'_pop_funlabel'.
 

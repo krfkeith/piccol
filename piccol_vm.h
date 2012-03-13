@@ -1,7 +1,7 @@
 #ifndef __PICCOL_VM_H
 #define __PICCOL_VM_H
 
-#include "nanom_asm.h"
+#include "piccol_asm.h"
 
 #include "metalan_prime.h"
 #include "metalan_doppel.h"
