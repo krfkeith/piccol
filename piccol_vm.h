@@ -32,10 +32,11 @@ struct Piccol {
 
     Piccol() : vm(as.code) {}
 
-    void register_callback(const std::string& name, const std::string& obj, nanom::callback_t cb) {
+    void register_callback(const std::string& name, const std::string& from, const std::string& to,
+                           nanom::callback_t cb) {
         vm.register_callback(nanom::label_t(metalan::symtab().get(name),
-                                            metalan::symtab().get(obj), 
-                                            metalan::symtab().get("Void")), 
+                                            metalan::symtab().get(from), 
+                                            metalan::symtab().get(to)), 
                              cb);
     }
 

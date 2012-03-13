@@ -11,9 +11,6 @@ def {
 } Skin;
 
 def {
-} Featflags;
-
-def {
   name: Sym
 
   sticky
@@ -356,10 +353,28 @@ Feature{ tag='monolith' walkable=true visible=true skin=Skin{char=8->Sym color='
 
 .
 
+def { xy:Coord tag:Sym } XYTag;
 
-def { xy:Coord walkable }     Walkable;
-def { xy:Coord height:Int }   Height;
-def { xy:Coord water }        Water;
+def { xy:Coord feat:Feature } XYFeature;
+def { xy:Coord feat:FeatureNoSkin } XYFeatureNoSkin;
+def { xy:Coord props:FeatureGridprops } XYFeatureGridprops;
+def { xy:Coord skin:Skin} XYSkin;
+
+set_feature XYTag -> Void :- 
+  XYFeature{xy=.xy feat=(Tag{tag=.tag} get_featstock->Feature)} set_feature;
+  XYFeatureNoSkin{xy=.xy feat=(Tag{tag=.tag} get_featstock->FeatureNoSkin)} set_feature;
+  XYFeatureGridprops{xy=.xy props=(Tag{tag=.tag} get_featstock->FeatureGridprops)} set_feature.
+
+set_feature XYFeature -> Void :- 
+  XYFeatureGridprops{xy=.xy props=.feat.props} set_feature
+  XYSkin{xy=.xy skin=.feat.skin} set_skin
+  XYFeatureFlags{xy=.xy flags=.feat.flags} set_featmap.
+
+set_feature XYFeatureNoSkin -> Void :- .
+  XYFeatureGridprops{xy=.xy props=.feat.props} set_feature
+
+
+set_feature XYFeatureGridprops -> Void :- .
 
 
 /*

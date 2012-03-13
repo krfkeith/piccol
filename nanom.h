@@ -580,7 +580,7 @@ inline void vm_run(Vm& vm,
                 auto j = vm.callbacks.find(l);
 
                 if (j == vm.callbacks.end()) {
-                    throw std::runtime_error("Callback for '" + 
+                    throw std::runtime_error("Callback '" + symtab().get(name.uint) + " " +
                                              symtab().get(fromtype.uint) + "->" +
                                              symtab().get(totype.uint) + "' undefined");
                 }

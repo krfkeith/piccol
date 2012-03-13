@@ -95,8 +95,9 @@ int main(int argc, char** argv) {
     emiter.assign(std::istreambuf_iterator<char>(efile),
                   std::istreambuf_iterator<char>());
 
-    l.register_callback("add_featstock", "Feature", printer);
-    l.register_callback("test", "Test", printer);
+    l.register_callback("set_featstock", "Feattag", "Void", printer);
+    l.register_callback("set_featstock", "Featnonetag", "Void", printer);
+    l.register_callback("set_featstock", "Featnoskintag", "Void", printer);
     
     l.load(lexer, morpher, emiter, inp);
 

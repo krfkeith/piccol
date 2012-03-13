@@ -105,6 +105,10 @@ private:
         shapestack.pop_back();
     }
 
+    void drop_types() {
+        shapestack.clear();
+    }
+
     void top_type() {
         if (shapestack.empty())
             throw std::runtime_error("Sanity error: _top_type before _push_type");
@@ -315,6 +319,12 @@ public:
 
             } else if (op_name == "_pop_type") {
                 pop_type();
+
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_drop_types") {
+                drop_types();
 
                 ++p_i;
                 continue;
