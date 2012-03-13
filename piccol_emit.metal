@@ -34,7 +34,6 @@ val_primitive :- val 'CALL' '$cast'
                  @'PUSH' @'Sym' @'_pop_type' primitive_type_x @'SYSCALL_PRIMITIVE'.
 val_primitive :- val.
 
-val_or_call :- val_primitive.
 val_or_call :- statements.
 
 structfield :- val_or_call 
@@ -52,6 +51,11 @@ structval :- 'SET_TYPE' @'_push_type' val_literal
              'END_STRUCT'
              .
 
+tuplefields :- val_or_call 'SET_TUPLEFIELD' tuplefields.
+tuplefields :- .
+
+tupleval :- 'START_TUPLE' @'_mark_tuple' tuplefields 'END_TUPLE' @'_make_tupletype'.
+
 funcall :- 'CALL' 
            sym 
            @'_top_type' @'_pop_type' 
@@ -60,6 +64,8 @@ funcall :- 'CALL'
 
 
 statements_x :- structval statements_x.
+statements_x :- tupleval statements_x.
+statements_x :- val_primitive statements_x.
 statements_x :- funcall statements_x.
 statements_x :- .
 

@@ -120,6 +120,96 @@ private:
         code.codes[label].push_back(op);
     }
 
+    void mark_tuple() {
+
+        shapestack.push_back(symtab().get(""));
+    }
+
+    void make_tupletype() {
+        
+        std::vector<Sym> tuptypes;
+
+        while (1) {
+            if (shapestack.empty()) 
+                throw std::runtime_error("Sanity error: _make_tupletype before _mark_tuple");
+
+            Sym s = shapestack.back();
+            shapestack.pop_back();
+
+            if (s == symtab().get(""))
+                break;
+
+            tuptypes.push_back(s);
+        }
+
+        Shape autoshape;
+        VmCode::code_t autodef;
+        
+        autodef.emplace_back(NEW_SHAPE);
+
+        std::string hacktype = "[";
+        size_t n = 0;
+        for (std::vector<Sym>::reverse_iterator i = tuptypes.rbegin(); i != tuptypes.rend(); ++i) {
+            if (i != tuptypes.rbegin())
+                hacktype += ",";
+            
+            const std::string& tn = symtab().get(*i);
+            hacktype += tn;
+            Sym fn = symtab().get(uint_to_string(n));
+
+            autodef.emplace_back(PUSH, fn);
+
+            if (tn == "Bool") {
+                autoshape.add_field(symtab().get(uint_to_string(n)), BOOL);
+                autodef.emplace_back(PUSH, (UInt)BOOL);
+                autodef.emplace_back(DEF_FIELD);
+
+            } else if (tn == "Int") {
+                autoshape.add_field(symtab().get(uint_to_string(n)), INT);
+                autodef.emplace_back(PUSH, (UInt)INT);
+                autodef.emplace_back(DEF_FIELD);
+
+            } else if (tn == "UInt") {
+                autoshape.add_field(symtab().get(uint_to_string(n)), UINT);
+                autodef.emplace_back(PUSH, (UInt)UINT);
+                autodef.emplace_back(DEF_FIELD);
+
+            } else if (tn == "Real") {
+                autoshape.add_field(symtab().get(uint_to_string(n)), REAL);
+                autodef.emplace_back(PUSH, (UInt)REAL);
+                autodef.emplace_back(DEF_FIELD);
+
+            } else if (tn == "Sym") {
+                autoshape.add_field(symtab().get(uint_to_string(n)), SYMBOL);
+                autodef.emplace_back(PUSH, (UInt)SYMBOL);
+                autodef.emplace_back(DEF_FIELD);
+
+            } else {
+                autoshape.add_field(symtab().get(uint_to_string(n)), STRUCT, *i, vm.shapes.get(*i).size());
+                autodef.emplace_back(PUSH, *i);
+                autodef.emplace_back(DEF_STRUCT_FIELD);
+            }
+
+            ++n;
+        }
+        hacktype += "]";
+
+        Sym tupshs = symtab().get(hacktype);
+
+        shapestack.push_back(tupshs);
+
+        if (!vm.shapes.has_shape(tupshs)) {
+            
+            vm.shapes.add(tupshs, autoshape);
+
+            autodef.emplace_back(PUSH, tupshs);
+            autodef.emplace_back(DEF_SHAPE);
+
+            auto& c = code.codes[nillabel];
+            c.insert(c.end(), autodef.begin(), autodef.end());
+        }
+    }
+
     void push_funlabel() {
         ++p_i;
 
@@ -353,6 +443,18 @@ public:
                 ++p_i;
                 continue;
 
+            } else if (op_name == "_mark_tuple") {
+                mark_tuple();
+
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_make_tupletype") {
+                make_tupletype();
+
+                ++p_i;
+                continue;
+
             } else if (op_name == "_fieldname_deref") {
                 fieldname_deref();
 
@@ -441,7 +543,7 @@ public:
 
                 if (j.op == PUSH || j.op == PUSH_DUP) {
                     tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, 
-                                                        int_to_string(j.arg.uint)));
+                                                        j.arg.uint)); //int_to_string(j.arg.uint)));
                 }
             }
         }

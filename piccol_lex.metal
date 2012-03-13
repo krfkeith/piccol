@@ -83,6 +83,11 @@ structvalfields :- spaces.
 structval :- @'SET_TYPE' typename_here spaces '{' @'START_STRUCT' structvalfields '}' @'END_STRUCT'.
 
 
+tuplefields :- spaces val_or_call @'SET_TUPLEFIELD' tuplefields.
+tuplefields :- spaces.
+
+tupleval :- spaces '[' @'START_TUPLE' tuplefields ']' @'END_TUPLE'.
+
 
 val :- @'SET_TYPE' @'Real' @'PUSH' realval.
 val :- @'SET_TYPE' @'Int'  @'PUSH' intval &''.
@@ -102,6 +107,8 @@ funcall :- @'CALL' ident_here spaces '->' spaces typename_here.
 funcall :- @'CALL' ident_here @'Void'.
 
 statements :- structval spaces statements.
+statements :- tupleval spaces statements.
+statements :- val_primitive spaces statements.
 statements :- funcall spaces statements.
 statements :- .
 

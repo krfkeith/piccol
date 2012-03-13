@@ -133,6 +133,10 @@ struct Shapes {
         return i->second;
     }
 
+    bool has_shape(Sym shapeid) const {
+        return (shapes.count(shapeid) != 0);
+    }
+
     void add(Sym shapeid, const Shape& sh) {
 
         auto i = shapes.find(shapeid);
@@ -246,6 +250,8 @@ enum op_t {
 struct Opcode {
     op_t op;
     Val arg;
+
+    Opcode(op_t o = NOOP, Val a = (size_t)0) : op(o), arg(a) {}
 };
 
 

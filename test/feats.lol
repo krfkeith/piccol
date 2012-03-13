@@ -1,4 +1,7 @@
 
+def {
+ tag: Sym
+} Tag;
 
 def {
   x: Int
@@ -62,10 +65,11 @@ def {
 } Feature;
 
 
+/*
 def { tag: Sym feat:  Feature          } Feattag;
 def { tag: Sym props: FeatureGridprops } Featnonetag;
 def { tag: Sym feat:  FeatureNoSkin    } Featnoskintag;
-
+*/
 
 floor_gridprops Void->FeatureGridprops :- 
    FeatureGridprops{ lit=false set_water=false clear_water=false walkable=true visible=true height=-10 }.
@@ -73,23 +77,23 @@ floor_gridprops Void->FeatureGridprops :-
 
 init_featstock Void -> Void :-
 
-Feattag { tag='>' 
-          feat=Feature{ props=(floor_gridprops->FeatureGridprops)
-                        skin=Skin{char='>' color='white'} 
-                        flags=FeatureFlags{stairs=1 name='a hole in the floor'} }
-} set_featstock
+[ '>'
+  Feature{ props=(floor_gridprops->FeatureGridprops)
+           skin=Skin{char='>' color='white'} 
+           flags=FeatureFlags{stairs=1 name='a hole in the floor'} }
+] set_featstock
 
-Feattag{ tag='1' 
-         feat=Feature{ props=(floor_gridprops->FeatureGridprops)
-                       skin=Skin{char='>' color='lime'} 
-                       flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='a'} }
-} set_featstock
+[ '1'
+  Feature{ props=(floor_gridprops->FeatureGridprops)
+           skin=Skin{char='>' color='lime'} 
+           flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='a'} }
+] set_featstock
 
-Feattag{ tag='2' 
-         feat=Feature{ props=(floor_gridprops->FeatureGridprops)
-                       skin=Skin{char='>' color='crimson'}
-                       flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='b'} }
-} set_featstock
+[ '2' 
+  Feature{ props=(floor_gridprops->FeatureGridprops)
+           skin=Skin{char='>' color='crimson'}
+           flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='b'} }
+] set_featstock
 
 /*
 Feature{ tag='3' walkable=true visible=true skin=Skin{char='>' color='sky'}
@@ -250,28 +254,28 @@ Feature{ tag='w' walkable=true visible=true skin=Skin{char='-' color='sky'}
 
 */
 
-Featnonetag{ tag='W' 
-             props=FeatureGridprops{ walkable=true visible=true set_water=true lit=false 
-                                     clear_water=false height=-10 }
-} set_featstock
+[ 'W' 
+  FeatureGridprops{ walkable=true visible=true set_water=true lit=false 
+                    clear_water=false height=-10 }
+] set_featstock
 
-Featnonetag{ tag='.' 
-             props=FeatureGridprops{ walkable=true visible=true set_water=false lit=false 
-                                     clear_water=true height=-10 }
-} set_featstock
+[ '.' 
+  FeatureGridprops{ walkable=true visible=true set_water=false lit=false 
+                    clear_water=true height=-10 }
+] set_featstock
 
 
-Featnoskintag{ tag='e' 
-               feat=FeatureNoSkin{ props=(floor_gridprops->FeatureGridprops)
-                                   back='desaturated_green'
-                                   flags=FeatureFlags{ poison=0.5 name='a cloud of Ebola virus' } }
-} set_featstock
+[ 'e' 
+  FeatureNoSkin{ props=(floor_gridprops->FeatureGridprops)
+                 back='desaturated_green'
+                 flags=FeatureFlags{ poison=0.5 name='a cloud of Ebola virus' } }
+] set_featstock
 
-Featnoskintag{ tag='f' 
-               feat=FeatureNoSkin{ props=(floor_gridprops->FeatureGridprops)
-                                   back='gray'
-                                   flags=FeatureFlags{ confuse=true name='confusing smoke' } }
-} set_featstock
+[ 'f' 
+  FeatureNoSkin{ props=(floor_gridprops->FeatureGridprops)
+                 back='gray'
+                 flags=FeatureFlags{ confuse=true name='confusing smoke' } }
+] set_featstock
 
 /*
 Feature{ tag='g' walkable=true visible=true skin=Skin{} back='dark_green'
@@ -353,28 +357,25 @@ Feature{ tag='monolith' walkable=true visible=true skin=Skin{char=8->Sym color='
 
 .
 
-def { xy:Coord tag:Sym } XYTag;
+/***
 
-def { xy:Coord feat:Feature } XYFeature;
-def { xy:Coord feat:FeatureNoSkin } XYFeatureNoSkin;
-def { xy:Coord props:FeatureGridprops } XYFeatureGridprops;
-def { xy:Coord skin:Skin} XYSkin;
+set_feature [Coord Sym] -> Void :- 
+  [ .0 (.1 get_featstock->Feature)] set_feature;
+  [ .0 (.1 get_featstock->FeatureNoSkin)] set_feature;
+  [ .0 (.1 get_featstock->FeatureGridprops)] set_feature.
 
-set_feature XYTag -> Void :- 
-  XYFeature{xy=.xy feat=(Tag{tag=.tag} get_featstock->Feature)} set_feature;
-  XYFeatureNoSkin{xy=.xy feat=(Tag{tag=.tag} get_featstock->FeatureNoSkin)} set_feature;
-  XYFeatureGridprops{xy=.xy props=(Tag{tag=.tag} get_featstock->FeatureGridprops)} set_feature.
+set_feature [Coord Feature] -> Void :- 
+  [ .0 .1.props] set_feature
+  [ .0 .1.skin] set_skin
+  [ .0 .1.flags] set_featmap.
 
-set_feature XYFeature -> Void :- 
-  XYFeatureGridprops{xy=.xy props=.feat.props} set_feature
-  XYSkin{xy=.xy skin=.feat.skin} set_skin
-  XYFeatureFlags{xy=.xy flags=.feat.flags} set_featmap.
-
-set_feature XYFeatureNoSkin -> Void :- .
-  XYFeatureGridprops{xy=.xy props=.feat.props} set_feature
+set_feature [Coord FeatureNoSkin] -> Void :- .
+  [ .0 .1.props] set_feature.
 
 
-set_feature XYFeatureGridprops -> Void :- .
+set_feature [Coord FeatureGridprops] -> Void :- .
+
+***/
 
 
 /*

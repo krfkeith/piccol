@@ -102,6 +102,9 @@ struct Piccol {
         bm _b("assembling");
         as.parse(stage2);
 
+        std::cout << "-----------------" << std::endl;
+        std::cout << as.print() << std::endl;
+
         bm _b2("running");
         nanom::vm_run(vm, as.nillabel);
     }
