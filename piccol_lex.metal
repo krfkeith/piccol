@@ -114,7 +114,6 @@ val :- @'SET_TYPE' @'Sym'  @'PUSH' symval.
 val :- nilval  @'SET_TYPE' @'Bool' @'PUSH' @'0'.
 val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
 
-val_primitive :- val spaces '->' spaces @'CALL' @'$cast' typename_here.
 val_primitive :- val.
 
 val_or_call :- val_primitive.
@@ -122,6 +121,7 @@ val_or_call :- structval.
 val_or_call :- '(' spaces statements spaces ')'.
 
 
+funcall :- @'ASMCALL' '$' ident_here.
 funcall :- @'CALL' ident_here spaces '->' spaces typename_here.
 funcall :- @'CALL' ident_here @'Void'.
 

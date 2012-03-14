@@ -30,9 +30,6 @@ primitive_type_x :- primitive_type &'push'.
 
 val :- 'SET_TYPE' @'PUSH' primitive_type_x 'PUSH' val_literal @'_push_type' &'pop'.
 
-val_primitive :- val 'CALL' '$cast'
-                 @'_top_type' @'_pop_type' 
-                 @'PUSH' @'Sym' primitive_type_x @'_push_type' &'pop' @'SYSCALL_PRIMITIVE'.
 val_primitive :- val.
 
 val_or_call :- statements.
@@ -57,6 +54,7 @@ tuplefields :- .
 
 tupleval :- 'START_TUPLE' @'_mark_tuple' tuplefields 'END_TUPLE' @'_make_tupletype'.
 
+funcall :- 'ASMCALL' @'_asmcall' val_literal.
 funcall :- 'CALL' 
            sym 
            @'_top_type' @'_pop_type' 

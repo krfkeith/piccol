@@ -196,6 +196,16 @@ enum op_t {
     CALL,
     EXIT,
 
+    NEW_SHAPE,
+    DEF_FIELD,
+    DEF_STRUCT_FIELD,
+    DEF_SHAPE,
+
+    NEW_STRUCT,
+    SET_FIELDS,
+
+    /***/
+
     ADD_INT,
     SUB_INT,
     MUL_INT,
@@ -238,15 +248,10 @@ enum op_t {
     GT_REAL,
     GTE_REAL,
 
-    NEW_SHAPE,
-    DEF_FIELD,
-    DEF_STRUCT_FIELD,
-    DEF_SHAPE,
-
-    NEW_STRUCT,
-    SET_FIELDS,
-
-    SYSCALL_PRIMITIVE
+    INT_TO_REAL,
+    REAL_TO_INT,
+    INT_TO_CHAR,
+    UINT_TO_CHAR
 
 };
 
@@ -360,6 +365,12 @@ struct _mapper {
         m[(size_t)PUSH_DUP] = "PUSH_DUP";
         m[(size_t)CALL] = "CALL";
         m[(size_t)EXIT] = "EXIT";
+        m[(size_t)NEW_SHAPE] = "NEW_SHAPE";
+        m[(size_t)DEF_FIELD] = "DEF_FIELD";
+        m[(size_t)DEF_STRUCT_FIELD] = "DEF_STRUCT_FIELD";
+        m[(size_t)DEF_SHAPE] = "DEF_SHAPE";
+        m[(size_t)NEW_STRUCT] = "NEW_STRUCT";
+        m[(size_t)SET_FIELDS] = "SET_FIELDS";
         m[(size_t)ADD_INT] = "ADD_INT";
         m[(size_t)SUB_INT] = "SUB_INT";
         m[(size_t)MUL_INT] = "MUL_INT";
@@ -395,13 +406,10 @@ struct _mapper {
         m[(size_t)LTE_REAL] = "LTE_REAL";
         m[(size_t)GT_REAL] = "GT_REAL";
         m[(size_t)GTE_REAL] = "GTE_REAL";
-        m[(size_t)NEW_SHAPE] = "NEW_SHAPE";
-        m[(size_t)DEF_FIELD] = "DEF_FIELD";
-        m[(size_t)DEF_STRUCT_FIELD] = "DEF_STRUCT_FIELD";
-        m[(size_t)DEF_SHAPE] = "DEF_SHAPE";
-        m[(size_t)NEW_STRUCT] = "NEW_STRUCT";
-        m[(size_t)SET_FIELDS] = "SET_FIELDS";
-        m[(size_t)SYSCALL_PRIMITIVE] = "SYSCALL_PRIMITIVE";
+        m[(size_t)INT_TO_REAL] = "INT_TO_REAL";
+        m[(size_t)REAL_TO_INT] = "REAL_TO_INT";
+        m[(size_t)INT_TO_CHAR] = "INT_TO_CHAR";
+        m[(size_t)UINT_TO_CHAR] = "UINT_TO_CHAR";
         
         n["NOOP"] = NOOP;
         n["PUSH"] = PUSH;
@@ -411,6 +419,12 @@ struct _mapper {
         n["PUSH_DUP"] = PUSH_DUP;
         n["CALL"] = CALL;
         n["EXIT"] = EXIT;
+        n["NEW_SHAPE"] = NEW_SHAPE;
+        n["DEF_FIELD"] = DEF_FIELD;
+        n["DEF_STRUCT_FIELD"] = DEF_STRUCT_FIELD;
+        n["DEF_SHAPE"] = DEF_SHAPE;
+        n["NEW_STRUCT"] = NEW_STRUCT;
+        n["SET_FIELDS"] = SET_FIELDS;
         n["ADD_INT"] = ADD_INT;
         n["SUB_INT"] = SUB_INT;
         n["MUL_INT"] = MUL_INT;
@@ -446,13 +460,10 @@ struct _mapper {
         n["LTE_REAL"] = LTE_REAL;
         n["GT_REAL"] = GT_REAL;
         n["GTE_REAL"] = GTE_REAL;
-        n["NEW_SHAPE"] = NEW_SHAPE;
-        n["DEF_FIELD"] = DEF_FIELD;
-        n["DEF_STRUCT_FIELD"] = DEF_STRUCT_FIELD;
-        n["DEF_SHAPE"] = DEF_SHAPE;
-        n["NEW_STRUCT"] = NEW_STRUCT;
-        n["SET_FIELDS"] = SET_FIELDS;
-        n["SYSCALL_PRIMITIVE"] = SYSCALL_PRIMITIVE;
+        n["INT_TO_REAL"] = INT_TO_REAL;
+        n["REAL_TO_INT"] = REAL_TO_INT;
+        n["INT_TO_CHAR"] = INT_TO_CHAR;
+        n["UINT_TO_CHAR"] = UINT_TO_CHAR;
     }
 };
 
@@ -602,6 +613,56 @@ inline void vm_run(Vm& vm,
 
             break;
         }
+
+        case NEW_SHAPE: {
+            vm.tmp_shape = Shape();
+            break;
+        }
+
+        case DEF_FIELD: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.tmp_shape.add_field(v1.uint, (Type)v2.uint);
+            break;
+        }
+
+        case DEF_STRUCT_FIELD: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            const Shape& sh = vm.shapes.get(v2.uint);
+            vm.tmp_shape.add_field(v1.uint, STRUCT, v2.uint, sh.size());
+            break;
+        }
+
+        case DEF_SHAPE: {
+            Val v = vm.pop();
+            vm.shapes.add(v.uint, vm.tmp_shape);
+            break;
+        }
+
+        case NEW_STRUCT: {
+            Val v = vm.pop();
+            vm.stack.insert(vm.stack.end(), v.uint, Val());
+            break;
+        }
+
+        case SET_FIELDS: {
+            Val strusize = vm.pop();
+            Val offs_end = vm.pop();
+            Val offs_beg = vm.pop();
+
+            size_t topsize = (offs_end.uint - offs_beg.uint);
+            auto tope = vm.stack.end();
+            auto topi = tope - topsize;
+            auto stri = topi - strusize.uint + offs_beg.uint;
+
+            for (auto i = topi; i != tope; ++i, ++stri) {
+                *stri = *i;
+            }
+
+            vm.stack.resize(vm.stack.size() - topsize);
+            break;
+        } 
             
         case ADD_INT: {
             Val v2 = vm.pop();
@@ -845,86 +906,32 @@ inline void vm_run(Vm& vm,
             break;
         }
 
-        case NEW_SHAPE: {
-            vm.tmp_shape = Shape();
-            break;
-        }
-
-        case DEF_FIELD: {
-            Val v2 = vm.pop();
-            Val v1 = vm.pop();
-            vm.tmp_shape.add_field(v1.uint, (Type)v2.uint);
-            break;
-        }
-
-        case DEF_STRUCT_FIELD: {
-            Val v2 = vm.pop();
-            Val v1 = vm.pop();
-            const Shape& sh = vm.shapes.get(v2.uint);
-            vm.tmp_shape.add_field(v1.uint, STRUCT, v2.uint, sh.size());
-            break;
-        }
-
-        case DEF_SHAPE: {
+        case INT_TO_REAL: {
             Val v = vm.pop();
-            vm.shapes.add(v.uint, vm.tmp_shape);
+            Val ret = (Real)v.inte;
+            vm.stack.push_back(ret);
             break;
         }
 
-        case NEW_STRUCT: {
+        case REAL_TO_INT: {
             Val v = vm.pop();
-            vm.stack.insert(vm.stack.end(), v.uint, Val());
+            Val ret = (Int)v.real;
+            vm.stack.push_back(ret);
             break;
         }
 
-        case SET_FIELDS: {
-            Val strusize = vm.pop();
-            Val offs_end = vm.pop();
-            Val offs_beg = vm.pop();
-
-            size_t topsize = (offs_end.uint - offs_beg.uint);
-            auto tope = vm.stack.end();
-            auto topi = tope - topsize;
-            auto stri = topi - strusize.uint + offs_beg.uint;
-
-            for (auto i = topi; i != tope; ++i, ++stri) {
-                *stri = *i;
-            }
-
-            vm.stack.resize(vm.stack.size() - topsize);
-            break;
-        } 
-
-        case SYSCALL_PRIMITIVE: {
-            Sym totype = vm.pop().uint;
-            Sym fromtype = vm.pop().uint;
-            Val from = vm.pop();
+        case INT_TO_CHAR: {
+            Val v = vm.pop();
             Val ret;
+            ret.uint = symtab().get(std::string(1, (char)v.inte));
+            vm.stack.push_back(ret);
+            break;
+        }
 
-            if (fromtype == int_primitive && totype == real_primitive) {
-                ret.real = (Real)from.inte;
-
-            } else if (fromtype == real_primitive && totype == int_primitive) {
-                ret.inte = (Int)from.real;
-
-            } else if (fromtype == int_primitive && totype == sym_primitive) {
-                ret.uint = symtab().get(std::string(1, (char)from.inte));
-
-            } else if (fromtype == uint_primitive && totype == sym_primitive) {
-                ret.uint = symtab().get(std::string(1, (unsigned char)from.uint));
-
-            } else if ((fromtype == bool_primitive && totype == int_primitive) ||
-                       (fromtype == bool_primitive && totype == uint_primitive) || 
-                       (fromtype == int_primitive && totype == bool_primitive) ||
-                       (fromtype == uint_primitive && totype == bool_primitive)) {
-                ret.uint = (bool)from.uint;
-
-            } else {
-                throw std::runtime_error("Don't know how to convert " + 
-                                         symtab().get(fromtype) + "->" +
-                                         symtab().get(totype));
-            }
-            
+        case UINT_TO_CHAR: {
+            Val v = vm.pop();
+            Val ret;
+            ret.uint = symtab().get(std::string(1, (unsigned char)v.uint));
             vm.stack.push_back(ret);
             break;
         }

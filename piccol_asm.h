@@ -1,5 +1,5 @@
-#ifndef __NANOM_ASM_H
-#define __NANOM_ASM_H
+#ifndef __PICCOL_ASM_H
+#define __PICCOL_ASM_H
 
 #include <cinttypes>
 
@@ -323,6 +323,39 @@ private:
         }
     }
 
+
+    std::unordered_map<std::pair<std::string,std::string>,Opcode>
+    make_asmcall_map() {
+        typedef std::unordered_map<std::pair<std::string,std::string>,Opcode> ret_t;
+
+        ret_t.emplace(std::make_pair(
+    }
+
+    void asmcall(const std::string& shape, const std::string& call) {
+
+    }
+
+    void asmcall() {
+
+        Sym shape = symtab().get("Void");
+
+        if (!shapestack.empty()) {
+            shape = shapestack.back();
+            shapestack.pop_back();
+        }
+
+        ++p_i;
+        if (p_i == p_e)
+            throw std::runtime_error("End of input in _asmcall");
+
+        Sym s = p_i->sym;
+
+        if (!asmcall(symtab().get(shape), symtab().get(s))) {
+
+            throw std::runtime_error("Unknown syscall: " + symtab().get(shape) + " " + symtab().get(s));
+        }
+    }
+
 public:
 
     void parse(const metalan::Symlist& prog) {
@@ -417,6 +450,12 @@ public:
 
             } else if (op_name == "_fieldtype_check") {
                 fieldtype_check();
+
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_asmcall") {
+                asmcall();
 
                 ++p_i;
                 continue;
