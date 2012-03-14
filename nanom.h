@@ -487,12 +487,6 @@ inline void vm_run(Vm& vm,
                    size_t ip = 0, 
                    bool verbose = false) {
 
-    Sym int_primitive = symtab().get("Int");
-    Sym real_primitive = symtab().get("Real");
-    Sym uint_primitive = symtab().get("UInt");
-    Sym bool_primitive = symtab().get("Bool");
-    Sym sym_primitive = symtab().get("Sym");
-
     bool done = false;
 
     VmCode::code_t* code = &(vm.code.codes[label]);

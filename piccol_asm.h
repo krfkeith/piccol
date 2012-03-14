@@ -324,15 +324,31 @@ private:
     }
 
 
-    std::unordered_map<std::pair<std::string,std::string>,Opcode>
+    std::unordered_map< std::pair<std::string,std::string>, std::pair<Opcode,std::string> >
     make_asmcall_map() {
-        typedef std::unordered_map<std::pair<std::string,std::string>,Opcode> ret_t;
+        typedef std::unordered_map< std::pair<std::string,std::string>,
+                                    std::pair<Opcode,std::string> > ret_t;
 
-        ret_t.emplace(std::make_pair(
+        ret_t ret;
+        ret[std::make_pair("[ Int Int ]", "add")] = std::make_pair(Opcode(ADD_INT), "Int");
+        ret[std::make_pair("[ Real Real ]", "add")] = std::make_pair(Opcode(ADD_REAL), "Real");
+        ret[std::make_pair("Int", "to_real")] = std::make_pair(Opcode(INT_TO_REAL), "Real");
+        ret[std::make_pair("Real", "to_int")] = std::make_pair(Opcode(REAL_TO_INT), "Int");
+        return ret;
     }
 
-    void asmcall(const std::string& shape, const std::string& call) {
+    bool asmcall(const std::string& shape, const std::string& call) {
+        static auto amap = make_asmcall_map();
 
+        auto i = amap.find(std::make_pair(shape, call));
+
+        if (i == amap.end())
+            return false;
+
+        code.codes[label].push_back(i->second.first);
+        shapestack.push_back(symtab().get(i->second.second));
+
+        return true;
     }
 
     void asmcall() {

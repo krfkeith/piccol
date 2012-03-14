@@ -1,4 +1,5 @@
 
+/*
 <<
 
 intexpr :- \any:'Int' '+' \any:'Int' @''
@@ -14,4 +15,15 @@ bottles Int->Void :-
   'Take one down, pass it around,' print
   [ 
 
+*/
 
+def [ a:Int b:Int ];
+def [ a:Real b:Real ];
+
+/* TODO! Check proper return type on exit. */
+
+test Void->Int :- [3.25 ([1 (3.14 $to_int)] $add $to_real)] $add.
+
+test3 Void->Void :- .
+
+test2 Void->Int :- [3.14 5.5] $add test3.
