@@ -31,10 +31,18 @@ ident_x :- .
 
 ident :- locase_letter ident_x.
 
+ident_here :- ident &''.
+
+
 typename :- upcase_letter ident_x.
 
-ident_here :- ident &''.
+tuplename_x :- @' ' &'combine' typename_here &'combine' spaces tuplename_x.
+tuplename_x :- .
+
+tuplename :- '[' &'append' spaces tuplename_x ']' @' ]' &'combine'.
+
 typename_here :- typename &''.
+typename_here :- &'push' tuplename &'pop'.
 
 opttype :- spaces ':' spaces @'FIELD_TYPE' typename_here.
 opttype :- spaces @'EMPTY_TYPE'.
@@ -42,10 +50,21 @@ opttype :- spaces @'EMPTY_TYPE'.
 structfields :- spaces @'FIELD_NAME' ident_here opttype structfields.
 structfields :- spaces .
 
-structdef :- spaces 'def' @'START_DEF' spaces '{' structfields '}' 
+tuptype :- @' ' &'combine' typename_here &'combine_keep'.
+
+tuplefields :- spaces @'FIELD_NAME' ident_here spaces ':' spaces @'FIELD_TYPE' tuptype tuplefields.
+tuplefields :- spaces .
+
+structdef :- '{' structfields '}' 
              spaces @'DEF_NAME' typename_here spaces ';' @'END_DEF'.
 
+tupledef :- '[' &'push' tuplefields ']' @' ]' &'combine' spaces ';'
+            spaces @'DEF_NAME' &'pop' @'END_DEF'.
 
+defhead :- spaces 'def' @'START_DEF' spaces.
+
+def :- defhead structdef.
+def :- defhead tupledef.
 
 
 
@@ -63,9 +82,9 @@ realval :- intval &'' 'f'.
 symval_x :- {\\} {'} @{'}  &'combine' symval_x.
 symval_x :- {\\} {t} @{\t} &'combine' symval_x.
 symval_x :- {\\} {n} @{\n} &'combine' symval_x.
-symval_x :- {'}.
+symval_x :- {'} &'pop'.
 symval_x :- \any &'append' symval_x.
-symval :- @'' {'} symval_x.
+symval :- &'push' {'} symval_x.
 
 nilval :- 'nil'.
 nilval :- 'false'.
@@ -83,10 +102,10 @@ structvalfields :- spaces.
 structval :- @'SET_TYPE' typename_here spaces '{' @'START_STRUCT' structvalfields '}' @'END_STRUCT'.
 
 
-tuplefields :- spaces val_or_call @'SET_TUPLEFIELD' tuplefields.
-tuplefields :- spaces.
+tuplevalfields :- spaces val_or_call @'SET_TUPLEFIELD' tuplevalfields.
+tuplevalfields :- spaces.
 
-tupleval :- spaces '[' @'START_TUPLE' tuplefields ']' @'END_TUPLE'.
+tupleval :- spaces '[' @'START_TUPLE' tuplevalfields ']' @'END_TUPLE'.
 
 
 val :- @'SET_TYPE' @'Real' @'PUSH' realval.
@@ -106,8 +125,8 @@ val_or_call :- '(' spaces statements spaces ')'.
 funcall :- @'CALL' ident_here spaces '->' spaces typename_here.
 funcall :- @'CALL' ident_here @'Void'.
 
-statements :- structval spaces statements.
 statements :- tupleval spaces statements.
+statements :- structval spaces statements.
 statements :- val_primitive spaces statements.
 statements :- funcall spaces statements.
 statements :- .
@@ -121,7 +140,7 @@ fun :- spaces @'FUN_TYPE' ident_here
        spaces '.' @'END_FUN'.
 
 
-all :- structdef all.
+all :- def all.
 all :- fun all.
 all :- spaces.
 

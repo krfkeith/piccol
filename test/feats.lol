@@ -65,11 +65,10 @@ def {
 } Feature;
 
 
-/*
-def { tag: Sym feat:  Feature          } Feattag;
-def { tag: Sym props: FeatureGridprops } Featnonetag;
-def { tag: Sym feat:  FeatureNoSkin    } Featnoskintag;
-*/
+def [ a:Sym b:Feature ];
+def [ a:Sym b:FeatureGridprops ];
+def [ a:Sym b:FeatureNoSkin ];
+
 
 floor_gridprops Void->FeatureGridprops :- 
    FeatureGridprops{ lit=false set_water=false clear_water=false walkable=true visible=true height=-10 }.

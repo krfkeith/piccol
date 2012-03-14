@@ -108,14 +108,15 @@ struct MetalanPrime {
         /*
          * Special commands:
          * 
-         * 'append'  : Append the current capture to a previously emitted symbol. 
-         *             The previously emitted symbol will be modified in-place.
-         * 'combine' : Append the previously emitted symbol to the symbol emitted before it.
-         *             This second-to-last symbols will be modified in-place.
-         *             The current capture will be ignored.
-         * 'push'    : Push current capture on a stack, do not emit any symbols.
-         * 'pop'     : Pop a capture from the stack and emit the symbols is contains. 
-         *             The current capture will be ignored.
+         * 'append'      : Append the current capture to the top of the stack.
+         * 'combine'     : Append the previously emitted symbol to the top of the stack.
+         *                 The current capture will be ignored, the previously emitted symbol
+         *                 will be deleted.
+         * 'combine_keep': Like 'combine', but the previously emitted symbol will _not_ be
+         *                 deleted.
+         * 'push'        : Push current capture on a stack, do not emit any symbols.
+         * 'pop'         : Pop a capture from the stack and emit the symbols is contains. 
+         *                 The current capture will be ignored.
          */
         
 
@@ -127,19 +128,31 @@ struct MetalanPrime {
 
             if (n.type == 0) {
 
-                if (symstr == "append" && !ret.syms.empty()) {
+                if (symstr == "append") {
                     
-                    Symcell& prev = ret.syms.back();
-                    prev.sym = symtab().get(symtab().get(prev.sym) + n.capture);
+                    if (capture_stack.empty())
+                        continue;
+
+                    capture_stack.back() += n.capture;
                     continue;
 
-                } else if (symstr == "combine" && ret.syms.size() >= 2) {
+                } else if (symstr == "combine" && ret.syms.size() >= 1) {
+
+                    if (capture_stack.empty())
+                        continue;
                     
                     Symcell prev = ret.syms.back();
                     ret.syms.pop_back();
-                    Symcell& prevprev = ret.syms.back();
-                    prevprev.sym = symtab().get(symtab().get(prevprev.sym) + 
-                                                symtab().get(prev.sym));
+                    capture_stack.back() += symtab().get(prev.sym);
+                    continue;
+
+                } else if (symstr == "combine_keep" && ret.syms.size() >= 1) {
+
+                    if (capture_stack.empty())
+                        continue;
+                    
+                    Symcell prev = ret.syms.back();
+                    capture_stack.back() += symtab().get(prev.sym);
                     continue;
 
                 } else if (symstr == "push") {

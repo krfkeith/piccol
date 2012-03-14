@@ -95,6 +95,9 @@ private:
         if (p_i == p_e)
             throw std::runtime_error("End of input in _push_type");
 
+        if (!vm.shapes.has_shape(p_i->sym)) 
+            throw std::runtime_error("Undefined shape: " + symtab().get(p_i->sym));
+
         shapestack.push_back(p_i->sym);
     }
 
@@ -142,72 +145,21 @@ private:
             tuptypes.push_back(s);
         }
 
-        Shape autoshape;
-        VmCode::code_t autodef;
-        
-        autodef.emplace_back(NEW_SHAPE);
-
         std::string hacktype = "[";
-        size_t n = 0;
         for (std::vector<Sym>::reverse_iterator i = tuptypes.rbegin(); i != tuptypes.rend(); ++i) {
-            if (i != tuptypes.rbegin())
-                hacktype += ",";
+            hacktype += " ";
             
             const std::string& tn = symtab().get(*i);
             hacktype += tn;
-            Sym fn = symtab().get(uint_to_string(n));
-
-            autodef.emplace_back(PUSH, fn);
-
-            if (tn == "Bool") {
-                autoshape.add_field(symtab().get(uint_to_string(n)), BOOL);
-                autodef.emplace_back(PUSH, (UInt)BOOL);
-                autodef.emplace_back(DEF_FIELD);
-
-            } else if (tn == "Int") {
-                autoshape.add_field(symtab().get(uint_to_string(n)), INT);
-                autodef.emplace_back(PUSH, (UInt)INT);
-                autodef.emplace_back(DEF_FIELD);
-
-            } else if (tn == "UInt") {
-                autoshape.add_field(symtab().get(uint_to_string(n)), UINT);
-                autodef.emplace_back(PUSH, (UInt)UINT);
-                autodef.emplace_back(DEF_FIELD);
-
-            } else if (tn == "Real") {
-                autoshape.add_field(symtab().get(uint_to_string(n)), REAL);
-                autodef.emplace_back(PUSH, (UInt)REAL);
-                autodef.emplace_back(DEF_FIELD);
-
-            } else if (tn == "Sym") {
-                autoshape.add_field(symtab().get(uint_to_string(n)), SYMBOL);
-                autodef.emplace_back(PUSH, (UInt)SYMBOL);
-                autodef.emplace_back(DEF_FIELD);
-
-            } else {
-                autoshape.add_field(symtab().get(uint_to_string(n)), STRUCT, *i, vm.shapes.get(*i).size());
-                autodef.emplace_back(PUSH, *i);
-                autodef.emplace_back(DEF_STRUCT_FIELD);
-            }
-
-            ++n;
         }
-        hacktype += "]";
+        hacktype += " ]";
 
         Sym tupshs = symtab().get(hacktype);
 
+        if (!vm.shapes.has_shape(tupshs)) 
+            throw std::runtime_error("Undefined shape: " + symtab().get(tupshs));
+
         shapestack.push_back(tupshs);
-
-        if (!vm.shapes.has_shape(tupshs)) {
-            
-            vm.shapes.add(tupshs, autoshape);
-
-            autodef.emplace_back(PUSH, tupshs);
-            autodef.emplace_back(DEF_SHAPE);
-
-            auto& c = code.codes[nillabel];
-            c.insert(c.end(), autodef.begin(), autodef.end());
-        }
     }
 
     void push_funlabel() {

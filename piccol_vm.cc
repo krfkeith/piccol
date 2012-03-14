@@ -95,9 +95,9 @@ int main(int argc, char** argv) {
     emiter.assign(std::istreambuf_iterator<char>(efile),
                   std::istreambuf_iterator<char>());
 
-    l.register_callback("set_featstock", "Feattag", "Void", printer);
-    l.register_callback("set_featstock", "Featnonetag", "Void", printer);
-    l.register_callback("set_featstock", "Featnoskintag", "Void", printer);
+    l.register_callback("set_featstock", "[ Sym Feature ]", "Void", printer);
+    l.register_callback("set_featstock", "[ Sym FeatureNoSkin ]", "Void", printer);
+    l.register_callback("set_featstock", "[ Sym FeatureGridprops ]", "Void", printer);
     
     l.load(lexer, morpher, emiter, inp);
 

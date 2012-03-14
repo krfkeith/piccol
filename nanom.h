@@ -251,7 +251,7 @@ struct Opcode {
     op_t op;
     Val arg;
 
-    Opcode(op_t o = NOOP, Val a = (size_t)0) : op(o), arg(a) {}
+    Opcode(op_t o = NOOP, Val a = (UInt)0) : op(o), arg(a) {}
 };
 
 
