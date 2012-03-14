@@ -336,10 +336,12 @@ public:
 
             const std::string& op_name = metalan::symtab().get(p_i->sym);
 
+            /*
             std::cout << "!" << op_name << std::endl;
             for (const auto& s : shapestack) 
                 std::cout << " " << symtab().get(s);
             std::cout << std::endl;
+            */
 
             if (op_name == "_cmode_on") {
                 cmode_on();
