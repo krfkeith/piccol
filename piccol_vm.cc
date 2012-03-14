@@ -5,8 +5,7 @@
 
 #include "piccol_vm.h"
 
-void printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-             const nanom::Struct& struc, nanom::Struct& ret) {
+void print_(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Struct& struc) {
 
     std::cout << "{" << std::endl;
     for (const auto& i : shape.sym2field) {
@@ -28,8 +27,7 @@ void printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom
             std::cout << metalan::symtab().get(struc.get_field(i.second.ix_from).uint);
             break;
         case nanom::STRUCT:
-            printer(shapes, shapes.get(i.second.shape), shapeto,
-                    struc.substruct(i.second.ix_from, i.second.ix_to), ret);
+            print_(shapes, shapes.get(i.second.shape), struc.substruct(i.second.ix_from, i.second.ix_to));
             break;
         case nanom::NONE:
             std::cout << "<fail>";
@@ -42,12 +40,18 @@ void printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom
 }
 
 
+void printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
+             const nanom::Struct& struc, nanom::Struct& ret) {
+    print_(shapes, shape, struc);
+}
+
+
 int main(int argc, char** argv) {
 
     std::string inp;
 
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <file>" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " <file> <funname> <funrettype>" << std::endl;
         return 1;
     }
 
@@ -101,7 +105,12 @@ int main(int argc, char** argv) {
     
     l.load(lexer, morpher, emiter, inp);
 
-    l.run("init_featstock", "Void");
+    //l.run("init_featstock", "Void");
+
+    nanom::Struct out;
+    l.run(argv[2], "Void", argv[3], out);
+
+    print_(l.vm.shapes, l.vm.shapes.get(argv[3]), out);
 
     return 0;
 }

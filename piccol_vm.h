@@ -88,6 +88,9 @@ struct Piccol {
             stage1 = stage2;
         }
 
+        //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        //std::cout << stage2.print() << std::endl;
+
         try {
             bm _b("emiting");
             stage2 = doppel.parse(emiter, stage2);
@@ -109,12 +112,26 @@ struct Piccol {
         nanom::vm_run(vm, as.nillabel);
     }
 
-    void run(metalan::Sym name, metalan::Sym s1) {
-        nanom::vm_run(vm, nanom::label_t(name, s1, metalan::symtab().get("Void")), 0, true);
+    void run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out) {
+        nanom::vm_run(vm, nanom::label_t(name, s1, s2), 0, true);
+
+        // This isn't really needed since we shouldn't exit out of middle of a call stack.
+
+        if (vm.frame.size() > 0) {
+            out.v.assign(vm.stack.begin() + vm.frame.back().stack_ix + vm.frame.back().struct_size,
+                         vm.stack.end());
+
+        } else {
+            out.v.assign(vm.stack.begin(), vm.stack.end());
+        }
+
+        vm.stack.clear();
+        vm.frame.clear();
     }
 
-    void run(const std::string& name, const std::string& s) {
-        run(metalan::symtab().get(name), metalan::symtab().get(s));
+    void run(const std::string& name, const std::string& fr, const std::string& to, nanom::Struct& out) {
+        run(metalan::symtab().get(name), metalan::symtab().get(fr), metalan::symtab().get(to),
+            out);
     }
 };
 

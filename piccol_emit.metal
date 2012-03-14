@@ -31,8 +31,8 @@ primitive_type_x :- primitive_type &'push'.
 val :- 'SET_TYPE' @'PUSH' primitive_type_x 'PUSH' val_literal @'_push_type' &'pop'.
 
 val_primitive :- val 'CALL' '$cast'
-                 @'PUSH' @'Sym' primitive_type 
-                 @'PUSH' @'Sym' @'_pop_type' primitive_type_x @'SYSCALL_PRIMITIVE'.
+                 @'_top_type' @'_pop_type' 
+                 @'PUSH' @'Sym' primitive_type_x @'_push_type' &'pop' @'SYSCALL_PRIMITIVE'.
 val_primitive :- val.
 
 val_or_call :- statements.

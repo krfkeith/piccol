@@ -146,6 +146,10 @@ struct Shapes {
 
         shapes.insert(i, std::make_pair(shapeid, sh));
     }
+
+    const Shape& get(const std::string& s) const {
+        return get(symtab().get(s));
+    }
 };
 
 
