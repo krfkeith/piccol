@@ -1,7 +1,7 @@
 
 <<
 
-intexpr :- \any:'Int' '+' \any:'Int' @'$'
+intexpr :- \any:'Int' '+' \any:'Int' @''
 
 >>
 
