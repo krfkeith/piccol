@@ -344,29 +344,90 @@ private:
     }
 
 
-    std::unordered_map< std::pair<std::string,std::string>, std::pair<Opcode,std::string> >
-    make_asmcall_map() {
-        typedef std::unordered_map< std::pair<std::string,std::string>,
-                                    std::pair<Opcode,std::string> > ret_t;
+    struct asmcall_map_ {
+        typedef std::unordered_map< std::pair<Sym,Sym>, 
+                                    std::pair<Opcode,Sym> > map_t;
 
-        ret_t ret;
-        ret[std::make_pair("[ Int Int ]", "add")] = std::make_pair(Opcode(ADD_INT), "Int");
-        ret[std::make_pair("[ Real Real ]", "add")] = std::make_pair(Opcode(ADD_REAL), "Real");
-        ret[std::make_pair("Int", "to_real")] = std::make_pair(Opcode(INT_TO_REAL), "Real");
-        ret[std::make_pair("Real", "to_int")] = std::make_pair(Opcode(REAL_TO_INT), "Int");
-        return ret;
-    }
+        map_t map;
 
-    bool asmcall(const std::string& shape, const std::string& call) {
-        static auto amap = make_asmcall_map();
+        asmcall_map_() {
 
-        auto i = amap.find(std::make_pair(shape, call));
+            add("[ Int Int ]",   "add",     ADD_INT,     "Int");
+            add("[ Int Int ]",   "sub",     SUB_INT,     "Int");
+            add("[ Int Int ]",   "mul",     MUL_INT,     "Int");
+            add("[ Int Int ]",   "div",     DIV_INT,     "Int");
+            add("Int",           "neg",     NEG_INT,     "Int");
 
-        if (i == amap.end())
+            add("[ UInt UInt ]", "add",     ADD_UINT,    "UInt");
+            add("[ UInt UInt ]", "sub",     SUB_UINT,    "UInt");
+            add("[ UInt UInt ]", "mul",     MUL_UINT,    "UInt");
+            add("[ UInt UInt ]", "div",     DIV_UINT,    "UInt");
+
+            add("[ Real Real ]", "add",     ADD_REAL,    "Real");
+            add("[ Real Real ]", "sub",     SUB_REAL,    "Real");
+            add("[ Real Real ]", "mul",     MUL_REAL,    "Real");
+            add("[ Real Real ]", "div",     DIV_REAL,    "Real");
+            add("Real",          "neg",     NEG_REAL,    "Real");
+
+            add("[ UInt UInt ]", "band",    BAND,        "UInt");
+            add("[ UInt UInt ]", "bor",     BOR,         "UInt");
+            add("[ UInt UInt ]", "bnot",    BNOT,        "UInt");
+            add("[ UInt UInt ]", "bxor",    BXOR,        "UInt");
+            add("[ UInt UInt ]", "bshl",    BSHL,        "UInt");
+            add("[ UInt UInt ]", "bshr",    BSHR,        "UInt");
+
+            add("[ Int Int ]",   "eq",      EQ_INT,      "Int");
+            add("[ Int Int ]",   "lt",      LT_INT,      "Int");
+            add("[ Int Int ]",   "lte",     LTE_INT,     "Int");
+            add("[ Int Int ]",   "gt",      GT_INT,      "Int");
+            add("[ Int Int ]",   "gte",     GTE_INT,     "Int");
+
+            add("[ UInt UInt ]", "eq",      EQ_UINT,      "UInt");
+            add("[ UInt UInt ]", "lt",      LT_UINT,      "UInt");
+            add("[ UInt UInt ]", "lte",     LTE_UINT,     "UInt");
+            add("[ UInt UInt ]", "gt",      GT_UINT,      "UInt");
+            add("[ UInt UInt ]", "gte",     GTE_UINT,     "UInt");
+
+            add("[ Real Real ]", "eq",      EQ_REAL,      "Real");
+            add("[ Real Real ]", "lt",      LT_REAL,      "Real");
+            add("[ Real Real ]", "lte",     LTE_REAL,     "Real");
+            add("[ Real Real ]", "gt",      GT_REAL,      "Real");
+            add("[ Real Real ]", "gte",     GTE_REAL,     "Real");
+
+            add("Int",           "to_real", INT_TO_REAL,  "Real");
+            add("Real",          "to_int",  REAL_TO_INT,  "Int");
+
+            add("Int",           "to_sym",  INT_TO_CHAR,  "Sym");
+            add("UInt",          "to_sym",  UINT_TO_CHAR, "Sym");
+            
+            add("Int",           "to_uint", NOOP,         "UInt");
+            add("Int",           "to_bool", NOOP,         "Bool");
+            add("UInt",          "to_int",  NOOP,         "Int");
+            add("UInt",          "to_bool", NOOP,         "Bool");
+            add("Bool",          "to_int",  NOOP,         "Int");
+            add("Bool",          "to_uint", NOOP,         "UInt");
+
+        }
+
+        void add(const std::string& typefrom, const std::string& name,
+                 op_t op, const std::string& typeto) {
+
+            map[std::make_pair(symtab().get(typefrom), symtab().get(name))] = 
+                std::make_pair(Opcode(op), symtab().get(typeto));
+        }
+    };
+
+        
+    bool asmcall(Sym shape, Sym call) {
+        static asmcall_map_ amap;
+
+        auto i = amap.map.find(std::make_pair(shape, call));
+
+        if (i == amap.map.end())
             return false;
 
         code.codes[label].push_back(i->second.first);
-        shapestack.push_back(symtab().get(i->second.second));
+        shapestack.push_back(i->second.second);
 
         return true;
     }
@@ -386,7 +447,7 @@ private:
 
         Sym s = p_i->sym;
 
-        if (!asmcall(symtab().get(shape), symtab().get(s))) {
+        if (!asmcall(shape, s)) {
 
             throw std::runtime_error("Unknown syscall: " + symtab().get(shape) + " " + symtab().get(s));
         }
