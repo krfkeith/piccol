@@ -40,9 +40,10 @@ void print_(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom:
 }
 
 
-void printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
+bool printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
              const nanom::Struct& struc, nanom::Struct& ret) {
     print_(shapes, shape, struc);
+    return true;
 }
 
 
@@ -108,9 +109,14 @@ int main(int argc, char** argv) {
     //l.run("init_featstock", "Void");
 
     nanom::Struct out;
-    l.run(argv[2], "Void", argv[3], out);
 
-    print_(l.vm.shapes, l.vm.shapes.get(argv[3]), out);
+    bool ret = l.run(argv[2], "Void", argv[3], out);
+
+    if (!ret) {
+        std::cout << "fail." << std::endl;
+    } else {
+        print_(l.vm.shapes, l.vm.shapes.get(argv[3]), out);
+    }
 
     return 0;
 }

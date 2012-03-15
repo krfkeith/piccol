@@ -571,8 +571,7 @@ public:
 
             ++p_i;
             
-            if (op.op == PUSH ||
-                op.op == PUSH_DUP) {
+            if (op.op == PUSH) {
 
                 if (p_i == p_e) {
                     throw std::runtime_error("End of input while looking for opcode argument");
@@ -603,6 +602,15 @@ public:
                 }
 
                 ++p_i;
+
+            } else if (op.op == IF || op.op == IF_NOT || op.op == IF_FAIL || op.op == IF_NOT_FAIL) {
+
+                if (p_i == p_e) {
+                    throw std::runtime_error("End of input while looking for opcode argument");
+                }
+
+                op.arg = string_to_int(metalan::symtab().get(p_i->sym));
+                ++p_i;
             }
             
             c.push_back(op);
@@ -631,7 +639,7 @@ public:
                 tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, 
                                                     opcodename(j.op)));
 
-                if (j.op == PUSH || j.op == PUSH_DUP) {
+                if (j.op == PUSH || j.op == IF || j.op == IF_NOT || j.op == IF_FAIL || j.op == IF_NOT_FAIL) {
                     tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, 
                                                         j.arg.uint)); //int_to_string(j.arg.uint)));
                 }

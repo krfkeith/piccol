@@ -112,7 +112,8 @@ struct Piccol {
         nanom::vm_run(vm, as.nillabel);
     }
 
-    void run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out) {
+    bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out) {
+        vm.failbit = false;
         nanom::vm_run(vm, nanom::label_t(name, s1, s2), 0, true);
 
         // This isn't really needed since we shouldn't exit out of middle of a call stack.
@@ -127,11 +128,12 @@ struct Piccol {
 
         vm.stack.clear();
         vm.frame.clear();
+        return !(vm.failbit);
     }
 
-    void run(const std::string& name, const std::string& fr, const std::string& to, nanom::Struct& out) {
-        run(metalan::symtab().get(name), metalan::symtab().get(fr), metalan::symtab().get(to),
-            out);
+    bool run(const std::string& name, const std::string& fr, const std::string& to, nanom::Struct& out) {
+        return run(metalan::symtab().get(name), metalan::symtab().get(fr), metalan::symtab().get(to),
+                   out);
     }
 };
 

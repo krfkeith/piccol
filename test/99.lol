@@ -25,4 +25,22 @@ bottles Int->Void :-
 .
 
 
-bottles Int->Void :-
+bottles Int Void:
+CALL bottles$1 Int Void
+IF_NOT_FAIL{ EXIT }
+CALL bottles$2 Int Void
+IF_NOT_FAIL{ EXIT }
+POP_FRAME
+FAIL
+
+
+bottles$1 Int Void:
+...
+LTE
+IF_FALSE{FAIL}
+...
+CALL print
+IF_FAIL{FAIL}
+...
+POP_FRAMEHEAD
+EXIT

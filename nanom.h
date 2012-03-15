@@ -190,8 +190,14 @@ enum op_t {
     PUSH,
     POP,
     SWAP,
-    DUP,
-    PUSH_DUP,
+
+    IF_FAIL,
+    IF_NOT_FAIL,
+    POP_FRAME,
+    POP_FRAMEHEAD,
+    FAIL,
+    IF,
+    IF_NOT,
 
     CALL,
     EXIT,
@@ -304,7 +310,7 @@ struct VmCode {
 };
 
 
-typedef void (*callback_t)(const Shapes&, const Shape&, const Shape&, const Struct&, Struct&);
+typedef bool (*callback_t)(const Shapes&, const Shape&, const Shape&, const Struct&, Struct&);
 
 
 struct Vm {
@@ -322,6 +328,7 @@ struct Vm {
 
     std::vector<Val> stack;
     std::vector<frame_t> frame;
+    bool failbit;
 
     VmCode& code;
 
@@ -332,7 +339,7 @@ struct Vm {
     Shape tmp_shape;
 
 
-    Vm(VmCode& c) : code(c) {}
+    Vm(VmCode& c) : failbit(false), code(c) {}
 
     void register_callback(label_t s, callback_t cb) {
         callbacks[s] = cb;
@@ -361,8 +368,13 @@ struct _mapper {
         m[(size_t)PUSH] = "PUSH";
         m[(size_t)POP] = "POP";
         m[(size_t)SWAP] = "SWAP";
-        m[(size_t)DUP] = "DUP";
-        m[(size_t)PUSH_DUP] = "PUSH_DUP";
+        m[(size_t)IF] = "IF";
+        m[(size_t)IF_NOT] = "IF_NOT";
+        m[(size_t)IF_FAIL] = "IF_FAIL";
+        m[(size_t)IF_NOT_FAIL] = "IF_NOT_FAIL";
+        m[(size_t)POP_FRAME] = "POP_FRAME";
+        m[(size_t)POP_FRAMEHEAD] = "POP_FRAMEHEAD";
+        m[(size_t)FAIL] = "FAIL";
         m[(size_t)CALL] = "CALL";
         m[(size_t)EXIT] = "EXIT";
         m[(size_t)NEW_SHAPE] = "NEW_SHAPE";
@@ -415,8 +427,13 @@ struct _mapper {
         n["PUSH"] = PUSH;
         n["POP"] = POP;
         n["SWAP"] = SWAP;
-        n["DUP"] = DUP;
-        n["PUSH_DUP"] = PUSH_DUP;
+        n["IF"] = IF;
+        n["IF_NOT"] = IF_NOT;
+        n["IF_FAIL"] = IF_FAIL;
+        n["IF_NOT_FAIL"] = IF_NOT_FAIL;
+        n["POP_FRAME"] = POP_FRAME;
+        n["POP_FRAMEHEAD"] = POP_FRAMEHEAD;
+        n["FAIL"] = FAIL;
         n["CALL"] = CALL;
         n["EXIT"] = EXIT;
         n["NEW_SHAPE"] = NEW_SHAPE;
@@ -530,31 +547,65 @@ inline void vm_run(Vm& vm,
             break;
         }
 
-        case DUP: {
+        case IF: {
             Val v = vm.pop();
-            vm.stack.push_back(v);
-            vm.stack.push_back(v);
+            if (v.uint) {
+                ip += c.arg.inte;
+                continue;
+            }
             break;
         }
 
-        case PUSH_DUP: {
-            Val v = vm.stack.back();
-            vm.stack.push_back(c.arg);
-            vm.stack.push_back(v);
+        case IF_NOT: {
+            Val v = vm.pop();
+            if (!v.uint) {
+                ip += c.arg.inte;
+                continue;
+            }
             break;
         }
 
-        case EXIT: {
+        case IF_FAIL: 
+            if (vm.failbit) {
+                ip += c.arg.inte;
+                continue;
+            }
+            break;
+
+        case IF_NOT_FAIL:
+            if (!vm.failbit) {
+                ip += c.arg.inte;
+                continue;
+            }
+            break;
+
+        case POP_FRAME: {
+            const auto& fp = vm.frame.back();
+            auto sb = vm.stack.begin() + fp.stack_ix;
+            vm.stack.erase(sb, vm.stack.end());
+            break;
+        }
+
+        case POP_FRAMEHEAD: {
             const auto& fp = vm.frame.back();
             auto sb = vm.stack.begin() + fp.stack_ix;
             auto se = sb + fp.struct_size;
             vm.stack.erase(sb, se);
+            break;
+        }
+            
+        case FAIL:
+            vm.failbit = true;
+            // No break, do an EXIT
+
+        case EXIT: {
 
             if (vm.frame.size() == 1) {
                 vm.frame.pop_back();
                 return;
 
             } else {
+                const auto& fp = vm.frame.back();
                 label = fp.prev_label;
                 ip = fp.prev_ip;
                 code = &(vm.code.codes[label]);
@@ -577,6 +628,7 @@ inline void vm_run(Vm& vm,
 
                 vm.frame.emplace_back(label, ip+1, vm.stack.size() - shape.size(), shape.size());
 
+                vm.failbit = false;
                 label = l;
                 code = &(i->second);
                 ip = 0;
@@ -600,7 +652,7 @@ inline void vm_run(Vm& vm,
                                              symtab().get(totype.uint) + "' undefined");
                 }
 
-                (j->second)(vm.shapes, shape, vm.shapes.get(totype.uint), tmp, ret);
+                vm.failbit = (j->second)(vm.shapes, shape, vm.shapes.get(totype.uint), tmp, ret);
 
                 vm.stack.insert(vm.stack.end(), ret.v.begin(), ret.v.end());
             }
