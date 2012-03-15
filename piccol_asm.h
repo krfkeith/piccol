@@ -197,6 +197,26 @@ private:
         if (labelstack.empty())
             throw std::runtime_error("Sanity error: _pop_funlabel before _push_funlabel");
 
+        const label_t& fname = labelstack.back();
+
+        if (shapestack.empty()) {
+
+            if (fname.toshape != symtab().get("Void")) {
+                throw std::runtime_error("Sanity error: _pop_funlabel before _push_type");
+            }
+
+        } else {
+
+            if (fname.toshape != shapestack.back()) {
+
+                throw std::runtime_error("Wrong return type: " + 
+                                         symtab().get(fname.name) + " " +
+                                         symtab().get(fname.fromshape) + "->" +
+                                         symtab().get(fname.toshape) + " returns " + 
+                                         symtab().get(shapestack.back()));
+            }
+        }
+
         labelstack.pop_back();
 
         if (labelstack.empty()) {

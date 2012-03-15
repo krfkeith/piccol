@@ -73,7 +73,7 @@ statements :- statements_x.
 
 fun :- 'FUN_TYPE' @'_push_funlabel' val_literal val_literal val_literal
        'START_FUN' statements 
-       'END_FUN' @'EXIT' @'_drop_types' @'_pop_funlabel'.
+       'END_FUN' @'EXIT' @'_pop_funlabel' @'_drop_types'.
 
 
 all :- def all.

@@ -117,6 +117,7 @@ val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
 val_primitive :- val.
 
 val_or_call :- val_primitive.
+val_or_call :- tupleval.
 val_or_call :- structval.
 val_or_call :- '(' spaces statements spaces ')'.
 
