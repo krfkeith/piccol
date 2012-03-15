@@ -26,9 +26,9 @@ bottles Int->Void :-
 
 
 bottles Int Void:
-CALL bottles$1 Int Void
+CALL_LIGHT bottles$1 Int Void
 IF_NOT_FAIL{ EXIT }
-CALL bottles$2 Int Void
+CALL_LIGHT bottles$2 Int Void
 IF_NOT_FAIL{ EXIT }
 POP_FRAME
 FAIL

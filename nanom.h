@@ -200,6 +200,7 @@ enum op_t {
     IF_NOT,
 
     CALL,
+    CALL_LIGHT,
     EXIT,
 
     NEW_SHAPE,
@@ -376,6 +377,7 @@ struct _mapper {
         m[(size_t)POP_FRAMEHEAD] = "POP_FRAMEHEAD";
         m[(size_t)FAIL] = "FAIL";
         m[(size_t)CALL] = "CALL";
+        m[(size_t)CALL_LIGHT] = "CALL_LIGHT";
         m[(size_t)EXIT] = "EXIT";
         m[(size_t)NEW_SHAPE] = "NEW_SHAPE";
         m[(size_t)DEF_FIELD] = "DEF_FIELD";
@@ -435,6 +437,7 @@ struct _mapper {
         n["POP_FRAMEHEAD"] = POP_FRAMEHEAD;
         n["FAIL"] = FAIL;
         n["CALL"] = CALL;
+        n["CALL_LIGHT"] = CALL_LIGHT;
         n["EXIT"] = EXIT;
         n["NEW_SHAPE"] = NEW_SHAPE;
         n["DEF_FIELD"] = DEF_FIELD;
@@ -658,6 +661,21 @@ inline void vm_run(Vm& vm,
             }
 
             break;
+        }
+
+
+        case CALL_LIGHT: {
+            Val name = vm.pop();
+
+            const auto& fr = vm.frame.back();
+
+            vm.frame.emplace_back(label, ip+1, fr.stack_ix, fr.struct_size);
+
+            vm.failbit = false;
+            label.name = name.uint;
+            code = &(vm.code.codes[label]);
+            ip = 0;
+            continue;
         }
 
         case NEW_SHAPE: {
