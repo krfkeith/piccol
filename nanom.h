@@ -150,6 +150,10 @@ struct Shapes {
     const Shape& get(const std::string& s) const {
         return get(symtab().get(s));
     }
+
+    void reset() {
+        shapes.clear();
+    }
 };
 
 
@@ -200,6 +204,7 @@ enum op_t {
     IF_NOT,
 
     CALL,
+    SYSCALL,
     CALL_LIGHT,
     EXIT,
 
@@ -300,10 +305,23 @@ struct hash<nanom::label_t> {
 
 namespace nanom {
 
+
+
+typedef bool (*callback_t)(const Shapes&, const Shape&, const Shape&, const Struct&, Struct&);
+
+
 struct VmCode {
     typedef std::vector<Opcode> code_t;
      
     std::unordered_map<label_t, code_t> codes;
+
+    Shapes shapes;
+
+    std::unordered_map<label_t, callback_t> callbacks;
+
+    void register_callback(label_t s, callback_t cb) {
+        callbacks[s] = cb;
+    }
 
     static label_t toplevel_label() {
         Sym none = symtab().get("");
@@ -311,8 +329,6 @@ struct VmCode {
     }
 };
 
-
-typedef bool (*callback_t)(const Shapes&, const Shape&, const Shape&, const Struct&, Struct&);
 
 
 struct Vm {
@@ -333,19 +349,14 @@ struct Vm {
     bool failbit;
 
     VmCode& code;
-
-    Shapes shapes;
-
-    std::unordered_map<label_t, callback_t> callbacks;
+    Shapes& shapes;
 
     Shape tmp_shape;
 
 
-    Vm(VmCode& c) : failbit(false), code(c) {}
+    Vm(VmCode& c) : failbit(false), code(c), shapes(code.shapes) {}
 
-    void register_callback(label_t s, callback_t cb) {
-        callbacks[s] = cb;
-    }
+    Vm(VmCode& c, Shapes& s) : failbit(false), code(c), shapes(s) {}
 
     Val pop() {
         Val ret = stack.back();
@@ -355,6 +366,12 @@ struct Vm {
 
     void push(Val v) {
         stack.push_back(v);
+    }
+
+    void reset() {
+        stack.clear();
+        frame.clear();
+        failbit = false;
     }
 
 };
@@ -379,6 +396,7 @@ struct _mapper {
         m[(size_t)FAIL] = "FAIL";
         m[(size_t)CALL] = "CALL";
         m[(size_t)CALL_LIGHT] = "CALL_LIGHT";
+        m[(size_t)SYSCALL] = "SYSCALL";
         m[(size_t)EXIT] = "EXIT";
         m[(size_t)NEW_SHAPE] = "NEW_SHAPE";
         m[(size_t)DEF_FIELD] = "DEF_FIELD";
@@ -440,6 +458,7 @@ struct _mapper {
         n["FAIL"] = FAIL;
         n["CALL"] = CALL;
         n["CALL_LIGHT"] = CALL_LIGHT;
+        n["SYSCALL"] = SYSCALL;
         n["EXIT"] = EXIT;
         n["NEW_SHAPE"] = NEW_SHAPE;
         n["DEF_FIELD"] = DEF_FIELD;
@@ -628,44 +647,46 @@ inline void vm_run(Vm& vm,
             const Shape& shape = vm.shapes.get(fromtype.uint);
             
             label_t l(name.uint, fromtype.uint, totype.uint);
-            auto i = vm.code.codes.find(l);
 
-            if (i != vm.code.codes.end()) {
+            vm.frame.emplace_back(label, ip+1, vm.stack.size() - shape.size(), shape.size());
 
-                vm.frame.emplace_back(label, ip+1, vm.stack.size() - shape.size(), shape.size());
-
-                vm.failbit = false;
-                label = l;
-                code = &(i->second);
-                ip = 0;
-                continue;
-
-            } else {
-
-                Struct tmp;
-                auto tope = vm.stack.end();
-                auto topb = tope - shape.size();
-                tmp.v.assign(topb, tope);
-                vm.stack.resize(vm.stack.size() - shape.size());
-
-                Struct ret;
-
-                auto j = vm.callbacks.find(l);
-
-                if (j == vm.callbacks.end()) {
-                    throw std::runtime_error("Callback '" + symtab().get(name.uint) + " " +
-                                             symtab().get(fromtype.uint) + "->" +
-                                             symtab().get(totype.uint) + "' undefined");
-                }
-
-                vm.failbit = !(j->second)(vm.shapes, shape, vm.shapes.get(totype.uint), tmp, ret);
-
-                vm.stack.insert(vm.stack.end(), ret.v.begin(), ret.v.end());
-            }
-
-            break;
+            vm.failbit = false;
+            label = l;
+            code = &(vm.code.codes[label]);
+            ip = 0;
+            continue;
         }
 
+        case SYSCALL: {
+            Val totype = vm.pop();
+            Val fromtype = vm.pop();
+            Val name = vm.pop();
+
+            const Shape& shape = vm.shapes.get(fromtype.uint);
+
+            label_t l(name.uint, fromtype.uint, totype.uint);
+
+            Struct tmp;
+            auto tope = vm.stack.end();
+            auto topb = tope - shape.size();
+            tmp.v.assign(topb, tope);
+            vm.stack.resize(vm.stack.size() - shape.size());
+
+            Struct ret;
+
+            auto j = vm.code.callbacks.find(l);
+
+            if (j == vm.code.callbacks.end()) {
+                throw std::runtime_error("Callback '" + symtab().get(name.uint) + " " +
+                                         symtab().get(fromtype.uint) + "->" +
+                                         symtab().get(totype.uint) + "' undefined");
+            }
+
+            vm.failbit = !(j->second)(vm.shapes, shape, vm.shapes.get(totype.uint), tmp, ret);
+
+            vm.stack.insert(vm.stack.end(), ret.v.begin(), ret.v.end());
+            break;
+        }
 
         case CALL_LIGHT: {
             Val name = vm.pop();

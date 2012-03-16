@@ -57,11 +57,8 @@ tupleval :- 'START_TUPLE' @'_mark_tuple' tuplefields 'END_TUPLE' @'_make_tuplety
 variable :- 'DEREF' @'_get_fields' val_literal @'GET_FRAMEHEAD_FIELDS'.
 
 funcall :- 'ASMCALL' @'_asmcall' val_literal.
-funcall :- 'CALL' 
-           sym 
-           @'_top_type' @'_pop_type' 
-           @'_push_type' val_literal @'_top_type' 
-           @'CALL'.
+
+funcall :- 'CALL' @'_call_or_syscall' val_literal val_literal.
 
 
 statements_x :- structval statements_x.

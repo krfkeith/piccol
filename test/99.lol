@@ -13,11 +13,11 @@ def [ a:Real b:Real ];
 
 def [ a:Int b:Sym ];
 
-bottles Void->Void :-
-  99 bottles.
-
 bottles Int->Void :-
   [ .v 'bottles of beer on the wall,'] print.
+
+bottles Void->Void :-
+  99 bottles.
 
 /*
 bottles Int->Void :-

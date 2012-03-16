@@ -27,17 +27,18 @@ namespace piccol {
 
 struct Piccol {
 
-    nanom::VmAsm as;
+    nanom::VmCode code;
     nanom::Vm vm;
+    PiccolAsm as;
 
-    Piccol() : vm(as.code) {}
+    Piccol() : vm(code), as(vm) {}
 
     void register_callback(const std::string& name, const std::string& from, const std::string& to,
                            nanom::callback_t cb) {
-        vm.register_callback(nanom::label_t(metalan::symtab().get(name),
-                                            metalan::symtab().get(from), 
-                                            metalan::symtab().get(to)), 
-                             cb);
+        code.register_callback(nanom::label_t(metalan::symtab().get(name),
+                                              metalan::symtab().get(from), 
+                                              metalan::symtab().get(to)), 
+                               cb);
     }
 
     void load(const std::string& lexer_, 
@@ -102,14 +103,18 @@ struct Piccol {
         //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
         //std::cout << stage2.print() << std::endl;
 
+        nanom::label_t nillabel = VmCode::toplevel_label();
+
+        vm.code.codes[nillabel].clear();
+
         bm _b("assembling");
         as.parse(stage2);
 
         //std::cout << "-----------------" << std::endl;
         //std::cout << as.print() << std::endl;
 
-        bm _b2("running");
-        nanom::vm_run(vm, as.nillabel);
+        //bm _b2("running");
+        //nanom::vm_run(vm, nillabel);
     }
 
     bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out) {
@@ -126,9 +131,10 @@ struct Piccol {
             out.v.assign(vm.stack.begin(), vm.stack.end());
         }
 
-        vm.stack.clear();
-        vm.frame.clear();
-        return !(vm.failbit);
+        bool ret = !(vm.failbit);
+
+        vm.reset();
+        return ret;
     }
 
     bool run(const std::string& name, const std::string& fr, const std::string& to, nanom::Struct& out) {
