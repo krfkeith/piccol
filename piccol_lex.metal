@@ -116,10 +116,14 @@ val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
 
 val_primitive :- val.
 
-val_or_call :- val_primitive.
+variable :- @'DEREF' '.' ident_here.
+
+
 val_or_call :- tupleval.
 val_or_call :- structval.
 val_or_call :- '(' spaces statements spaces ')'.
+val_or_call :- variable.
+val_or_call :- val_primitive.
 
 
 funcall :- @'ASMCALL' '$' ident_here.
@@ -128,6 +132,7 @@ funcall :- @'CALL' ident_here @'Void'.
 
 statements :- tupleval spaces statements.
 statements :- structval spaces statements.
+statements :- variable spaces statements.
 statements :- val_primitive spaces statements.
 statements :- funcall spaces statements.
 statements :- .

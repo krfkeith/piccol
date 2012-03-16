@@ -54,6 +54,8 @@ tuplefields :- .
 
 tupleval :- 'START_TUPLE' @'_mark_tuple' tuplefields 'END_TUPLE' @'_make_tupletype'.
 
+variable :- 'DEREF' @'_get_fields' val_literal @'GET_FRAMEHEAD_FIELDS'.
+
 funcall :- 'ASMCALL' @'_asmcall' val_literal.
 funcall :- 'CALL' 
            sym 
@@ -64,6 +66,7 @@ funcall :- 'CALL'
 
 statements_x :- structval statements_x.
 statements_x :- tupleval statements_x.
+statements_x :- variable statements_x.
 statements_x :- val_primitive statements_x.
 statements_x :- funcall statements_x.
 statements_x :- .
@@ -73,7 +76,7 @@ statements :- statements_x.
 
 fun :- 'FUN_TYPE' @'_push_funlabel' val_literal val_literal val_literal
        'START_FUN' statements 
-       'END_FUN' @'EXIT' @'_pop_funlabel' @'_drop_types'.
+       'END_FUN' @'POP_FRAMEHEAD' @'EXIT' @'_pop_funlabel' @'_drop_types'.
 
 
 all :- def all.

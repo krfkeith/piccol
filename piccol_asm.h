@@ -331,7 +331,10 @@ private:
             fieldtypename = symtab().get(typeinfo.shape);
             break;
 
-        case NONE:
+        case NONE: 
+            throw std::runtime_error("No such field: " + 
+                                     symtab().get(structshape) + "." +
+                                     symtab().get(fieldsym));
             break;
         }
 
@@ -343,6 +346,42 @@ private:
         }
     }
 
+
+    void get_fields() {
+
+        if (labelstack.empty())
+            throw std::runtime_error("Sanity error: _get_fields before _push_funlabel");
+
+        Sym framehead = labelstack.back().fromshape;
+        const Shape& sh = vm.shapes.get(framehead);
+
+        ++p_i;
+        if (p_i == p_e)
+            throw std::runtime_error("End of input in _fieldname_deref");
+
+        Sym fieldsym = p_i->sym;
+
+        const Shape::typeinfo& fieldt = sh.get_type(fieldsym);
+        Sym newshape;
+
+        switch (fieldt.type) {
+        case BOOL:   newshape = symtab().get("Bool"); break;
+        case INT:    newshape = symtab().get("Int"); break;
+        case UINT:   newshape = symtab().get("UInt"); break;
+        case REAL:   newshape = symtab().get("Real"); break;
+        case SYMBOL: newshape = symtab().get("Sym"); break;
+        case STRUCT: newshape = fieldt.shape; break;
+        case NONE:
+            throw std::runtime_error("No such field: " + 
+                                     symtab().get(framehead) + "." +
+                                     symtab().get(fieldsym));
+        }
+
+        shapestack.push_back(newshape);
+
+        code.codes[label].push_back(Opcode(PUSH, (UInt)fieldt.ix_from));
+        code.codes[label].push_back(Opcode(PUSH, (UInt)fieldt.ix_to));
+    }
 
     struct asmcall_map_ {
         typedef std::unordered_map< std::pair<Sym,Sym>, 
@@ -548,6 +587,12 @@ public:
             } else if (op_name == "_fieldtype_check") {
                 fieldtype_check();
 
+                ++p_i;
+                continue;
+
+            } else if (op_name == "_get_fields") {
+                get_fields();
+                
                 ++p_i;
                 continue;
 

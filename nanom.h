@@ -210,6 +210,7 @@ enum op_t {
 
     NEW_STRUCT,
     SET_FIELDS,
+    GET_FRAMEHEAD_FIELDS,
 
     /***/
 
@@ -385,6 +386,7 @@ struct _mapper {
         m[(size_t)DEF_SHAPE] = "DEF_SHAPE";
         m[(size_t)NEW_STRUCT] = "NEW_STRUCT";
         m[(size_t)SET_FIELDS] = "SET_FIELDS";
+        m[(size_t)GET_FRAMEHEAD_FIELDS] = "GET_FRAMEHEAD_FIELDS";
         m[(size_t)ADD_INT] = "ADD_INT";
         m[(size_t)SUB_INT] = "SUB_INT";
         m[(size_t)MUL_INT] = "MUL_INT";
@@ -445,6 +447,7 @@ struct _mapper {
         n["DEF_SHAPE"] = DEF_SHAPE;
         n["NEW_STRUCT"] = NEW_STRUCT;
         n["SET_FIELDS"] = SET_FIELDS;
+        n["GET_FRAMEHEAD_FIELDS"] = GET_FRAMEHEAD_FIELDS;
         n["ADD_INT"] = ADD_INT;
         n["SUB_INT"] = SUB_INT;
         n["MUL_INT"] = MUL_INT;
@@ -523,7 +526,7 @@ inline void vm_run(Vm& vm,
 
         if (verbose) {
             std::cout << ">" << ip << " " << opcodename(c.op) << "(" << c.arg.inte << ") "
-                      << " ||\t\t\t";
+                      << vm.failbit << " ||\t\t\t";
             for (const auto& ii : vm.stack) {
                 std::cout << " " << ii.inte << ":" << symtab().get(ii.uint);
             }
@@ -655,7 +658,7 @@ inline void vm_run(Vm& vm,
                                              symtab().get(totype.uint) + "' undefined");
                 }
 
-                vm.failbit = (j->second)(vm.shapes, shape, vm.shapes.get(totype.uint), tmp, ret);
+                vm.failbit = !(j->second)(vm.shapes, shape, vm.shapes.get(totype.uint), tmp, ret);
 
                 vm.stack.insert(vm.stack.end(), ret.v.begin(), ret.v.end());
             }
@@ -727,6 +730,19 @@ inline void vm_run(Vm& vm,
             vm.stack.resize(vm.stack.size() - topsize);
             break;
         } 
+
+        case GET_FRAMEHEAD_FIELDS: {
+            Val offs_end = vm.pop();
+            Val offs_beg = vm.pop();
+
+            const auto& fp = vm.frame.back();
+            auto sb = vm.stack.begin() + fp.stack_ix;
+            auto se = sb + offs_end.uint;
+            sb += offs_beg.uint;
+
+            vm.stack.insert(vm.stack.end(), sb, se);
+            break;
+        }
             
         case ADD_INT: {
             Val v2 = vm.pop();

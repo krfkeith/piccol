@@ -13,6 +13,13 @@ def [ a:Real b:Real ];
 
 def [ a:Int b:Sym ];
 
+bottles Void->Void :-
+  99 bottles.
+
+bottles Int->Void :-
+  [ .v 'bottles of beer on the wall,'] print.
+
+/*
 bottles Int->Void :-
   [.v 0] $lte ? 
   'No more bottles of beer on the wall!' print
@@ -44,3 +51,4 @@ IF_FAIL{FAIL}
 ...
 POP_FRAMEHEAD
 EXIT
+*/
