@@ -58,7 +58,8 @@ variable :- 'DEREF' @'_get_fields' val_literal @'GET_FRAMEHEAD_FIELDS'.
 
 funcall :- 'ASMCALL' @'_asmcall' val_literal.
 
-funcall :- 'CALL' @'_call_or_syscall' val_literal val_literal.
+funcall :- 'CALL' @'_call_or_syscall' val_literal val_literal
+           @'IF_NOT_FAIL' @'2' @'FAIL'.
 
 
 statements_x :- structval statements_x.
@@ -71,9 +72,21 @@ statements_x :- .
 statements :- @'_push_type' @'Void' funcall statements_x.
 statements :- statements_x.
 
+statements_or_branch :- 'END_FUN'.
+statements_or_branch :- 'BRANCH' statements_or_branch.
+statements_or_branch :- @'_next_branch' @'CALL_LIGHT' @'_push_branch' 
+                        statements 
+                        @'POP_FRAMEHEAD' @'EXIT'
+                        @'_pop_funlabel'
+                        @'_drop_types'
+                        @'IF_FAIL' @'2' @'EXIT' @'POP_FRAMETAIL'
+                        statements_or_branch.
+
+
 fun :- 'FUN_TYPE' @'_push_funlabel' val_literal val_literal val_literal
-       'START_FUN' statements 
-       'END_FUN' @'POP_FRAMEHEAD' @'EXIT' @'_pop_funlabel' @'_drop_types'.
+       'START_FUN' 
+       statements_or_branch
+       @'POP_FRAMEHEAD' @'FAIL' @'_pop_funlabel'.
 
 
 all :- def all.

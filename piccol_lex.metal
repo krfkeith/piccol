@@ -137,13 +137,16 @@ statements :- val_primitive spaces statements.
 statements :- funcall spaces statements.
 statements :- .
 
+statements_or_branch :- '.' .
+statements_or_branch :- ';' @'BRANCH' spaces statements_or_branch.
+statements_or_branch :- statements spaces statements_or_branch.
 
 fun :- spaces @'FUN_TYPE' ident_here
        spaces typename_here spaces '->' 
        spaces typename_here 
        spaces ':-' 
-       @'START_FUN' spaces statements 
-       spaces '.' @'END_FUN'.
+       @'START_FUN' spaces statements_or_branch 
+       @'END_FUN'.
 
 
 all :- def all.

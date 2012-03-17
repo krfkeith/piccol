@@ -139,7 +139,8 @@ private:
             cmode(false),
             cmode_code(compiletime_code.codes[nillabel]),
             code(runtime_code),
-            label(nill)
+            label(nill),
+            curbranch(0)
             {
                 compiletime_vm.shapes = oldshapes;
             }
@@ -158,6 +159,7 @@ private:
         std::vector<Sym> shapestack;
         std::vector<label_t> labelstack;
         label_t label;
+        size_t curbranch;
 
 
         void cmode_on() {
@@ -270,6 +272,7 @@ private:
 
             labelstack.emplace_back(name, from, p_i->sym);
             label = labelstack.back();
+            curbranch = 0;
 
             if (code.codes.count(label) != 0) {
                 throw std::runtime_error("Function defined twice: " + 
@@ -310,6 +313,32 @@ private:
             } else {
                 label = labelstack.back();
             }
+        }
+
+        void push_branch() {
+
+            if (labelstack.empty())
+                throw std::runtime_error("Sanity error: _push_branch before _push_funlabel");
+
+            curbranch++;
+
+            label_t l(labelstack.back());
+            l.name = symtab().get(symtab().get(l.name) + "$" + uint_to_string(curbranch));
+
+            labelstack.push_back(l);
+            label = labelstack.back();
+        }
+
+        void next_branch() {
+
+            if (labelstack.empty())
+                throw std::runtime_error("Sanity error: _next_branch before _push_branch");
+
+            const label_t& l = labelstack.back();
+
+            Sym name = symtab().get(symtab().get(l.name) + "$" + uint_to_string(curbranch+1));
+
+            code.codes[label].push_back(Opcode(PUSH, (UInt)name));
         }
 
         void type_size() {
@@ -611,6 +640,18 @@ private:
 
                 } else if (op_name == "_pop_funlabel") {
                     pop_funlabel();
+
+                    ++p_i;
+                    continue;
+
+                } else if (op_name == "_push_branch") {
+                    push_branch();
+
+                    ++p_i;
+                    continue;
+
+                } else if (op_name == "_next_branch") {
+                    next_branch();
 
                     ++p_i;
                     continue;

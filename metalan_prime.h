@@ -20,6 +20,8 @@ struct charmatcher {
 
         const std::string& str = symtab().get(sc.sym);
 
+        //std::cout << str << "~[" << std::string(b, e).substr(0, 10) << "]" << std::endl;
+
         if (sc.type == Symcell::ESCAPE) {
 
             if (str == "any") {

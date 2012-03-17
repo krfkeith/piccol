@@ -197,8 +197,8 @@ enum op_t {
 
     IF_FAIL,
     IF_NOT_FAIL,
-    POP_FRAME,
     POP_FRAMEHEAD,
+    POP_FRAMETAIL,
     FAIL,
     IF,
     IF_NOT,
@@ -391,8 +391,8 @@ struct _mapper {
         m[(size_t)IF_NOT] = "IF_NOT";
         m[(size_t)IF_FAIL] = "IF_FAIL";
         m[(size_t)IF_NOT_FAIL] = "IF_NOT_FAIL";
-        m[(size_t)POP_FRAME] = "POP_FRAME";
         m[(size_t)POP_FRAMEHEAD] = "POP_FRAMEHEAD";
+        m[(size_t)POP_FRAMETAIL] = "POP_FRAMETAIL";
         m[(size_t)FAIL] = "FAIL";
         m[(size_t)CALL] = "CALL";
         m[(size_t)CALL_LIGHT] = "CALL_LIGHT";
@@ -453,8 +453,8 @@ struct _mapper {
         n["IF_NOT"] = IF_NOT;
         n["IF_FAIL"] = IF_FAIL;
         n["IF_NOT_FAIL"] = IF_NOT_FAIL;
-        n["POP_FRAME"] = POP_FRAME;
         n["POP_FRAMEHEAD"] = POP_FRAMEHEAD;
+        n["POP_FRAMETAIL"] = POP_FRAMETAIL;
         n["FAIL"] = FAIL;
         n["CALL"] = CALL;
         n["CALL_LIGHT"] = CALL_LIGHT;
@@ -604,18 +604,18 @@ inline void vm_run(Vm& vm,
             }
             break;
 
-        case POP_FRAME: {
-            const auto& fp = vm.frame.back();
-            auto sb = vm.stack.begin() + fp.stack_ix;
-            vm.stack.erase(sb, vm.stack.end());
-            break;
-        }
-
         case POP_FRAMEHEAD: {
             const auto& fp = vm.frame.back();
             auto sb = vm.stack.begin() + fp.stack_ix;
             auto se = sb + fp.struct_size;
             vm.stack.erase(sb, se);
+            break;
+        }
+
+        case POP_FRAMETAIL: {
+            const auto& fp = vm.frame.back();
+            auto sb = vm.stack.begin() + fp.stack_ix + fp.struct_size;
+            vm.stack.erase(sb, vm.stack.end());
             break;
         }
             
