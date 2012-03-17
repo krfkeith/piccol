@@ -1,7 +1,4 @@
 
-#include <iostream>
-#include <fstream>
-#include <streambuf>
 
 #include "piccol_vm.h"
 
@@ -79,42 +76,19 @@ int main(int argc, char** argv) {
                    std::istreambuf_iterator<char>());
     }
 
-    piccol::Piccol l;
+    piccol::Piccol l(piccol::load_file("piccol_lex.metal"),
+                     piccol::load_file("piccol_morph.metal"),
+                     piccol::load_file("piccol_emit.metal"),
+                     piccol::load_file("prelude.piccol"));
 
-    std::ifstream lfile("piccol_lex.metal");
-    std::ifstream mfile("piccol_morph.metal");
-    std::ifstream efile("piccol_emit.metal");
-
-    if (!lfile)
-        throw std::runtime_error("Could not open 'piccol_lex.metal'");
-
-    if (!mfile)
-        throw std::runtime_error("Could not open 'piccol_morph.metal'");
-
-    if (!efile)
-        throw std::runtime_error("Could not open 'piccol_emit.metal'");
-
-    std::string lexer;
-    std::string morpher;
-    std::string emiter;
-
-    lexer.assign(std::istreambuf_iterator<char>(lfile),
-                 std::istreambuf_iterator<char>());
-
-    morpher.assign(std::istreambuf_iterator<char>(mfile),
-                   std::istreambuf_iterator<char>());
-
-    emiter.assign(std::istreambuf_iterator<char>(efile),
-                  std::istreambuf_iterator<char>());
+    l.init();
 
     l.register_callback("set_featstock", "[ Sym Feature ]", "Void", printer);
     l.register_callback("set_featstock", "[ Sym FeatureNoSkin ]", "Void", printer);
     l.register_callback("set_featstock", "[ Sym FeatureGridprops ]", "Void", printer);
     l.register_callback("print", "[ Int Sym ]", "Void", do_cout);
     
-    l.load(lexer, morpher, emiter, inp);
-
-    //l.run("init_featstock", "Void");
+    l.load(inp);
 
     nanom::Struct out;
 

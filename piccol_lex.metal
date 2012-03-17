@@ -150,13 +150,7 @@ all :- def all.
 all :- fun all.
 all :- spaces.
 
-prelude :- @'START_DEF' @'DEF_NAME' @'Void' @'END_DEF'
-           @'START_DEF' @'FIELD_NAME' @'v' @'FIELD_TYPE' @'Int'  @'DEF_NAME' @'Int' @'END_DEF'
-           @'START_DEF' @'FIELD_NAME' @'v' @'FIELD_TYPE' @'UInt' @'DEF_NAME' @'UInt' @'END_DEF'
-           @'START_DEF' @'FIELD_NAME' @'v' @'FIELD_TYPE' @'Sym'  @'DEF_NAME' @'Sym' @'END_DEF'
-           @'START_DEF' @'FIELD_NAME' @'v' @'FIELD_TYPE' @'Bool' @'DEF_NAME' @'Bool' @'END_DEF'
-           @'START_DEF' @'FIELD_NAME' @'v' @'FIELD_TYPE' @'Real' @'DEF_NAME' @'Real' @'END_DEF'.
-
+prelude :- .
 
 main :- prelude all.
 

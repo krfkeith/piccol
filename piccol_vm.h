@@ -6,6 +6,12 @@
 #include "metalan_prime.h"
 #include "metalan_doppel.h"
 
+
+#include <iostream>
+#include <fstream>
+#include <streambuf>
+
+
 #include <sys/time.h>
 struct bm {
     struct timeval b;
@@ -25,13 +31,41 @@ struct bm {
 
 namespace piccol {
 
+inline std::string load_file(const std::string& fname) {
+
+    std::ifstream file(fname);
+
+    if (!file)
+        throw std::runtime_error("Could not open '" + fname + "'");
+
+    std::string ret;
+
+    ret.assign(std::istreambuf_iterator<char>(file),
+               std::istreambuf_iterator<char>());
+    return ret;
+}
+
 struct Piccol {
 
     nanom::VmCode code;
     nanom::Vm vm;
     PiccolAsm as;
 
-    Piccol() : vm(code), as(vm) {}
+    std::string lexer_code;
+    std::string morpher_code;
+    std::string emiter_code;
+    std::string prelude_code;
+
+    Piccol(std::string&& lexer_, 
+           std::string&& morpher_,
+           std::string&& emiter_,
+           std::string&& prelude_) : 
+        vm(code), as(vm),
+        lexer_code(lexer_),
+        morpher_code(morpher_),
+        emiter_code(emiter_),
+        prelude_code(prelude_)
+        {}
 
     void register_callback(const std::string& name, const std::string& from, const std::string& to,
                            nanom::callback_t cb) {
@@ -41,22 +75,23 @@ struct Piccol {
                                cb);
     }
 
-    void load(const std::string& lexer_, 
-              const std::string& morpher_,
-              const std::string& emiter_, 
-              const std::string& inp) {
+    void init() {
+        load(prelude_code);
+    }
+
+    void load(const std::string& inp) {
 
         metalan::MetalanPrime prime;
         metalan::MetalanDoppel doppel;
 
         metalan::Symlist lexer;
-        lexer.parse(lexer_);
+        lexer.parse(lexer_code);
 
         metalan::Symlist morpher;
-        morpher.parse(morpher_);
+        morpher.parse(morpher_code);
 
         metalan::Symlist emiter;
-        emiter.parse(emiter_);
+        emiter.parse(emiter_code);
 
         metalan::Symlist stage1;
 
