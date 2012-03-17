@@ -1,0 +1,6 @@
+def {} Void;
+def {v:Int} Int;
+def {v:UInt} UInt;
+def {v:Sym} Sym;
+def {v:Bool} Bool;
+def {v:Real} Real;
