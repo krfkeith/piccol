@@ -126,6 +126,7 @@ val_or_call :- variable.
 val_or_call :- val_primitive.
 
 
+funcall :- '?' @'ASMCALL' @'if'.
 funcall :- @'ASMCALL' '$' ident_here.
 funcall :- @'CALL' ident_here spaces '->' spaces typename_here.
 funcall :- @'CALL' ident_here @'Void'.

@@ -110,7 +110,7 @@ private:
 
             add("[ Bool Bool ]", "and",     BAND,         "Bool");
             add("[ Bool Bool ]", "or",      BOR,          "Bool");
-            add("Bool",          "not",     BNOT,         "Bool");
+            add("Bool",          "not",     BOOL_NOT,     "Bool");
 
             add("Int",           "to_real", INT_TO_REAL,  "Real");
             add("Real",          "to_int",  REAL_TO_INT,  "Int");

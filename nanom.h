@@ -243,6 +243,8 @@ enum op_t {
     BSHL,
     BSHR,
 
+    BOOL_NOT,
+
     EQ_INT,
     LT_INT,
     LTE_INT,
@@ -425,6 +427,7 @@ struct _mapper {
         m[(size_t)BXOR] = "BXOR";
         m[(size_t)BSHL] = "BSHL";
         m[(size_t)BSHR] = "BSHR";
+        m[(size_t)BOOL_NOT] = "BOOL_NOT";
         m[(size_t)EQ_INT] = "EQ_INT";
         m[(size_t)LT_INT] = "LT_INT";
         m[(size_t)LTE_INT] = "LTE_INT";
@@ -487,6 +490,7 @@ struct _mapper {
         n["BXOR"] = BXOR;
         n["BSHL"] = BSHL;
         n["BSHR"] = BSHR;
+        n["BOOL_NOT"] = BOOL_NOT;
         n["EQ_INT"] = EQ_INT;
         n["LT_INT"] = LT_INT;
         n["LTE_INT"] = LTE_INT;
@@ -899,6 +903,12 @@ inline void vm_run(Vm& vm,
             Val v2 = vm.pop();
             Val v1 = vm.pop();
             vm.stack.push_back(v1.uint >> v2.uint);
+            break;
+        }
+
+        case BOOL_NOT: {
+            Val v = vm.pop();
+            vm.stack.push_back((UInt)!(v.uint));
             break;
         }
 
