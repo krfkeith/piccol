@@ -623,11 +623,25 @@ inline void vm_run(Vm& vm,
             break;
         }
             
-        case FAIL:
+        case FAIL: {
             vm.failbit = true;
-            // No break, do an EXIT
+
+            if (vm.frame.size() == 1) {
+                vm.frame.pop_back();
+                return;
+
+            } else {
+                const auto& fp = vm.frame.back();
+                label = fp.prev_label;
+                ip = fp.prev_ip;
+                code = &(vm.code.codes[label]);
+                vm.frame.pop_back();
+                continue;
+            }
+        }
 
         case EXIT: {
+            vm.failbit = false;
 
             if (vm.frame.size() == 1) {
                 vm.frame.pop_back();

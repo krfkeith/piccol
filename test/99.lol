@@ -12,7 +12,7 @@ print [Int Bool]->Void :-
   \a print.
 
 opt_s Int->Void :-
-  [\v 1] $eq $not ? 's' print; '' print.
+  [\v 1] $eq $not ? 's' print; .
 
 bottles Int->Void :-
   [ \v 0 ] $eq ? 

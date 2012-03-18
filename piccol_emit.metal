@@ -72,8 +72,13 @@ statements_x :- .
 statements :- @'_push_type' @'Void' funcall statements_x.
 statements :- statements_x.
 
-statements_or_branch :- 'END_FUN'.
+
+statements_or_branch :- 'END_FUN' @'POP_FRAMEHEAD' @'FAIL' @'_pop_funlabel'.
+
+statements_or_branch :- 'BRANCH' 'END_FUN' @'POP_FRAMEHEAD' @'EXIT' @'_push_type' @'Void' @'_pop_funlabel'.
+
 statements_or_branch :- 'BRANCH' statements_or_branch.
+
 statements_or_branch :- @'_next_branch' @'CALL_LIGHT' @'_push_branch' 
                         statements 
                         @'POP_FRAMEHEAD' @'EXIT'
@@ -85,8 +90,7 @@ statements_or_branch :- @'_next_branch' @'CALL_LIGHT' @'_push_branch'
 
 fun :- 'FUN_TYPE' @'_push_funlabel' val_literal val_literal val_literal
        'START_FUN' 
-       statements_or_branch
-       @'POP_FRAMEHEAD' @'FAIL' @'_pop_funlabel'.
+       statements_or_branch.
 
 
 all :- def all.
