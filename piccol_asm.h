@@ -90,23 +90,27 @@ private:
             add("[ UInt UInt ]", "bshl",    BSHL,        "UInt");
             add("[ UInt UInt ]", "bshr",    BSHR,        "UInt");
 
-            add("[ Int Int ]",   "eq",      EQ_INT,      "Int");
-            add("[ Int Int ]",   "lt",      LT_INT,      "Int");
-            add("[ Int Int ]",   "lte",     LTE_INT,     "Int");
-            add("[ Int Int ]",   "gt",      GT_INT,      "Int");
-            add("[ Int Int ]",   "gte",     GTE_INT,     "Int");
+            add("[ Int Int ]",   "eq",      EQ_INT,      "Bool");
+            add("[ Int Int ]",   "lt",      LT_INT,      "Bool");
+            add("[ Int Int ]",   "lte",     LTE_INT,     "Bool");
+            add("[ Int Int ]",   "gt",      GT_INT,      "Bool");
+            add("[ Int Int ]",   "gte",     GTE_INT,     "Bool");
 
-            add("[ UInt UInt ]", "eq",      EQ_UINT,      "UInt");
-            add("[ UInt UInt ]", "lt",      LT_UINT,      "UInt");
-            add("[ UInt UInt ]", "lte",     LTE_UINT,     "UInt");
-            add("[ UInt UInt ]", "gt",      GT_UINT,      "UInt");
-            add("[ UInt UInt ]", "gte",     GTE_UINT,     "UInt");
+            add("[ UInt UInt ]", "eq",      EQ_UINT,      "Bool");
+            add("[ UInt UInt ]", "lt",      LT_UINT,      "Bool");
+            add("[ UInt UInt ]", "lte",     LTE_UINT,     "Bool");
+            add("[ UInt UInt ]", "gt",      GT_UINT,      "Bool");
+            add("[ UInt UInt ]", "gte",     GTE_UINT,     "Bool");
 
-            add("[ Real Real ]", "eq",      EQ_REAL,      "Real");
-            add("[ Real Real ]", "lt",      LT_REAL,      "Real");
-            add("[ Real Real ]", "lte",     LTE_REAL,     "Real");
-            add("[ Real Real ]", "gt",      GT_REAL,      "Real");
-            add("[ Real Real ]", "gte",     GTE_REAL,     "Real");
+            add("[ Real Real ]", "eq",      EQ_REAL,      "Bool");
+            add("[ Real Real ]", "lt",      LT_REAL,      "Bool");
+            add("[ Real Real ]", "lte",     LTE_REAL,     "Bool");
+            add("[ Real Real ]", "gt",      GT_REAL,      "Bool");
+            add("[ Real Real ]", "gte",     GTE_REAL,     "Bool");
+
+            add("[ Bool Bool ]", "and",     BAND,         "Bool");
+            add("[ Bool Bool ]", "or",      BOR,          "Bool");
+            add("Bool",          "not",     BNOT,         "Bool");
 
             add("Int",           "to_real", INT_TO_REAL,  "Real");
             add("Real",          "to_int",  REAL_TO_INT,  "Int");
@@ -121,6 +125,7 @@ private:
             add("Bool",          "to_int",  NOOP,         "Int");
             add("Bool",          "to_uint", NOOP,         "UInt");
 
+            add("Bool",          "if",      IF,           "Void");
         }
 
         void add(const std::string& typefrom, const std::string& name,
@@ -550,7 +555,18 @@ private:
             if (i == amap.map.end())
                 return false;
 
-            code.codes[label].push_back(i->second.first);
+            // HACK
+            // Too lazy yet to implement a proper multi-opcode feature.
+            if (i->second.first.op == IF) {
+
+                code.codes[label].push_back(Opcode(IF, (Int)2));
+                code.codes[label].push_back(Opcode(FAIL));
+                
+            } else {
+
+                code.codes[label].push_back(i->second.first);
+            }
+
             shapestack.push_back(i->second.second);
 
             return true;

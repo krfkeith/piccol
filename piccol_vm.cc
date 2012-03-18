@@ -43,10 +43,17 @@ bool printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom
     return true;
 }
 
-bool do_cout(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-             const nanom::Struct& struc, nanom::Struct& ret) {
+bool do_cout_2(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
+               const nanom::Struct& struc, nanom::Struct& ret) {
 
-    std::cout << struc.v[0].inte << " " << metalan::symtab().get(struc.v[1].uint) << std::endl;
+    std::cout << struc.v[0].inte;
+    return true;
+}
+
+bool do_cout_1(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
+               const nanom::Struct& struc, nanom::Struct& ret) {
+
+    std::cout << metalan::symtab().get(struc.v[0].uint);
     return true;
 }
 
@@ -86,7 +93,8 @@ int main(int argc, char** argv) {
     l.register_callback("set_featstock", "[ Sym Feature ]", "Void", printer);
     l.register_callback("set_featstock", "[ Sym FeatureNoSkin ]", "Void", printer);
     l.register_callback("set_featstock", "[ Sym FeatureGridprops ]", "Void", printer);
-    l.register_callback("print", "[ Int Sym ]", "Void", do_cout);
+    l.register_callback("print", "Int", "Void", do_cout_2);
+    l.register_callback("print", "Sym", "Void", do_cout_1);
     
     l.load(inp);
 

@@ -1,35 +1,45 @@
 
-/*
-<<
-
-intexpr :- \any:'Int' '+' \any:'Int' @''
-
->>
-
-*/
-
 def [ a:Int b:Int ];
+def [ a:Bool b:Bool ];
 def [ a:Real b:Real ];
 
 def [ a:Int b:Sym ];
+def [ a:Int b:Bool ];
+
+print [Int Bool]->Void :- 
+  [([\a 0] $eq) \b] $and $if 'No more' print;
+  [\a 0] $eq $if 'no more' print ; 
+  \a print.
+
+opt_s Int->Void :-
+  [\v 1] $gt $if 's' print; .
 
 bottles Int->Void :-
-  [ .v 'bottles of beer on the wall,'] print.
+  [ \v 0 ] $eq $if 
+     [ \v true ] print 
+     ' bottles of beer on the wall, ' print
+     [ \v false ] print 
+     ' bottles of beer.\n' print 
+     'Go to the store and buy some more, 99 bottles of beer on the wall.\n' print
+;
+  \v print ' bottle' \v opt_s ' of beer on the wall, ' print
+  \v print ' bottle' \v opt_s ' of beer,\n' print
+  'Take one down, pass it around, ' print
+  [\v 1] $sub bottles_last_line.
+
+bottles_last_line Int->Void :-
+  [ \v false ] print 
+  ' bottle' \v opt_s ' of beer on the wall.\n\n' print
+  \v bottles.
+
 
 bottles Void->Void :-
   99 bottles.
 
+
+
+
 /*
-bottles Int->Void :-
-  [.v 0] $lte ? 
-  'No more bottles of beer on the wall!' print
-;
-  [.v ' bottles of beer on the wall,'] print
-  [.v ' bottles of beer,'] print
-  'Take one down, pass it around,' print
-  [ ([.v 1] $sub) ' bottles of beer on the wall.' ] print
-  [.v 1] $sub bottles
-.
 
 
 bottles Int Void:
@@ -51,4 +61,11 @@ IF_FAIL{FAIL}
 ...
 POP_FRAMEHEAD
 EXIT
+
+0
+.a
+EQ
+IF_FALSE{FALSE}
+CALL_LIGHT $2
+
 */

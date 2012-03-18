@@ -154,7 +154,7 @@ struct Piccol {
 
     bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out) {
         vm.failbit = false;
-        nanom::vm_run(vm, nanom::label_t(name, s1, s2), 0, true);
+        nanom::vm_run(vm, nanom::label_t(name, s1, s2)); //, 0, true);
 
         // This isn't really needed since we shouldn't exit out of middle of a call stack.
 
