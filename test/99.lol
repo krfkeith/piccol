@@ -31,19 +31,11 @@ bottles Int->Void :-
   \v print ' bottle' print \v opt_s ' of beer on the wall, ' print
   \v print ' bottle' print \v opt_s ' of beer,\n' print
   'Take one down, pass it around, ' print
-  #[\v 1] $sub bottles_last_line
-  [([\v 1] $sub) false] print
-  ' bottle' print [\v 1] $sub opt_s ' of beer on the wall.\n\n' print
-  [\v 1] $sub bottles.
-
-
-/*
-bottles_last_line Int->Void :-
-  [ \v false ] print 
-  ' bottle' \v opt_s ' of beer on the wall.\n\n' print
-  \v bottles.
-*/
-
+  [\v 1] $sub ->Void (
+      [\v false] print
+      ' bottle' print \v opt_s ' of beer on the wall.\n\n' print
+      \v bottles
+      ).
 
 bottles Void->Void :-
   99 bottles.
@@ -52,7 +44,6 @@ bottles Void->Void :-
 
 
 /*
-
 
 bottles Int Void:
 CALL_LIGHT bottles$1 Int Void
