@@ -3,40 +3,33 @@ def [ a:Int b:Int ];
 def [ a:Bool b:Bool ];
 def [ a:Real b:Real ];
 
-def [ a:Int b:Sym ];
-def [ a:Int b:Bool ];
-
 def [a:Int b:Sym c:Sym];
-def [a:[Int Bool] b:Sym c:Sym];
 
-print [Int Bool]->Void :- 
-/*
-  [([\a 0] $eq) \b] $and ? 'No more' print;
-  [\a 0] $eq ? 'no more' print ; 
-  \a print.
-*/
+def {n:Int do_caps:Bool} TextNum;
 
-  [\a 0] $eq ? \b ->Sym (\v ? 'No more'; 'no more') print;
-  \a print.
+def [a:TextNum b:Sym c:Sym];
 
+print TextNum->Void :- 
+  [\n 0] $eq ? \do_caps ->Sym (\v ? 'No more'; 'no more') print;
+  \n print.
 
 opt_s Int->Void :-
   [\v 1] $eq $not ? 's' print; .
 
-opt_s [Int Bool]->Void :-
-  \a opt_s.
+opt_s TextNum->Void :-
+  \n opt_s.
 
 print [Int Sym Sym]->Void :-
   \a print \b print \a opt_s \c print.
 
-print [[Int Bool] Sym Sym]->Void :-
+print [TextNum Sym Sym]->Void :-
   \a print \b print \a opt_s \c print.
 
 bottles Int->Void :-
   [ \v 0 ] $eq ? 
-     [ \v true ] print 
+     TextNum{n=\v do_caps=true} print 
      ' bottles of beer on the wall, ' print
-     [ \v false ] print 
+     TextNum{n=\v do_caps=false} print 
      ' bottles of beer.\n' print 
      'Go to the store and buy some more, 99 bottles of beer on the wall.\n' print
 ;
@@ -44,7 +37,7 @@ bottles Int->Void :-
   [\v ' bottle' ' of beer,\n'] print
   'Take one down, pass it around, ' print
   [\v 1] $sub ->Void ( 
-      [ [\v false] ' bottle' ' of beer on the wall.\n\n' ] print
+      [ TextNum{n=\v do_caps=false} ' bottle' ' of beer on the wall.\n\n' ] print
       \v bottles
       ).
 

@@ -9,6 +9,7 @@
     "{" "}"
     "(" ")"
     ";"
+    "="
     "\\."
     "\\?"
     ("\\W\\(\\$[a-z][a-zA-Z_0-9]*\\)" 1 font-lock-warning-face) ;font-lock-preprocessor-face)
@@ -17,6 +18,7 @@
   '("\\.lol$" "\\.piccol$")
   nil
   "A mode for simple piccol syntax highlighting.")
+
 
 
 
