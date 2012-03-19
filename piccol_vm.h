@@ -135,12 +135,11 @@ struct Piccol {
             throw std::runtime_error(std::string("Error in stage 3 (piccol_emit): ") + e.what());
         }
 
-        //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-        //std::cout << stage2.print() << std::endl;
+        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        std::cout << stage2.print() << std::endl;
 
-        nanom::label_t nillabel = VmCode::toplevel_label();
-
-        vm.code.codes[nillabel].clear();
+        //nanom::label_t nillabel = VmCode::toplevel_label();
+        //vm.code.codes[nillabel].clear();
 
         bm _b("assembling");
         as.parse(stage2);

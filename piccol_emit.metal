@@ -32,7 +32,8 @@ val :- 'SET_TYPE' @'PUSH' primitive_type_x 'PUSH' val_literal @'_push_type' &'po
 
 val_primitive :- val.
 
-val_or_call :- statements.
+val_or_call :- statement val_or_call.
+val_or_call :- .
 
 structfield :- val_or_call 
                'SELECT_FIELD' @'_fieldname_deref' val_literal
@@ -61,30 +62,43 @@ funcall :- 'ASMCALL' @'_asmcall' val_literal.
 funcall :- 'CALL' @'_call_or_syscall' val_literal val_literal
            @'IF_NOT_FAIL' @'2' @'FAIL'.
 
+statement :- structval.
+statement :- tupleval.
+statement :- variable.
+statement :- val_primitive.
+statement :- funcall.
 
-statements_x :- structval statements_x.
-statements_x :- tupleval statements_x.
-statements_x :- variable statements_x.
-statements_x :- val_primitive statements_x.
-statements_x :- funcall statements_x.
+statements_x :- statement statements_x.
 statements_x :- .
 
-statements :- @'_push_type' @'Void' funcall statements_x.
-statements :- statements_x.
+statements :- @'_push_type' @'Void' statements_x.
+
+function_fail        :- @'POP_FRAMEHEAD' @'FAIL' @'_pop_funlabel'.
+
+function_succeed     :- @'POP_FRAMEHEAD' @'EXIT' @'_pop_funlabel'.
+
+function_try_next    :- @'IF_FAIL' @'2' @'EXIT' @'POP_FRAMETAIL'.
 
 
-statements_or_branch :- 'END_FUN' @'POP_FRAMEHEAD' @'FAIL' @'_pop_funlabel'.
+statements_or_branch :- 'END_FUN'
+                        function_fail @'_drop_types'.
 
-statements_or_branch :- 'BRANCH' 'END_FUN' @'POP_FRAMEHEAD' @'EXIT' @'_push_type' @'Void' @'_pop_funlabel'.
+statements_or_branch :- 'END_LAMBDA' 
+                        function_fail
+                        @'IF_NOT_FAIL' @'2' @'FAIL'
+                        statements_x
+                        statements_or_branch.
 
-statements_or_branch :- 'BRANCH' statements_or_branch.
+statements_or_branch :- 'END_BRANCH'
+                        function_succeed 
+                        function_try_next
+                        statements_or_branch.
 
-statements_or_branch :- @'_next_branch' @'CALL_LIGHT' @'_push_branch' 
+statements_or_branch :- 'START_LAMBDA' @'_push_lambda' val_literal @'CALL'
+                        statements_or_branch.
+
+statements_or_branch :- 'START_BRANCH' @'_push_branch' @'CALL_LIGHT'
                         statements 
-                        @'POP_FRAMEHEAD' @'EXIT'
-                        @'_pop_funlabel'
-                        @'_drop_types'
-                        @'IF_FAIL' @'2' @'EXIT' @'POP_FRAMETAIL'
                         statements_or_branch.
 
 

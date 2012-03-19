@@ -140,15 +140,22 @@ statement :- funcall spaces.
 paren_statements :- ')'.
 paren_statements :- statement paren_statements.
 
-statements_or_branch :- '.' .
-statements_or_branch :- ';' @'BRANCH' spaces statements_or_branch.
-statements_or_branch :- statement spaces statements_or_branch.
+statement_or_branch :- ';' @'END_BRANCH' @'START_BRANCH' spaces.
+statement_or_branch :- '->' spaces @'START_LAMBDA' typename_here spaces 
+                       '(' spaces @'START_BRANCH' lambda_statements.
+statement_or_branch :- statement.
+
+lambda_statements :- ')' spaces @'END_BRANCH' @'END_LAMBDA'.
+lambda_statements :- statement_or_branch lambda_statements.
+
+toplevel_statements :- '.' @'END_BRANCH' .
+toplevel_statements :- statement_or_branch toplevel_statements.
 
 fun :- spaces @'FUN_TYPE' ident_here
        spaces typename_here spaces '->' 
        spaces typename_here 
        spaces ':-' 
-       @'START_FUN' spaces statements_or_branch 
+       @'START_FUN' spaces @'START_BRANCH' toplevel_statements 
        @'END_FUN'.
 
 

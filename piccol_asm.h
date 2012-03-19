@@ -330,20 +330,55 @@ private:
             label_t l(labelstack.back());
             l.name = symtab().get(symtab().get(l.name) + "$" + uint_to_string(curbranch));
 
+            code.codes[label].push_back(Opcode(PUSH, (UInt)l.name));
+
+            ++p_i;
+
+            if (p_i == p_e)
+                throw std::runtime_error("End of input in _push_branch");
+
+            // HACK
+            code.codes[label].push_back(Opcode(opcodecode(symtab().get(p_i->sym))));
+
             labelstack.push_back(l);
             label = labelstack.back();
         }
 
-        void next_branch() {
+        void push_lambda() {
 
             if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _next_branch before _push_branch");
+                throw std::runtime_error("Sanity error: _push_branch before _push_funlabel");
 
-            const label_t& l = labelstack.back();
+            if (shapestack.empty())
+                throw std::runtime_error("Sanity error: _push_lambda before _push_type");
 
-            Sym name = symtab().get(symtab().get(l.name) + "$" + uint_to_string(curbranch+1));
+            curbranch++;
 
-            code.codes[label].push_back(Opcode(PUSH, (UInt)name));
+            label_t l(labelstack.back());
+            l.name = symtab().get(symtab().get(l.name) + "$" + uint_to_string(curbranch));
+            l.fromshape = shapestack.back();
+
+            ++p_i;
+
+            if (p_i == p_e)
+                throw std::runtime_error("End of input in _push_lambda");
+
+            l.toshape = p_i->sym;
+
+            code.codes[label].push_back(Opcode(PUSH, (UInt)l.name));
+            code.codes[label].push_back(Opcode(PUSH, (UInt)l.fromshape));
+            code.codes[label].push_back(Opcode(PUSH, (UInt)l.toshape));
+
+            ++p_i;
+
+            if (p_i == p_e)
+                throw std::runtime_error("End of input in _push_lambda");
+
+            // HACK
+            code.codes[label].push_back(Opcode(opcodecode(symtab().get(p_i->sym))));
+
+            labelstack.push_back(l);
+            label = labelstack.back();
         }
 
         void type_size() {
@@ -605,12 +640,15 @@ private:
 
                 const std::string& op_name = metalan::symtab().get(p_i->sym);
 
-                /*
+
                   std::cout << "!" << op_name << std::endl;
                   for (const auto& s : shapestack) 
-                  std::cout << " " << symtab().get(s);
+                      std::cout << " " << symtab().get(s);
                   std::cout << std::endl;
-                */
+                  for (const auto& s : labelstack) 
+                      std::cout << symtab().get(s.name) << " " << symtab().get(s.fromshape)
+                                << " " << symtab().get(s.toshape) << std::endl;
+                  std::cout << "--- ---" << std::endl;
 
                 if (op_name == "_cmode_on") {
                     cmode_on();
@@ -666,8 +704,8 @@ private:
                     ++p_i;
                     continue;
 
-                } else if (op_name == "_next_branch") {
-                    next_branch();
+                } else if (op_name == "_push_lambda") {
+                    push_lambda();
 
                     ++p_i;
                     continue;

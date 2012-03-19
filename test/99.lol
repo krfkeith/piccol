@@ -7,9 +7,15 @@ def [ a:Int b:Sym ];
 def [ a:Int b:Bool ];
 
 print [Int Bool]->Void :- 
+/*
   [([\a 0] $eq) \b] $and ? 'No more' print;
   [\a 0] $eq ? 'no more' print ; 
   \a print.
+*/
+
+  [\a 0] $eq ? \b ->Sym (\v ? 'No more'; 'no more') print;
+  \a print.
+
 
 opt_s Int->Void :-
   [\v 1] $eq $not ? 's' print; .
