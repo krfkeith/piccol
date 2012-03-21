@@ -71,7 +71,6 @@ def :- defhead tupledef.
 uintval_x :- digit uintval_x.
 uintval_x :- .
 uintval :- digit uintval_x.
-uintval :- digit uintval_x.
 
 intval :- '-' uintval.
 intval :- uintval.
@@ -87,7 +86,7 @@ symval_x :- \any &'append' symval_x.
 symval :- &'push' {'} symval_x.
 
 nilval :- 'nil'.
-nilval :- 'false'.
+falseval :- 'false'.
 trueval :- 'true'.
 
 
@@ -111,7 +110,8 @@ tupleval :- spaces '[' @'START_TUPLE' tuplevalfields ']' @'END_TUPLE'.
 val :- @'SET_TYPE' @'Real' @'PUSH' realval.
 val :- @'SET_TYPE' @'Int'  @'PUSH' intval &''.
 val :- @'SET_TYPE' @'Sym'  @'PUSH' symval.
-val :- nilval  @'SET_TYPE' @'Bool' @'PUSH' @'0'.
+val :- nilval  @'SET_TYPE' @'Sym' @'PUSH' @'0'.
+val :- falseval @'SET_TYPE' @'Bool' @'PUSH' @'0'.
 val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
 
 val_primitive :- val.
