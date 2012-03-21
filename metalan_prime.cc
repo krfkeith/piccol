@@ -14,7 +14,6 @@ int main(int argc, char** argv) {
     code.assign(std::istreambuf_iterator<char>(t),
                 std::istreambuf_iterator<char>());
 
-    //std::ifstream t2(argv[2]);
     std::string inp;
 
     inp.assign(std::istreambuf_iterator<char>(std::cin),
@@ -23,7 +22,13 @@ int main(int argc, char** argv) {
 
     metalan::MetalanPrime p;
 
-    std::string ret = p.parse(code, inp);
+    bool raw = false;
+
+    if (argc > 2 && argv[2] == std::string("-r")) {
+        raw = true;
+    }
+
+    std::string ret = p.parse(code, inp, raw);
 
     std::cout << ret << std::endl;
 

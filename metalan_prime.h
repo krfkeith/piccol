@@ -183,13 +183,26 @@ struct MetalanPrime {
         return ret;
     }
 
-    std::string parse(const std::string& code, const std::string& inp, bool verbose = false) {
+    std::string parse(const std::string& code, const std::string& inp, bool raw, bool verbose = false) {
 
         Symlist code_;
         code_.parse(code);
 
         Symlist ret = parse(code_, inp, verbose);
-        return ret.print();
+
+        if (raw) {
+            std::string r0;
+
+            for (const Symcell& s : ret.syms) {
+                r0 += symtab().get(s.sym);
+            }
+
+            return r0;
+
+        } else {
+
+            return ret.print();
+        }
     }
 };
 
