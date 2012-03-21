@@ -42,6 +42,7 @@ bottles Int->Void :-
       ).
 
 bottles Void->Void :-
+  [([(0)(1)] $add)(1)] $add print
   99 bottles.
 
 

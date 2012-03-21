@@ -1,0 +1,77 @@
+
+
+space :- ' '.
+space :- '\n'.
+space :- '\t'.
+
+spaces :- space spaces.
+spaces :- .
+
+
+ident_tail :- \upcase ident_tail.
+ident_tail :- \locase ident_tail.
+ident_tail :- \digit ident_tail.
+ident_tail :- '_' ident_tail.
+ident_tail :- .
+
+ident :- \locase ident_tail.
+
+variable :- '\\' ident.
+
+uinteger_tail :- \digit uinteger_tail.
+uinteger_tail :- .
+uinteger :- \digit uinteger_tail.
+
+integer :- '-' uinteger.
+integer :- uinteger.
+
+real :- integer '.' uinteger.
+real :- integer 'f'.
+
+bool :- 'true'.
+bool :- 'false'.
+
+literal_x :- variable.
+literal_x :- bool.
+literal_x :- real.
+literal_x :- integer.
+
+literal :- literal_x &''.
+
+literal_pad :- spaces literal spaces.
+
+
+val :- spaces literal spaces.
+val :- spaces '(' expr ')' spaces.
+
+expr_neg :- spaces '!' val.
+expr_neg :- spaces 'bool' spaces '(' val ')' spaces.
+expr_neg :- spaces 'int' spaces '(' val ')' spaces.
+expr_neg :- spaces 'uint' spaces '(' val ')' spaces.
+expr_neg :- spaces 'real' spaces '(' val ')' spaces.
+expr_neg :- spaces val.
+
+expr_add :- @'[(' expr_neg @')' '+' @'(' expr_add @')] $add'.
+expr_add :- expr_neg '-' expr_add.
+expr_add :- expr_neg.
+
+expr_mul :- expr_add '*' expr_mul.
+expr_mul :- expr_add '/' expr_mul.
+expr_mul :- expr_add.
+
+expr_eq :- @'[(' expr_mul @')' '=' @'(' expr_mul @')] $eq'.
+expr_eq :- expr_mul '==' expr_mul.
+expr_eq :- expr_mul '!=' expr_mul.
+expr_eq :- expr_mul '<' expr_mul.
+expr_eq :- expr_mul '<=' expr_mul.
+expr_eq :- expr_mul '>' expr_mul.
+expr_eq :- expr_mul '>=' expr_mul.
+expr_eq :- expr_mul.
+
+expr_and :- expr_eq '&&' expr_and.
+expr_and :- expr_eq '||' expr_and.
+expr_and :- expr_eq.
+
+expr :- expr_and.
+
+main :- expr spaces.
