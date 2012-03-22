@@ -8,6 +8,13 @@
 
 int main(int argc, char** argv) {
 
+    if (argc < 2 || argc > 3) {
+        std::cerr << "Usage: " << argv[0] << " <metalan source file> [-z]" << std::endl
+                  << "       -z means to recursively keep applying the transformation until the "
+                  << "          output converges to something stable." << std::endl;
+        return 1;
+    }
+
     int fn = 1;
     bool recursive = false;
 

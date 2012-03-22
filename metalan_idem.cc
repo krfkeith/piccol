@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 
     metalan::MetalanPrime p;
 
-    std::string ret = p.parse(code, inp, false);
+    std::string ret = p.parse(code, inp, true);
 
     std::cout << ret << std::endl;
 
