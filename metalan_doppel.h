@@ -40,7 +40,8 @@ struct MetalanDoppel {
 
     MetalanDoppel() {}
 
-    Symlist parse(Symlist& code, const Symlist& inp, bool verbose = false) {
+    Symlist parse(Symlist& code, const Symlist& inp, 
+                  bool verbose = false, const std::string& mainrule = "main") {
 
         parser_t parser;
         parser.verbose = verbose;
@@ -48,7 +49,7 @@ struct MetalanDoppel {
         parser_t::outlist_t out;
         Symlist::list_t unprocessed;
         
-        bool ok = parser.parse(code, inp.syms, out, unprocessed);
+        bool ok = parser.parse(code, inp.syms, out, unprocessed, mainrule);
 
         if (!ok) {
             
@@ -120,7 +121,8 @@ struct MetalanDoppel {
         return ret;
     }
 
-    std::string parse(const std::string& code, const std::string& inp, bool verbose = false) {
+    std::string parse(const std::string& code, const std::string& inp, 
+                      bool verbose = false, const std::string& mainrule = "main") {
 
         Symlist code_;
         code_.parse(code);
@@ -128,7 +130,7 @@ struct MetalanDoppel {
         Symlist sl;
         sl.parse(inp);
 
-        Symlist ret = parse(code_, sl, verbose);
+        Symlist ret = parse(code_, sl, verbose, mainrule);
         return ret.print();
     }
 };

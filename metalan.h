@@ -144,6 +144,16 @@ struct Symlist {
         return true;
     }
 
+    std::string print_raw() {
+        std::string r0;
+
+        for (const Symcell& s : syms) {
+            r0 += symtab().get(s.sym);
+        }
+
+        return r0;
+    }
+
     std::string print(size_t nmax=0) {
         std::string ret;
         
@@ -725,7 +735,7 @@ struct Parser {
     }
                
     bool parse(Symlist& pr, const tokenlist_t& inp, outlist_t& out,
-               tokenlist_t& unprocessed) {
+               tokenlist_t& unprocessed, const std::string& mainrule = "main") {
 
         list_t::iterator i = pr.syms.begin();
         list_t::iterator e = pr.syms.end();
@@ -753,7 +763,7 @@ struct Parser {
         largest_length = 0;
 
         size_t length = 0;
-        bool ok = apply("main", sb, se, out, length);
+        bool ok = apply(mainrule, sb, se, out, length);
 
         if (!ok || sb != se) {
             unprocessed.assign(sb, se);
@@ -764,12 +774,12 @@ struct Parser {
     }
 
     bool parse(const std::string& pr, const tokenlist_t& inp, outlist_t& out,
-               tokenlist_t& unprocessed) {
+               tokenlist_t& unprocessed, const std::string& mainrule = "main") {
 
         Symlist prog;
         prog.parse(pr);
 
-        return parse(prog.syms, inp, out, unprocessed);
+        return parse(prog.syms, inp, out, unprocessed, mainrule);
     }
 };
 

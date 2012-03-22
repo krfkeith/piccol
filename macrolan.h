@@ -10,7 +10,7 @@ struct Macrolan {
     metalan::MetalanPrime mlp;
     metalan::Symlist code;
 
-    std::unordered_map<Sym,metalan::Symlist> macros;
+    std::unordered_map<metalan::Sym,metalan::Symlist> macros;
 
 
     Macrolan(const std::string& c) {
@@ -19,8 +19,8 @@ struct Macrolan {
 
     std::string parse(const std::string& inp) {
         
-        Symlist code_ = code;
-        Symlist o = mlp.parse(code_, inp);
+        metalan::Symlist code_ = code;
+        metalan::Symlist o = mlp.parse(code_, inp);
 
         std::string ret;
 
@@ -41,8 +41,10 @@ struct Macrolan {
             } else if (op == "APPLY") {
                 auto tmp = macros.find(b->sym);
 
+                const std::string& rulename = metalan::symtab().get(b->sym);
+
                 if (tmp == macros.end())
-                    throw std::runtime_error("Unknown macro applied: " + metalan::symtab().get(b->sym));
+                    throw std::runtime_error("Unknown macro applied: " + rulename);
 
                 ++b;
                 if (b == e)
@@ -51,7 +53,14 @@ struct Macrolan {
                 metalan::MetalanPrime map;
                 metalan::Symlist sl = tmp->second;
 
-                ret += map.parse(sl, metalan::symtab().get(b->sym), true);
+                try {
+                    ret += map.parse(sl, metalan::symtab().get(b->sym), false,
+                                     rulename).print_raw();
+
+                } catch (std::exception& e) {
+                    throw std::runtime_error("Error while applying macro '" + rulename +
+                                             std::string("': ") + e.what());
+                }
 
             } else if (op == "DEFINE") {
 
@@ -60,7 +69,7 @@ struct Macrolan {
                 if (tmp != macros.end())
                     throw std::runtime_error("Macro defined twice: " + metalan::symtab().get(b->sym));
 
-                Symlist& newmacro = tmp->second;
+                metalan::Symlist& newmacro = macros[b->sym];
 
                 ++b;
                 if (b == e)
@@ -93,8 +102,13 @@ struct Macrolan {
             }
 
 
-            return ret;
+            ++b;
+            if (b == e) {
+                break;
+            }
         }
+
+        return ret;
     }
 };
 

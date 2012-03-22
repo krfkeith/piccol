@@ -79,7 +79,8 @@ struct MetalanPrime {
 
     MetalanPrime() {}
 
-    Symlist parse(Symlist& code, const std::string& inp, bool verbose = false) {
+    Symlist parse(Symlist& code, const std::string& inp, 
+                  bool verbose = false, const std::string& mainrule = "main") {
 
         parser_t parser;
         parser.verbose = verbose;
@@ -87,7 +88,7 @@ struct MetalanPrime {
         parser_t::outlist_t out;
         std::string unprocessed;
         
-        bool ok = parser.parse(code, inp, out, unprocessed);
+        bool ok = parser.parse(code, inp, out, unprocessed, mainrule);
 
         if (!ok) {
             std::string ext = std::string(parser.largest_extent, inp.end());
@@ -183,21 +184,16 @@ struct MetalanPrime {
         return ret;
     }
 
-    std::string parse(const std::string& code, const std::string& inp, bool raw, bool verbose = false) {
+    std::string parse(const std::string& code, const std::string& inp, bool raw, 
+                      bool verbose = false, const std::string& mainrule = "main") {
 
         Symlist code_;
         code_.parse(code);
 
-        Symlist ret = parse(code_, inp, verbose);
+        Symlist ret = parse(code_, inp, verbose, mainrule);
 
         if (raw) {
-            std::string r0;
-
-            for (const Symcell& s : ret.syms) {
-                r0 += symtab().get(s.sym);
-            }
-
-            return r0;
+            return ret.print_raw();
 
         } else {
 
