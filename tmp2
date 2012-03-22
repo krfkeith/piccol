@@ -57,33 +57,48 @@ literal_pad :- spaces literal spaces.
 val :- spaces literal spaces.
 val :- spaces '(' expr ')' spaces.
 
-expr_neg :- spaces '!' val.
-expr_neg :- spaces 'bool' spaces '(' val ')' spaces.
-expr_neg :- spaces 'int' spaces '(' val ')' spaces.
-expr_neg :- spaces 'uint' spaces '(' val ')' spaces.
-expr_neg :- spaces 'real' spaces '(' val ')' spaces.
+expr_neg :- spaces '!' spaces val @' $not'.
+expr_neg :- spaces '-' spaces val @' $neg'.
+expr_neg :- spaces 'bool' spaces '(' expr ')' spaces @' $to_bool'.
+expr_neg :- spaces 'int'  spaces '(' expr ')' spaces @' $to_int'.
+expr_neg :- spaces 'uint' spaces '(' expr ')' spaces @' $to_uint'.
+expr_neg :- spaces 'real' spaces '(' expr ')' spaces @' $to_real'.
 expr_neg :- spaces val.
 
-expr_add :- @'[(' expr_neg @')' '+' @'(' expr_add @')] $add'.
-expr_add :- expr_neg '-' expr_add.
-expr_add :- expr_neg.
+noop_tail :- @'] $noop'.
 
-expr_mul :- expr_add '*' expr_mul.
-expr_mul :- expr_add '/' expr_mul.
-expr_mul :- expr_add.
+expr_mul_head :- @'[(' expr_neg @')'.
+expr_mul_tail :- @'('  expr_mul @')] '.
 
-expr_eq :- @'[(' expr_mul @')' '=' @'(' expr_mul @')] $eq'.
-expr_eq :- expr_mul '==' expr_mul.
-expr_eq :- expr_mul '!=' expr_mul.
-expr_eq :- expr_mul '<' expr_mul.
-expr_eq :- expr_mul '<=' expr_mul.
-expr_eq :- expr_mul '>' expr_mul.
-expr_eq :- expr_mul '>=' expr_mul.
-expr_eq :- expr_mul.
+expr_mul :- expr_mul_head '*' expr_mul_tail @'$mul'.
+expr_mul :- expr_mul_head '/' expr_mul_tail @'$div'.
+expr_mul :- expr_mul_head noop_tail.
 
-expr_and :- expr_eq '&&' expr_and.
-expr_and :- expr_eq '||' expr_and.
-expr_and :- expr_eq.
+expr_add_head :- @'[(' expr_mul @')'.
+expr_add_tail :- @'('  expr_add @')] '.
+
+expr_add :- expr_add_head '+' expr_add_tail @'$add'.
+expr_add :- expr_add_head '-' expr_add_tail @'$sub'.
+expr_add :- expr_add_head noop_tail.
+
+expr_eq_head :- @'[(' expr_add @')'.
+expr_eq_tail :- @'('  expr_add @')] '.
+
+expr_eq :- expr_eq_head '='  expr_eq_tail @'$eq'.
+expr_eq :- expr_eq_head '==' expr_eq_tail @'$eq'.
+expr_eq :- expr_eq_head '!=' expr_eq_tail @'$eq $not'.
+expr_eq :- expr_eq_head '<'  expr_eq_tail @'$lt'.
+expr_eq :- expr_eq_head '<=' expr_eq_tail @'$lte'.
+expr_eq :- expr_eq_head '>'  expr_eq_tail @'$gt'.
+expr_eq :- expr_eq_head '>=' expr_eq_tail @'$gte'.
+expr_eq :- expr_eq_head noop_tail.
+
+expr_and_head :- @'[(' expr_eq @')'.
+expr_and_tail :- @'('  expr_and @')] '.
+
+expr_and :- expr_and_head '&&' expr_and_tail @'$and'.
+expr_and :- expr_and_head '||' expr_and_tail @'$or'.
+expr_and :- expr_and_head noop_tail.
 
 expr :- expr_and.
 
@@ -92,6 +107,6 @@ expr :- expr_and.
 <:: default(expr) default :- expr. ::>
 
 foobar [Int Int]->Bool :-
-  <: \a = \b :> ? 'ok' print;
+  <: (-\b - ((\b*\b) - 4*\a*\c))/(2*\a) :> ? 'ok' print;
   <:[expr] \a < \b :> ? 'less'.
 

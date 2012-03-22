@@ -125,6 +125,15 @@ private:
             add("Bool",          "to_int",  NOOP,         "Int");
             add("Bool",          "to_uint", NOOP,         "UInt");
 
+            // NOTE!
+            // These ridiculous constructs are only needed to make
+            // parse trees (i.e. automatic generation of piccol code)
+            // easier to generate!
+            add("[ Int ]",  "noop", NOOP, "Int");
+            add("[ UInt ]", "noop", NOOP, "UInt");
+            add("[ Bool ]", "noop", NOOP, "Bool");
+            add("[ Real ]", "noop", NOOP, "Real");
+
             add("Bool",          "if",      IF,           "Void");
         }
 
@@ -599,7 +608,9 @@ private:
                 
             } else {
 
-                code.codes[label].push_back(i->second.first);
+                if (i->second.first.op != NOOP) {
+                    code.codes[label].push_back(i->second.first);
+                }
             }
 
             shapestack.push_back(i->second.second);

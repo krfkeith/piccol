@@ -5,6 +5,17 @@ def {v:Sym} Sym;
 def {v:Bool} Bool;
 def {v:Real} Real;
 
+def [ a:Int  b:Int  ];
+def [ a:UInt b:UInt ];
+def [ a:Bool b:Bool ];
+def [ a:Real b:Real ];
+
+def [v:Int];
+def [v:UInt];
+def [v:Sym];
+def [v:Bool];
+def [v:Real];
+
 /***
 
 <:: spaces

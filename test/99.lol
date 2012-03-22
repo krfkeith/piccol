@@ -1,13 +1,12 @@
 
-def [ a:Int b:Int ];
-def [ a:Bool b:Bool ];
-def [ a:Real b:Real ];
 
 def [a:Int b:Sym c:Sym];
 
 def {n:Int do_caps:Bool} TextNum;
 
 def [a:TextNum b:Sym c:Sym];
+
+def [a:Int b:Int c:Int];
 
 print TextNum->Void :- 
   [\n 0] $eq ? \do_caps ->Sym (\v ? 'No more'; 'no more') print;
@@ -43,7 +42,12 @@ bottles Int->Void :-
 
 bottles Void->Void :-
   [([(0)(1)] $add)(1)] $add print
-  99 bottles.
+  99 bottles
+  [1 2 3] ->Int (
+
+[([([([([([([([(\b $neg)] $noop)([([([([([([([([([([(\b)([(\b)] $noop)] $mul)] $noop)] $noop)] $noop)] $noop)([([(4)([(\a)([(\c)] $noop)] $mul)] $mul)] $noop)] $sub)] $noop)] $noop)] $noop)] $noop)] $sub)] $noop)] $noop)([([([([([(2)([(\a)] $noop)] $mul)] $noop)] $noop)] $noop)] $noop)] $div)] $noop)] $noop)] $noop 
+
+  ) print.
 
 
 
