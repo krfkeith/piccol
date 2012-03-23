@@ -5,7 +5,7 @@
 
 #include "metalan_prime.h"
 #include "metalan_doppel.h"
-
+#include "macrolan.h"
 
 #include <iostream>
 #include <fstream>
@@ -50,17 +50,21 @@ struct Piccol {
     nanom::VmCode code;
     nanom::Vm vm;
     PiccolAsm as;
+    macrolan::Macrolan macro;
 
+    std::string macro_code;
     std::string lexer_code;
     std::string morpher_code;
     std::string emiter_code;
     std::string prelude_code;
 
-    Piccol(std::string&& lexer_, 
+    Piccol(std::string&& macrolan_,
+           std::string&& lexer_, 
            std::string&& morpher_,
            std::string&& emiter_,
            std::string&& prelude_) : 
-        vm(code), as(vm),
+        vm(code), as(vm), macro(macrolan_),
+        macro_code(macrolan_),
         lexer_code(lexer_),
         morpher_code(morpher_),
         emiter_code(emiter_),
@@ -79,7 +83,16 @@ struct Piccol {
         load(prelude_code);
     }
 
-    void load(const std::string& inp) {
+    void load(const std::string& inp_) {
+
+        std::string inp;
+
+        try {
+            inp = macro.parse(inp_);
+
+        } catch (std::exception& e) {
+            throw std::runtime_error(std::string("Error in pre-processing: ") + e.what());
+        }
 
         metalan::MetalanPrime prime;
         metalan::MetalanDoppel doppel;

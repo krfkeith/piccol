@@ -83,7 +83,8 @@ int main(int argc, char** argv) {
                    std::istreambuf_iterator<char>());
     }
 
-    piccol::Piccol l(piccol::load_file("piccol_lex.metal"),
+    piccol::Piccol l(piccol::load_file("macrolan.metal"),
+                     piccol::load_file("piccol_lex.metal"),
                      piccol::load_file("piccol_morph.metal"),
                      piccol::load_file("piccol_emit.metal"),
                      piccol::load_file("prelude.piccol"));

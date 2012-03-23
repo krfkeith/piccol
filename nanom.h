@@ -223,11 +223,13 @@ enum op_t {
     SUB_INT,
     MUL_INT,
     DIV_INT,
+    MOD_INT,
     NEG_INT,
 
     ADD_UINT,
     SUB_UINT,
     MUL_UINT,
+    MOD_UINT,
     DIV_UINT,
 
     ADD_REAL,
@@ -411,11 +413,13 @@ struct _mapper {
         m[(size_t)SUB_INT] = "SUB_INT";
         m[(size_t)MUL_INT] = "MUL_INT";
         m[(size_t)DIV_INT] = "DIV_INT";
+        m[(size_t)MOD_INT] = "MOD_INT";
         m[(size_t)NEG_INT] = "NEG_INT";
         m[(size_t)ADD_UINT] = "ADD_UINT";
         m[(size_t)SUB_UINT] = "SUB_UINT";
         m[(size_t)MUL_UINT] = "MUL_UINT";
         m[(size_t)DIV_UINT] = "DIV_UINT";
+        m[(size_t)MOD_UINT] = "MOD_UINT";
         m[(size_t)ADD_REAL] = "ADD_REAL";
         m[(size_t)SUB_REAL] = "SUB_REAL";
         m[(size_t)MUL_REAL] = "MUL_REAL";
@@ -811,6 +815,13 @@ inline void vm_run(Vm& vm,
             break;
         }
 
+        case MOD_INT: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.stack.push_back(v1.inte % v2.inte);
+            break;
+        }
+
         case NEG_INT: {
             Val v = vm.pop();
             vm.stack.push_back(-v.inte);
@@ -842,6 +853,13 @@ inline void vm_run(Vm& vm,
             Val v2 = vm.pop();
             Val v1 = vm.pop();
             vm.stack.push_back(v1.uint / v2.uint);
+            break;
+        }
+
+        case MOD_UINT: {
+            Val v2 = vm.pop();
+            Val v1 = vm.pop();
+            vm.stack.push_back(v1.uint % v2.uint);
             break;
         }
 

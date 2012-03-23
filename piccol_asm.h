@@ -70,12 +70,14 @@ private:
             add("[ Int Int ]",   "sub",     SUB_INT,     "Int");
             add("[ Int Int ]",   "mul",     MUL_INT,     "Int");
             add("[ Int Int ]",   "div",     DIV_INT,     "Int");
+            add("[ Int Int ]",   "mod",     MOD_INT,     "Int");
             add("Int",           "neg",     NEG_INT,     "Int");
 
             add("[ UInt UInt ]", "add",     ADD_UINT,    "UInt");
             add("[ UInt UInt ]", "sub",     SUB_UINT,    "UInt");
             add("[ UInt UInt ]", "mul",     MUL_UINT,    "UInt");
             add("[ UInt UInt ]", "div",     DIV_UINT,    "UInt");
+            add("[ UInt UInt ]", "mod",     MOD_UINT,    "UInt");
 
             add("[ Real Real ]", "add",     ADD_REAL,    "Real");
             add("[ Real Real ]", "sub",     SUB_REAL,    "Real");
