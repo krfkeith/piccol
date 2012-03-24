@@ -550,7 +550,7 @@ private:
         }
 
 
-        void call_or_syscall() {
+        void call_or_syscall(bool tailcall) {
 
             if (shapestack.empty()) 
                 throw std::runtime_error("_call_or_syscall before _push_type");
@@ -575,7 +575,7 @@ private:
             code.codes[label].push_back(Opcode(PUSH, (UInt)toshape));
 
             if (code.codes.find(l) != code.codes.end()) {
-                code.codes[label].push_back(Opcode(CALL));
+                code.codes[label].push_back(Opcode(tailcall ? TAILCALL : CALL));
 
             } else if (code.callbacks.find(l) != code.callbacks.end()) {
                 code.codes[label].push_back(Opcode(SYSCALL));
@@ -761,7 +761,13 @@ private:
                     continue;
 
                 } else if (op_name == "_call_or_syscall") {
-                    call_or_syscall();
+                    call_or_syscall(false);
+
+                    ++p_i;
+                    continue;
+
+                } else if (op_name == "_tailcall_or_syscall") {
+                    call_or_syscall(true);
 
                     ++p_i;
                     continue;

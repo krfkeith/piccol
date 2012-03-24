@@ -62,6 +62,9 @@ funcall :- 'ASMCALL' @'_asmcall' val_literal.
 funcall :- 'CALL' @'_call_or_syscall' val_literal val_literal
            @'IF_NOT_FAIL' @'2' @'FAIL'.
 
+funcall :- 'TAILCALL' @'_tailcall_or_syscall' val_literal val_literal
+           @'IF_NOT_FAIL' @'2' @'FAIL'.
+
 statement :- structval.
 statement :- tupleval.
 statement :- variable.

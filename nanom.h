@@ -205,6 +205,7 @@ enum op_t {
 
     CALL,
     SYSCALL,
+    TAILCALL,
     CALL_LIGHT,
     EXIT,
 
@@ -401,6 +402,7 @@ struct _mapper {
         m[(size_t)CALL] = "CALL";
         m[(size_t)CALL_LIGHT] = "CALL_LIGHT";
         m[(size_t)SYSCALL] = "SYSCALL";
+        m[(size_t)TAILCALL] = "TAILCALL";
         m[(size_t)EXIT] = "EXIT";
         m[(size_t)NEW_SHAPE] = "NEW_SHAPE";
         m[(size_t)DEF_FIELD] = "DEF_FIELD";
@@ -466,6 +468,7 @@ struct _mapper {
         n["CALL"] = CALL;
         n["CALL_LIGHT"] = CALL_LIGHT;
         n["SYSCALL"] = SYSCALL;
+        n["TAILCALL"] = TAILCALL;
         n["EXIT"] = EXIT;
         n["NEW_SHAPE"] = NEW_SHAPE;
         n["DEF_FIELD"] = DEF_FIELD;
@@ -556,6 +559,13 @@ inline void vm_run(Vm& vm,
                       << vm.failbit << " ||\t\t\t";
             for (const auto& ii : vm.stack) {
                 std::cout << " " << ii.inte << ":" << symtab().get(ii.uint);
+            }
+            std::cout << " [" << vm.stack.size() << "]";
+            for (const auto& ii : vm.frame) {
+                std::cout << "\n\t\t" << ii.prev_ip << "/" << ii.stack_ix << "," << ii.struct_size 
+                          << "," << symtab().get(ii.prev_label.name)
+                          << "," << symtab().get(ii.prev_label.fromshape)
+                          << "," << symtab().get(ii.prev_label.toshape) << " ";
             }
             std::cout << std::endl;
         }
@@ -659,6 +669,30 @@ inline void vm_run(Vm& vm,
                 vm.frame.pop_back();
                 continue;
             }
+        }
+
+        case TAILCALL: {
+            Val totype = vm.pop();
+            Val fromtype = vm.pop();
+            Val name = vm.pop();
+
+            auto& fp = vm.frame.back();
+            auto sb = vm.stack.begin() + fp.stack_ix;
+            auto se = sb + fp.struct_size;
+            vm.stack.erase(sb, se);
+
+            const Shape& shape = vm.shapes.get(fromtype.uint);
+            
+            label_t l(name.uint, fromtype.uint, totype.uint);
+
+            fp.stack_ix = vm.stack.size() - shape.size();
+            fp.struct_size = shape.size();
+
+            vm.failbit = false;
+            label = l;
+            code = &(vm.code.codes[label]);
+            ip = 0;
+            continue;
         }
 
         case CALL: {
