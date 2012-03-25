@@ -32,8 +32,11 @@ val :- 'SET_TYPE' @'PUSH' primitive_type_x 'PUSH' val_literal @'_push_type' &'po
 
 val_primitive :- val.
 
-val_or_call :- statement val_or_call.
-val_or_call :- .
+val_or_call_x :- statement val_or_call_x.
+val_or_call_x :- .
+
+val_or_call :- @'_push_type' @'Void' funcall val_or_call_x.
+val_or_call :- val_or_call_x.
 
 structfield :- val_or_call 
                'SELECT_FIELD' @'_fieldname_deref' val_literal

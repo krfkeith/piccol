@@ -1,5 +1,5 @@
 
-all: metalan_prime metalan_doppel metalan_idem macrolan piccol_vm
+all: metalan_prime metalan_doppel metalan_idem macrolan piccol_test
 
 CFLAGS = -std=c++0x -g -Wall
 
@@ -15,7 +15,8 @@ metalan_idem: metalan_prime
 macrolan: macrolan.h metalan_prime
 	g++ $(CFLAGS) macrolan.cc -o macrolan
 
-piccol_vm: metalan.h nanom.h piccol_vm.cc piccol_vm.h piccol_asm.h metalan_prime.h metalan_doppel.h macrolan.h
-	g++ $(CFLAGS) piccol_vm.cc -o piccol_vm 
+piccol_test: metalan.h nanom.h piccol_vm.h piccol_asm.h metalan_prime.h metalan_doppel.h macrolan.h piccol_test.cc 
+	g++ $(CFLAGS) piccol_test.cc -o piccol_test
+
 
 

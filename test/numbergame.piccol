@@ -1,0 +1,15 @@
+
+guess [Int Int]->Bool :-
+  <: \a == \b :> ? true;
+  <: \a < \b :> ? 'Nope, my number is lower.\n' print false;
+  'Nope, my number is higher.\n' print false.
+
+numbergame Int->Void :-
+  'Enter a number: ' print
+  [\v (read->Int)] guess->Bool ? 'Congratulations! You guessed my number and you won.\n' print ;
+  'Try again.\n' print
+  \v numbergame.
+
+numbergame Void->Void :-
+  'I guessed a number between 0 and 99. Try to figure out what it is by asking questions.\n' print
+  [0 99] random->Int numbergame.
