@@ -62,7 +62,7 @@ funcall :- 'ASMCALL' @'_asmcall' val_literal.
 funcall :- 'CALL' @'_call_or_syscall' val_literal val_literal
            @'IF_NOT_FAIL' @'2' @'FAIL'.
 
-funcall :- 'TAILCALL' @'_tailcall_or_syscall' val_literal val_literal
+funcall :- 'TAILCALL' @'DROP_FRAME' @'_tailcall_or_syscall' val_literal val_literal
            @'IF_NOT_FAIL' @'2' @'FAIL'.
 
 statement :- structval.
@@ -98,6 +98,9 @@ statements_or_branch :- 'END_BRANCH'
                         statements_or_branch.
 
 statements_or_branch :- 'START_LAMBDA' @'_push_lambda' val_literal @'CALL'
+                        statements_or_branch.
+
+statements_or_branch :- 'START_TAIL_LAMBDA' @'DROP_FRAME' @'_push_lambda' val_literal @'TAILCALL'
                         statements_or_branch.
 
 statements_or_branch :- 'START_BRANCH' @'_push_branch' @'CALL_LIGHT'

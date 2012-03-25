@@ -199,6 +199,7 @@ enum op_t {
     IF_NOT_FAIL,
     POP_FRAMEHEAD,
     POP_FRAMETAIL,
+    DROP_FRAME,
     FAIL,
     IF,
     IF_NOT,
@@ -398,6 +399,7 @@ struct _mapper {
         m[(size_t)IF_NOT_FAIL] = "IF_NOT_FAIL";
         m[(size_t)POP_FRAMEHEAD] = "POP_FRAMEHEAD";
         m[(size_t)POP_FRAMETAIL] = "POP_FRAMETAIL";
+        m[(size_t)DROP_FRAME] = "DROP_FRAME";
         m[(size_t)FAIL] = "FAIL";
         m[(size_t)CALL] = "CALL";
         m[(size_t)CALL_LIGHT] = "CALL_LIGHT";
@@ -464,6 +466,7 @@ struct _mapper {
         n["IF_NOT_FAIL"] = IF_NOT_FAIL;
         n["POP_FRAMEHEAD"] = POP_FRAMEHEAD;
         n["POP_FRAMETAIL"] = POP_FRAMETAIL;
+        n["DROP_FRAME"] = DROP_FRAME;
         n["FAIL"] = FAIL;
         n["CALL"] = CALL;
         n["CALL_LIGHT"] = CALL_LIGHT;
@@ -636,6 +639,10 @@ inline void vm_run(Vm& vm,
             vm.stack.erase(sb, vm.stack.end());
             break;
         }
+
+        case DROP_FRAME:
+            vm.frame.pop_back();
+            break;
             
         case FAIL: {
             vm.failbit = true;
