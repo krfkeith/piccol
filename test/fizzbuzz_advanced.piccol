@@ -1,0 +1,43 @@
+
+fizz Int->Void :-
+  <: \v % 3 == 0 :> ? 'Fizz' print.
+
+buzz Int->Void :-
+  <: \v % 5 == 0 :> ? 'Buzz' print.
+
+fizzbuzz Int->Void :-
+  \v fizz \v->Void(\v buzz;) ;
+  \v buzz;
+  \v print.
+
+<:: names(literals)
+  name :- \locase name.
+  name :- '_' name.
+  name :- .
+
+  typename :- \upcase name.
+
+  body :- \any body.
+  body :- .
+::>
+
+<:: makeloop(names)
+ 
+  name_here :- name &'push' &''.
+  typename_here :- typename &'push' &''.
+  body_here :- body &''.
+
+  makeloop :- spaces name_here spaces @' [' typename_here @' ' &'pop' @']->Void :- ' 
+              @' [\\a \\b] $gte ? ; '
+              @'\\a ->Void(' body_here @')'
+              @' [([ \\a 1 ] $add) \\b] ' &'pop' @'.' .
+::>
+
+<:[makeloop] fizzbuzz Int
+
+  \v fizzbuzz 
+  '\n' print 
+:>
+
+fizzbuzz Void->Void :- 
+  [0 25] fizzbuzz.

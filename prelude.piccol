@@ -28,7 +28,7 @@ spaces :- .
 
 ::>
 
-<:: literals
+<:: literals(spaces)
 
 ident_tail :- \upcase ident_tail.
 ident_tail :- \locase ident_tail.
@@ -64,7 +64,7 @@ literal_pad :- spaces literal spaces.
 
 ::>
 
-<:: expr(literals,spaces) 
+<:: expr(literals) 
 
 val :- spaces literal spaces.
 val :- spaces '(' expr ')' spaces.
