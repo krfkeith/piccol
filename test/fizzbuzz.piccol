@@ -1,0 +1,22 @@
+
+fizz Int->Void :-
+  <: \v % 3 == 0 :> ? 'Fizz' print.
+
+buzz Int->Void :-
+  <: \v % 5 == 0 :> ? 'Buzz' print.
+
+trybuzz Int->Void :- \v buzz; .
+
+fizzbuzz Int->Void :-
+  \v fizz \v trybuzz;
+  \v buzz;
+  \v print.
+
+fizzbuzz [Int Int]->Void :-
+  <: \a >= \b :> ? ;
+  \a fizzbuzz 
+  '\n' print 
+  [ (<:\a+1:>) \b] fizzbuzz.
+
+fizzbuzz Void->Void :- 
+  [0 25] fizzbuzz.
