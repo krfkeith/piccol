@@ -9,7 +9,7 @@ def [a:TextNum b:Sym c:Sym];
 def [a:Int b:Int c:Int];
 
 print TextNum->Void :- 
-  <: \n == 0 :> ? \do_caps ->Sym (\v ? 'No more'; 'no more') print;
+  <: \n == 0 :> ? \do_caps ->Sym (\v ? 'No more'; 'no more') print ;
   \n print.
 
 opt_s Int->Void :-
@@ -36,7 +36,7 @@ bottles Int->Void :-
   [\v ' bottle' ' of beer,\n'] print
   'Take one down, pass it around, ' print
   <: \v - 1 :> ->Void ( 
-      [ TextNum{n=\v do_caps=false} ' bottle' ' of beer on the wall.\n\n' ] print
+      [ TextNum{n=\v do_caps=false} ' bottle' ' of beer on the wall.\n\n' ] print 
       \v bottles
       ).
 

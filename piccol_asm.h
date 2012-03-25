@@ -137,6 +137,7 @@ private:
             add("[ Real ]", "noop", NOOP, "Real");
 
             add("Bool",          "if",      IF,           "Void");
+            add("Void",          "fail",    FAIL,         "Void");
         }
 
         void add(const std::string& typefrom, const std::string& name,
