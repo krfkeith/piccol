@@ -2,6 +2,7 @@
 #define __PICCOL_ASM_H
 
 #include <cinttypes>
+#include <map>
 
 #include "metalan.h"
 
@@ -59,8 +60,8 @@ private:
 
 
     struct asmcall_map_ {
-        typedef std::unordered_map< std::pair<Sym,Sym>, 
-                                    std::pair<Opcode,Sym> > map_t;
+        typedef std::map< std::pair<Sym,Sym>, 
+                          std::pair<Opcode,Sym> > map_t;
         
         map_t map;
 
