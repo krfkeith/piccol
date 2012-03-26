@@ -154,6 +154,8 @@ struct Struct {
         v.resize(n);
     }
 
+    Struct(const Struct& s) : v(s.v) {}
+
     Struct(Struct&& s) {
         v.swap(s.v);
     }
