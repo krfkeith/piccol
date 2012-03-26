@@ -1,467 +1,470 @@
 
 def {
- tag: Sym
-} Tag;
-
-def {
-  x: Int
-  y: Int
-} Coord;
-
-def {
   char: Sym
   color: Sym
 } Skin;
 
-def {
-  name: Sym
+def { v:Int } Toggle;
 
-  sticky
-  s_shrine
-  b_shrine
-  v_shrine
-  shootable 
-  warm
-  healingfountain
-  confuse
-  pois2
-  bb_shrine
-  permanent
-  explode 
+toggled Toggle->Bool :- 
+   <: \v < 0 :> ? false ;
+   <: \v > 0 :> ? true.
 
-  poison: Real
-  queasy: Real 
-  fire: Real
-
-  resource: Sym
-  sign: Sym
-  special: Sym
-  branch: Sym 
-
-  stairs: Int
-  lightbonus: Int
-
-} FeatureFlags;
+toggled Bool->Toggle :-
+   \v ? Toggle{v=1};
+   Toggle{v=-1}.
 
 def {
-  lit
-  set_water
-  clear_water
+  water: Toggle
   height: Int
+  lit
   walkable 
   visible
-} FeatureGridprops;
+} Gridprops;
+
 
 def {
-  flags: FeatureFlags
-  props: FeatureGridprops
+  confuse
+  sticky
+  pois2
+  shootable
+  v_shrine
+  s_shrine
+  healingfountain
+  bb_shrine
+  permanent
+  warm
+  b_shrine
+
+  lightbonus: Int
+  explode: Int
+  stairs: Int
+
+  poison: Real
+  queasy: Real
+  fire: Real
+
+  name: Sym
+  special: Sym
+  branch: Sym
+  sign: Sym
+  resource: Sym
+} Flags;
+
+
+def {
+  flags: Flags
+  props: Gridprops
   back: Sym
-} FeatureNoSkin;
+} FeatNoSkin;
 
 def {
-  flags: FeatureFlags
-  props: FeatureGridprops
+  flags: Flags
+  props: Gridprops
   skin: Skin
-} Feature;
+} Feat;
 
 
-def [ a:Sym b:Feature ];
-def [ a:Sym b:FeatureGridprops ];
-def [ a:Sym b:FeatureNoSkin ];
+def [tag:Sym feat:Feat];
+def [tag:Sym feat:FeatNoSkin];
+def [tag:Sym props:Gridprops];
+
+floor Void->Gridprops :- Gridprops{ walkable=true visible=true height=-10 }.
+glass Int->Gridprops :- Gridprops{ walkable=false visible=true height=\v }.
+wall Int->Gridprops :- Gridprops{ walkable=false visible=false height=\v }.
+water Bool->Gridprops :- Gridprops{ walkable=true visible=true height=-10 water=(\v toggled->Toggle) }.
+
+char Int->Sym :- \v $to_sym.
 
 
-floor_gridprops Void->FeatureGridprops :- 
-   FeatureGridprops{ lit=false set_water=false clear_water=false walkable=true visible=true height=-10 }.
+featstock_set [Sym Feat]->Void :-.
+featstock_set [Sym FeatNoSkin]->Void :-.
+featstock_set [Sym Gridprops]->Void :-.
 
+featstock_init Void->Void :-
 
-init_featstock Void -> Void :-
+[ 'signcth2' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(250 char->Sym) color='red'}
+        flags=Flags{name='eldritch engravings' sign='MGLW\'NAFH' } } ] featstock_set
 
-[ '>'
-  Feature{ props=(floor_gridprops->FeatureGridprops)
-           skin=Skin{char='>' color='white'} 
-           flags=FeatureFlags{stairs=1 name='a hole in the floor'} }
-] set_featstock
+[ 'signcth3' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(250 char->Sym) color='red'}
+        flags=Flags{name='eldritch engravings' sign='CTHULHU' } } ] featstock_set
 
-[ '1'
-  Feature{ props=(floor_gridprops->FeatureGridprops)
-           skin=Skin{char='>' color='lime'} 
-           flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='a'} }
-] set_featstock
+[ 'signcth1' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(250 char->Sym) color='red'}
+        flags=Flags{name='eldritch engravings' sign='PH\'NGLUI' } } ] featstock_set
+
+[ 'signcth6' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(250 char->Sym) color='red'}
+        flags=Flags{name='eldritch engravings' sign='FHTAGN' } } ] featstock_set
+
+[ 'signcth4' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(250 char->Sym) color='red'}
+        flags=Flags{name='eldritch engravings' sign='R\'LYEH' } } ] featstock_set
+
+[ 'signcth5' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(250 char->Sym) color='red'}
+        flags=Flags{name='eldritch engravings' sign='WGAH\'NAGL' } } ] featstock_set
+
+[ '##' 
+  Feat{ props=(1 wall->Gridprops)
+        skin=Skin{char=(176 char->Sym) color='grey'}
+        flags=Flags{name='carbonized graphite' } } ] featstock_set
+
+[ 'kali' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(234 char->Sym) color='white'}
+        flags=Flags{special='kali' name='a statue of Kali' } } ] featstock_set
+
+[ '#!' 
+  Feat{ props=(1000 wall->Gridprops)
+        skin=Skin{char=(176 char->Sym) color='grey'}
+        flags=Flags{permanent=true name='crystalline graphite' } } ] featstock_set
+
+[ '+.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(206 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
+
+[ 'Y' 
+  Feat{ props=(5 wall->Gridprops)
+        skin=Skin{char=(157 char->Sym) color='green'}
+        flags=Flags{name='a tree' } } ] featstock_set
+
+[ 'cthulhu' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(16 char->Sym) color='gray'}
+        flags=Flags{special='cthulhu' name='an unholy stone' } } ] featstock_set
+
+[ 'monolith' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(8 char->Sym) color='light_gray'}
+        flags=Flags{special='monolith' name='the Monolith' } } ] featstock_set
+
+[ '!' 
+  Feat{ props=Gridprops{ walkable=true visible=false height=-10 lit=false }
+        skin=Skin{char=(173 char->Sym) color='dark_green'}
+        flags=Flags{name='a giant fern' } } ] featstock_set
+
+[ 'Z.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(185 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
+
+[ '\"' 
+  FeatNoSkin{ props=(floor->Gridprops)
+              back='red'
+              flags=Flags{fire=0.333 name='napalm' } } ] featstock_set
+
+[ '$' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(20 char->Sym) color='light_sky'}
+        flags=Flags{healingfountain=true name='a Fountain of Youth' } } ] featstock_set
+
+[ '&' 
+  FeatNoSkin{ props=Gridprops{ walkable=true visible=true height=-10 lit=true }
+              back='darkest_blue'
+              flags=Flags{explode=3 queasy=0.1 name='swamp gas' } } ] featstock_set
+
+[ '+' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(206 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
+
+[ '*' 
+  Feat{ props=Gridprops{ walkable=true visible=false height=-10 lit=false }
+        skin=Skin{char='*' color='lightest_green'}
+        flags=Flags{name='rubble' } } ] featstock_set
+
+[ '-' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(205 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
+
+[ 'J.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(202 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
+
+[ '/' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(188 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
+
+[ '.' (false water->Gridprops) ] featstock_set
+
+[ '1' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char='>' color='lime'}
+        flags=Flags{branch='a' stairs=1 name='a hole in the floor' } } ] featstock_set
+
+[ 'signvault' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(254 char->Sym) color='white'}
+        flags=Flags{name='an engraving on the floor' sign='"Entrance to the Vault. Robbers beware."' } } ] featstock_set
+
+[ '3' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char='>' color='sky'}
+        flags=Flags{branch='c' stairs=1 name='a hole in the floor' } } ] featstock_set
 
 [ '2' 
-  Feature{ props=(floor_gridprops->FeatureGridprops)
-           skin=Skin{char='>' color='crimson'}
-           flags=FeatureFlags{stairs=1 name='a hole in the floor' branch='b'} }
-] set_featstock
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char='>' color='crimson'}
+        flags=Flags{branch='b' stairs=1 name='a hole in the floor' } } ] featstock_set
 
-/*
-Feature{ tag='3' walkable=true visible=true skin=Skin{char='>' color='sky'}
-         stairs=1 name='a hole in the floor' branch='c'};
+[ '5' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char='>' color='light_gray'}
+        flags=Flags{branch='e' stairs=1 name='a hole in the floor' } } ] featstock_set
 
-Feature{ tag='4' walkable=true visible=true skin=Skin{char='>' color='dark_gray'}
-         stairs=1 name='a hole in the floor' branch='d'};
+[ '4' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char='>' color='dark_gray'}
+        flags=Flags{branch='d' stairs=1 name='a hole in the floor' } } ] featstock_set
 
-Feature{ tag='5' walkable=true visible=true skin=Skin{char='>' color='light_gray'}
-         stairs=1 name='a hole in the floor' branch='e'};
+[ '7' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(187 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
 
-Feature{ tag='6' walkable=true visible=true 
-         skin=Skin{ char=175->Sym color='white'} 
-         stairs=1 name='a hole in the floor' branch='s'};
+[ '6' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(175 char->Sym) color='white'}
+        flags=Flags{branch='s' stairs=1 name='a hole in the floor' } } ] featstock_set
 
-Feature{ tag='8' walkable=true visible=true skin=Skin{char=175->Sym color='red'}
-         stairs=1 name='an entrance to the Rehabilitation Thunderdome' branch='q'};
+[ '8' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(175 char->Sym) color='red'}
+        flags=Flags{branch='q' stairs=1 name='an entrance to the Rehabilitation Thunderdome' } } ] featstock_set
 
-Feature{ tag='qk' walkable=true visible=true skin=Skin{char=175->Sym color='dark_gray'}
-         stairs=1 name='an entrace to the temple of Kali' branch='qk'};
+[ ':' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(9 char->Sym) color='white'}
+        flags=Flags{name='a column' } } ] featstock_set
 
-Feature{ tag='*' walkable=true visible=nil skin=Skin{char='*' color='lightest_green'}
-         name='rubble'};
+[ '=' 
+  Feat{ props=(-10 glass->Gridprops)
+        skin=Skin{char=(196 char->Sym) color='gray'}
+        flags=Flags{name='barricades' shootable=true } } ] featstock_set
 
-Feature{ tag='^' walkable=true visible=true skin=Skin{char=248->Sym color='red'}
-         sticky=true name='a cave floor covered with glue'};
+[ '>' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char='>' color='white'}
+        flags=Flags{stairs=1 name='a hole in the floor' } } ] featstock_set
 
-Feature{ tag='s' walkable=true visible=true skin=Skin{char=234->Sym  color='darker_grey'}
-         s_shrine=true name='a shrine to Shiva'};
+[ '@' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(15 char->Sym) color='yellow'}
+        flags=Flags{warm=true name='a hearth' } } ] featstock_set
 
-Feature{ tag='b' walkable=true visible=true skin=Skin{char=127->Sym color='white'}
-         b_shrine=true name='a shrine to Brahma'};
+[ 'C' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(20 char->Sym) color='dark_green'}
+        flags=Flags{resource='g' name='a Green Fountain' } } ] featstock_set
 
-Feature{ tag='v' walkable=true visible=true skin=Skin{char=233->Sym color='azure'}
-         v_shrine=true name='a shrine to Vishnu'};
+[ 'B' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(20 char->Sym) color='dark_yellow'}
+        flags=Flags{resource='y' name='a Yellow Fountain' } } ] featstock_set
 
-Feature{ tag='bb' walkable=true visible=true skin=Skin{char=16->Sym color='crimson'}
-         bb_shrine=true name='an Altar of Ba\'al-Zebub'};
+[ 'bb' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(16 char->Sym) color='crimson'}
+        flags=Flags{bb_shrine=true name='an Altar of Ba\'al-Zebub' } } ] featstock_set
 
-Feature{ tag='dd' walkable=true visible=true skin=Skin{char='^' color='white'}
-         lit=true lightbonus=7 name='a dolmen'};
+[ 'F' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(204 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
 
-Feature{ tag=':' walkable=nil visible=nil skin=Skin{char=9->Sym color='white'}
-         name='a column' height=0};
+[ 'L.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(200 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
 
-Feature{ tag='h' walkable=true visible=true skin=Skin{char=242->Sym color='white'}
-         stairs=6 name='a dropchute'};
+[ '7.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(187 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
 
-Feature{ tag='a' walkable=true visible=true skin=Skin{char=254->Sym color='green'}
-         name='an abandoned altar stone'};
+[ 'dd' 
+  Feat{ props=Gridprops{ walkable=true visible=true height=-10 lit=true }
+        skin=Skin{char='^' color='white'}
+        flags=Flags{lightbonus=7 name='a dolmen' } } ] featstock_set
 
-Feature{ tag='@' walkable=true visible=true skin=Skin{char=15->Sym color='yellow'}
-         name='a hearth' warm=true};
+[ 'J' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(202 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
 
-Feature{ tag='$' walkable=true visible=true skin=Skin{char=20->Sym color='light_sky'}
-         name='a Fountain of Youth' healingfountain=true};
+[ 'M' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(20 char->Sym) color='dark_purple'}
+        flags=Flags{resource='p' name='a Purple Fountain' } } ] featstock_set
 
+[ 'L' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(200 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
 
-Feature{ tag='=' walkable=nil visible=true skin=Skin{char=196->Sym color='gray'}
-         name='barricades' shootable=true};
+[ 'N' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(20 char->Sym) color='dark_sky'}
+        flags=Flags{resource='b' name='a Blue Fountain' } } ] featstock_set
 
-Feature{ tag='l' walkable=nil visible=true skin=Skin{char=179->Sym color='gray'}
-         name='barricades' shootable=true};
+[ 'T.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(203 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
 
-Feature{ tag='r' walkable=nil visible=true skin=Skin{char=218->Sym color='gray'}
-         name='barricades' shootable=true};
+[ '!f' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(24 char->Sym) color='desaturated_green'}
+        flags=Flags{name='a flowering fern' } } ] featstock_set
 
-Feature{ tag='q' walkable=nil visible=true skin=Skin{char=191->Sym color='gray'}
-         name='barricades' shootable=true};
+[ 'R' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(201 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
 
-Feature{ tag='p' walkable=nil visible=true skin=Skin{char=192->Sym color='gray'}
-         name='barricades' shootable=true};
+[ 'T' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(203 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
 
-Feature{ tag='d' walkable=nil visible=true skin=Skin{char=217->Sym color='gray'}
-         name='barricades' shootable=true};
+[ 'W' (true water->Gridprops) ] featstock_set
 
+[ 'V' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(20 char->Sym) color='dark_red'}
+        flags=Flags{resource='r' name='a Red Fountain' } } ] featstock_set
 
-Feature{ tag='|' walkable=nil visible=nil skin=Skin{char=186->Sym color='white'}
-         name='a smooth stone wall' height=0};
+[ '|.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(186 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
 
-Feature{ tag='-' walkable=nil visible=nil skin=Skin{char=205->Sym color='white'}
-         name='a smooth stone wall' height=0};
+[ 'signkali' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char='.' color='white'}
+        flags=Flags{name='an engraving on the floor' sign='kali ma, kali ma shakti de' } } ] featstock_set
 
-Feature{ tag='+' walkable=nil visible=nil skin=Skin{char=206->Sym color='white'}
-         name='a smooth stone wall' height=0};
+[ 'R.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(201 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
 
-Feature{ tag='R' walkable=nil visible=nil skin=Skin{char=201->Sym color='white'}
-         name='a smooth stone wall' height=0};
+[ 'Z' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(185 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
 
-Feature{ tag='L' walkable=nil visible=nil skin=Skin{char=200->Sym color='white'}
-         name='a smooth stone wall' height=0};
+[ '^' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(248 char->Sym) color='red'}
+        flags=Flags{sticky=true name='a cave floor covered with glue' } } ] featstock_set
 
-Feature{ tag='T' walkable=nil visible=nil skin=Skin{char=203->Sym color='white'}
-         name='a smooth stone wall' height=0};
+[ 'a' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(254 char->Sym) color='green'}
+        flags=Flags{name='an abandoned altar stone' } } ] featstock_set
 
-Feature{ tag='F' walkable=nil visible=nil skin=Skin{char=204->Sym color='white'}
-         name='a smooth stone wall' height=0};
+[ '/.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(188 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
 
-Feature{ tag='J' walkable=nil visible=nil skin=Skin{char=202->Sym color='white'}
-         name='a smooth stone wall' height=0};
-
-Feature{ tag='7' walkable=nil visible=nil skin=Skin{char=187->Sym color='white'}
-         name='a smooth stone wall' height=0};
-
-Feature{ tag='/' walkable=nil visible=nil skin=Skin{char=188->Sym color='white'}
-         name='a smooth stone wall' height=0};
-
-Feature{ tag='Z' walkable=nil visible=nil skin=Skin{char=185->Sym color='white'}
-         name='a smooth stone wall' height=0};
-
-
-Feature{ tag='|.' walkable=nil visible=true skin=Skin{char=186->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='-.' walkable=nil visible=true skin=Skin{char=205->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='+.' walkable=nil visible=true skin=Skin{char=206->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='R.' walkable=nil visible=true skin=Skin{char=201->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='L.' walkable=nil visible=true skin=Skin{char=200->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='T.' walkable=nil visible=true skin=Skin{char=203->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='F.' walkable=nil visible=true skin=Skin{char=204->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='J.' walkable=nil visible=true skin=Skin{char=202->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='7.' walkable=nil visible=true skin=Skin{char=187->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='/.' walkable=nil visible=true skin=Skin{char=188->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-Feature{ tag='Z.' walkable=nil visible=true skin=Skin{char=185->Sym color='gray'}
-         name='bulletproof glass' height=0};
-
-
-
-Feature{ tag='Y' walkable=nil visible=nil skin=Skin{char=157->Sym color='green'}
-         name='a tree' height=5};
-
-Feature{ tag='!' walkable=true visible=nil skin=Skin{char=173->Sym color='dark_green'}
-         name='a giant fern'};
-
-Feature{ tag='!f' walkable=true visible=true skin=Skin{char=24->Sym color='desaturated_green'}
-         name='a flowering fern'};
-
-Feature{ tag='w' walkable=true visible=true skin=Skin{char='-' color='sky'}
-         water=1 name='a pool of water'};
-
-*/
-
-[ 'W' 
-  FeatureGridprops{ walkable=true visible=true set_water=true lit=false 
-                    clear_water=false height=-10 }
-] set_featstock
-
-[ '.' 
-  FeatureGridprops{ walkable=true visible=true set_water=false lit=false 
-                    clear_water=true height=-10 }
-] set_featstock
-
+[ 'b' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(127 char->Sym) color='white'}
+        flags=Flags{name='a shrine to Brahma' b_shrine=true } } ] featstock_set
 
 [ 'e' 
-  FeatureNoSkin{ props=(floor_gridprops->FeatureGridprops)
-                 back='desaturated_green'
-                 flags=FeatureFlags{ poison=0.5 name='a cloud of Ebola virus' } }
-] set_featstock
+  FeatNoSkin{ props=(floor->Gridprops)
+              back='desaturated_green'
+              flags=Flags{poison=0.5 name='a cloud of Ebola virus' } } ] featstock_set
+
+[ 'd' 
+  Feat{ props=(-10 glass->Gridprops)
+        skin=Skin{char=(217 char->Sym) color='gray'}
+        flags=Flags{name='barricades' shootable=true } } ] featstock_set
+
+[ 'g' 
+  FeatNoSkin{ props=(floor->Gridprops)
+              back='dark_green'
+              flags=Flags{pois2=true poison=0.25 name='spores of black mold' } } ] featstock_set
 
 [ 'f' 
-  FeatureNoSkin{ props=(floor_gridprops->FeatureGridprops)
-                 back='gray'
-                 flags=FeatureFlags{ confuse=true name='confusing smoke' } }
-] set_featstock
+  FeatNoSkin{ props=(floor->Gridprops)
+              back='gray'
+              flags=Flags{confuse=true name='confusing smoke' } } ] featstock_set
 
-/*
-Feature{ tag='g' walkable=true visible=true skin=Skin{} back='dark_green'
-         poison=0.25 pois2=true name='spores of black mold'};
+[ 'h' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(242 char->Sym) color='white'}
+        flags=Flags{stairs=6 name='a dropchute' } } ] featstock_set
 
-Feature{ tag='&' walkable=true visible=true skin=Skin{} back='darkest_blue'
-         lit=true queasy=0.1 name='swamp gas' explode=true};
+[ '-.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(205 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
 
-Feature{ tag='"' walkable=true visible=true skin=Skin{} back='red'
-         fire=0.333 name='napalm'};
+[ 'l' 
+  Feat{ props=(-10 glass->Gridprops)
+        skin=Skin{char=(179 char->Sym) color='gray'}
+        flags=Flags{name='barricades' shootable=true } } ] featstock_set
 
+[ 'q' 
+  Feat{ props=(-10 glass->Gridprops)
+        skin=Skin{char=(191 char->Sym) color='gray'}
+        flags=Flags{name='barricades' shootable=true } } ] featstock_set
 
-Feature{ tag='C' walkable=true visible=true skin=Skin{char=20->Sym color='dark_green'}
-         resource='g' name='a Green Fountain'};
+[ 'p' 
+  Feat{ props=(-10 glass->Gridprops)
+        skin=Skin{char=(192 char->Sym) color='gray'}
+        flags=Flags{name='barricades' shootable=true } } ] featstock_set
 
-Feature{ tag='V' walkable=true visible=true skin=Skin{char=20->Sym color='dark_red'} 
-         resource='r' name='a Red Fountain'};
+[ 's' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(234 char->Sym) color='darker_grey'}
+        flags=Flags{s_shrine=true name='a shrine to Shiva' } } ] featstock_set
 
-Feature{ tag='B' walkable=true visible=true skin=Skin{char=20->Sym color='dark_yellow'}
-         resource='y' name='a Yellow Fountain'};
+[ 'r' 
+  Feat{ props=(-10 glass->Gridprops)
+        skin=Skin{char=(218 char->Sym) color='gray'}
+        flags=Flags{name='barricades' shootable=true } } ] featstock_set
 
-Feature{ tag='N' walkable=true visible=true skin=Skin{char=20->Sym color='dark_sky'}
-         resource='b' name='a Blue Fountain'};
+[ 'w' 
+  Feat{ props=(true water->Gridprops)
+        skin=Skin{char='-' color='sky'}
+        flags=Flags{name='a pool of water' } } ] featstock_set
 
-Feature{ tag='M' walkable=true visible=true skin=Skin{char=20->Sym color='dark_purple'} 
-         resource='p' name='a Purple Fountain'};
+[ 'v' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(233 char->Sym) color='azure'}
+        flags=Flags{v_shrine=true name='a shrine to Vishnu' } } ] featstock_set
 
+[ 'qk' 
+  Feat{ props=(floor->Gridprops)
+        skin=Skin{char=(175 char->Sym) color='dark_gray'}
+        flags=Flags{branch='qk' stairs=1 name='an entrace to the temple of Kali' } } ] featstock_set
 
-# quest/winning specials
+[ '|' 
+  Feat{ props=(0 wall->Gridprops)
+        skin=Skin{char=(186 char->Sym) color='white'}
+        flags=Flags{name='a smooth stone wall' } } ] featstock_set
 
-Feature{ tag='signkali' walkable=true visible=true skin=Skin{char='.' color='white'}
-         sign='kali ma kali ma shakti de' 
-         name='an engraving on the floor'};
-
-Feature{ tag='kali' walkable=true visible=true skin=Skin{char=234->Sym  color='white'}
-         special='kali' name='a statue of Kali'};
-
-Feature{ tag='signvault' walkable=true visible=true skin=Skin{char=254->Sym color='white'}
-         sign='"Entrance to the Vault. Robbers beware."'
-         name='an engraving on the floor'};
-
-Feature{ tag='##' walkable=nil visible=nil skin=Skin{char=176->Sym color='grey'}
-         name='carbonized graphite' height=1};
-
-Feature{ tag='#!' walkable=nil visible=nil skin=Skin{char=176->Sym color='grey'}
-         name='crystalline graphite' height=1000 permanent=true};
-
-Feature{ tag='cthulhu' walkable=true visible=true skin=Skin{char=16->Sym color='gray'}
-         special='cthulhu' name='an unholy stone'};
-
-Feature{ tag='signcth1' walkable=true visible=true skin=Skin{char=250->Sym color='red'}
-         sign='PH\'NGLUI'
-         name='eldritch engravings'};
-
-Feature{ tag='signcth2' walkable=true visible=true skin=Skin{char=250->Sym color='red'}
-         sign='MGLW\'NAFH'
-         name='eldritch engravings'};
-
-Feature{ tag='signcth3' walkable=true visible=true skin=Skin{char=250->Sym color='red'}
-         sign='CTHULHU'
-         name='eldritch engravings'};
-
-Feature{ tag='signcth4' walkable=true visible=true skin=Skin{char=250->Sym color='red'}
-         sign='R\'LYEH'
-         name='eldritch engravings'};
-
-Feature{ tag='signcth5' walkable=true visible=true skin=Skin{char=250->Sym color='red'}
-         sign='WGAH\'NAGL'
-         name='eldritch engravings'};
-
-Feature{ tag='signcth6' walkable=true visible=true skin=Skin{char=250->Sym color='red'}
-         sign='FHTAGN'
-         name='eldritch engravings'};
-
-Feature{ tag='monolith' walkable=true visible=true skin=Skin{char=8->Sym color='light_gray'}
-         special='monolith' name='the Monolith' };
-
-*/
+[ 'F.' 
+  Feat{ props=(0 glass->Gridprops)
+        skin=Skin{char=(204 char->Sym) color='gray'}
+        flags=Flags{name='bulletproof glass' } } ] featstock_set
 
 .
-
-/***
-
-set_feature [Coord Sym] -> Void :- 
-  [ .0 (.1 get_featstock->Feature)] set_feature;
-  [ .0 (.1 get_featstock->FeatureNoSkin)] set_feature;
-  [ .0 (.1 get_featstock->FeatureGridprops)] set_feature.
-
-set_feature [Coord Feature] -> Void :- 
-  [ .0 .1.props] set_feature
-  [ .0 .1.skin] set_skin
-  [ .0 .1.flags] set_featmap.
-
-set_feature [Coord FeatureNoSkin] -> Void :- .
-  [ .0 .1.props] set_feature.
-
-
-set_feature [Coord FeatureGridprops] -> Void :- .
-
-***/
-
-
-/*
-
-set_gridprops GridProps->Void callback;
-
-add_featmap Featpoint->Void callback;
-del_featmap Coord->Void callback;
-get_featmap Coord->Feature callback;
-in_featmap  Coord->Bool callback;
-
-get_featstock Tag->Feature callback;
-set_featstock Featsym->Void callback;
-
-
-
-: set_feature [Featpoint->Void] {
-  GridProps{xy=$xy walkable=$feat.walkable height=$feat.height water=$feat.water->Bool} set_gridprops 
-  $feat.nofeature ? { Coord{xy=$xy} del_featmap }
-                    { add_featmap }
-}
-
-
-: set_featsym [Tagpoint->Void] {
-Featpoint{xy=$xy feat=Tag{tag=$tag} get_featstock} set_feature
-}
-
-set_renderprops Coord XY -> Void :-
-
-[ get_featmap -> Feature FEAT, 
-  XyBool{xy=XY on=FEAT.lit} set_is_lit, 
-  XySym [ FEAT.back->Sym, {xy=XY sym=FEAT.back} ]
-        [ {xy=XY sym='black'} ] set_back
-
-
-        x, y = xy
-
-        feat = None
-        if xy in self.d.featmap:
-            feat = self.d.featmap[xy]
-
-        if feat and feat.lit:
-            dg.render_set_is_lit(x, y, True)
-        else:
-            dg.render_set_is_lit(x, y, False)
-
-        if feat and feat.back:
-            dg.render_set_back(x, y, feat.back)
-        else:
-            dg.render_set_back(x, y, libtcod.black)
-
-        fore = self.theme[self.d.branch][0]
-        fore2 = fore
-        fore_i = 0
-        is_terrain = False
-        c = ' '
-
-        walkable = dg.grid_is_walk(x, y)
-        if feat and feat.skin:
-            c, fore = feat.skin
-
-        elif walkable:
-            if dg.grid_is_water(x, y):
-                c = 251
-                fore = libtcod.light_azure
-                fore2 = libtcod.dark_azure
-                fore_i = 1
-            else:
-                c = 250
-                is_terrain = True
-
-        else:
-            if dg.grid_is_water(x,y):
-                fore = libtcod.desaturated_blue
-            c = 176
-            is_terrain = True
-
-        dg.render_set_skin(x, y, fore, c, fore2, fore_i, is_terrain)
-
-        ## 
-        if feat:
-            dg.render_set_is_viewblock(x, y, not feat.visible, 0)
-            dg.render_set_is_walkblock(x, y, not feat.walkable, 0)
-        else:
-            dg.render_set_is_viewblock(x, y, not walkable, 0)
-            dg.render_set_is_walkblock(x, y, not walkable, 0)
-
-
-
-*/

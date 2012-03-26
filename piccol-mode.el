@@ -6,7 +6,7 @@
 
 (define-generic-mode piccol-mode
   '("#" ("/*" . "*/"))
-  '("def" "false" "true")
+  '("def" "false" "true" "fail")
   '(("'.*?[^\\\\]'" 0 font-lock-string-face t)
     ":-"
     "->"
