@@ -138,6 +138,7 @@ private:
             add("[ UInt ]", "noop", NOOP, "UInt");
             add("[ Bool ]", "noop", NOOP, "Bool");
             add("[ Real ]", "noop", NOOP, "Real");
+            add("[ Sym ]",  "noop", NOOP, "Sym");
 
             add("Bool",          "if",      IF,           "Void");
             add("Void",          "fail",    FAIL,         "Void");
@@ -671,7 +672,7 @@ private:
 
                 const std::string& op_name = metalan::symtab().get(p_i->sym);
 
-
+                /*
                   std::cout << "!" << op_name << std::endl;
                   for (const auto& s : labelstack) {
                       std::cout << s.label.print() << std::endl;
@@ -680,7 +681,7 @@ private:
                       std::cout << std::endl;
                   }
                   std::cout << "--- ---" << std::endl;
-
+                */
 
                 if (op_name == "_cmode_on") {
                     cmode_on();

@@ -137,8 +137,8 @@ struct Piccol {
             stage1 = stage2;
         }
 
-        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-        std::cout << stage2.print() << std::endl;
+        //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        //std::cout << stage2.print() << std::endl;
 
         try {
             bm _b("emiting");
