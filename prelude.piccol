@@ -29,7 +29,7 @@ spaces :- .
 
 ::>
 
-<:: literals(spaces)
+<:: ident(spaces)
 
 ident_tail :- \upcase ident_tail.
 ident_tail :- \locase ident_tail.
@@ -38,6 +38,12 @@ ident_tail :- '_' ident_tail.
 ident_tail :- .
 
 ident :- \locase ident_tail.
+
+ident_pad :- spaces ident spaces.
+
+::>
+
+<:: literals(ident)
 
 variable :- '\\' ident.
 
@@ -64,6 +70,22 @@ literal_x :- integer.
 literal :- literal_x &''.
 
 literal_pad :- spaces literal spaces.
+
+::>
+
+<:: types(ident)
+
+typename :- \upcase ident_tail.
+
+tupletype_tail :- ']'.
+tupletype_tail :- typename spaces tupletype_tail.
+
+tupletype :- '[' spaces tupletype_tail.
+
+type :- typename.
+type :- tupletype.
+
+type_pad :- spaces type spaces.
 
 ::>
 
