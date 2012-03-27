@@ -18,6 +18,13 @@
      ==>
    START_TAIL_LAMBDA ... END_LAMBDA END_BRANCH [END_FUN|END_LAMBDA]
 
+   
+   And inserts a required 'Void' where syntax allows for it to be omitted for clarity.
+
+   OPTIONAL_VOID [CALL|ASMCALL|START_LAMBDA]
+     ==>
+   VOID [CALL|ASMCALL|START_LAMBDA]
+
 }.
 
 
@@ -49,9 +56,16 @@ tailcall_call :- 'CALL' @'TAILCALL' tailcall_name tailcall_name
 tailcall :- tailcall_call.
 tailcall :- tailcall_lambda.
 
+optional_void_call :- 'CALL'.
+optional_void_call :- 'ASMCALL'.
+optional_void_call :- 'START_LAMBDA'.
+
+optional_void :- 'OPTIONAL_VOID' @'VOID' optional_void_call.
+optional_void :- 'OPTIONAL_VOID'.
 
 all :- typetag_field all.
 all :- tailcall all.
+all :- optional_void all.
 all :- \any &'' all.
 all :- .
 

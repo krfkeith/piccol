@@ -16,6 +16,8 @@ struct symcellmatcher {
 
         if (b == e) return false;
 
+        std::cout << symtab().get(sc.sym) << "~" << symtab().get(b->sym) << std::endl;
+
         if (sc.type == Symcell::ESCAPE && sc.sym == symtab().get("any")) {
             ++b;
             ++n;

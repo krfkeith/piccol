@@ -1,0 +1,11 @@
+
+
+
+def { a:Int b:Sym } A;
+def { x:A y:A } B;
+
+test B->A :-
+  A{a=(\y->Int(\a)) b=(\x->Sym(\b))}.
+
+test Void->A :- B{x=A{a=1 b='one'} y=A{a=2 b='two'}} test->A.
+

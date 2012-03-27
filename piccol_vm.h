@@ -148,27 +148,30 @@ struct Piccol {
             throw std::runtime_error(std::string("Error in stage 3 (piccol_emit): ") + e.what());
         }
 
-        //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-        //std::cout << stage2.print() << std::endl;
-
-        //nanom::label_t nillabel = VmCode::toplevel_label();
-        //vm.code.codes[nillabel].clear();
+        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        std::cout << stage2.print() << std::endl;
 
         bm _b("assembling");
         as.parse(stage2);
 
         //std::cout << "-----------------" << std::endl;
         //std::cout << as.print() << std::endl;
-
-        //bm _b2("running");
-        //nanom::vm_run(vm, nillabel);
     }
 
     bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out) {
         bm _b("running");
 
+        nanom::label_t l(name, s1, s2);
+
+        if (vm.code.codes.find(l) == vm.code.codes.end()) {
+            throw std::runtime_error("Undefined function: " + 
+                                     symtab().get(name) + " " + 
+                                     symtab().get(s1) + "->" +
+                                     symtab().get(s2));
+        }
+
         vm.failbit = false;
-        nanom::vm_run(vm, nanom::label_t(name, s1, s2)); //, 0, true);
+        nanom::vm_run(vm, l); //, 0, true);
 
         // This isn't really needed since we shouldn't exit out of middle of a call stack.
 

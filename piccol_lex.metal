@@ -121,7 +121,7 @@ variable :- @'DEREF' '\\' ident_here.
 
 val_or_call :- tupleval.
 val_or_call :- structval.
-val_or_call :- '(' spaces paren_statements.
+val_or_call :- '(' spaces @'OPTIONAL_VOID' paren_statements.
 val_or_call :- variable.
 val_or_call :- val_primitive.
 
@@ -135,19 +135,21 @@ funcall :- @'CALL' ident_here @'Void'.
 statement :- tupleval spaces.
 statement :- structval spaces.
 statement :- variable spaces.
+statement :- lambda spaces.
 statement :- val_primitive spaces.
 statement :- funcall spaces.
 
 paren_statements :- ')'.
 paren_statements :- statement paren_statements.
 
-statement_or_branch :- ';' @'END_BRANCH' @'START_BRANCH' spaces.
-statement_or_branch :- '->' spaces @'START_LAMBDA' typename_here spaces 
-                       '(' spaces @'START_BRANCH' lambda_statements.
-statement_or_branch :- statement.
+lambda :- '->' spaces @'START_LAMBDA' typename_here spaces 
+          '(' spaces @'START_BRANCH' lambda_statements.
 
 lambda_statements :- ')' spaces @'END_BRANCH' @'END_LAMBDA'.
 lambda_statements :- statement_or_branch lambda_statements.
+
+statement_or_branch :- ';' @'END_BRANCH' @'START_BRANCH' @'OPTIONAL_VOID' spaces.
+statement_or_branch :- statement.
 
 toplevel_statements :- '.' @'END_BRANCH' .
 toplevel_statements :- statement_or_branch toplevel_statements.
@@ -156,7 +158,8 @@ fun :- spaces @'FUN_TYPE' ident_here
        spaces typename_here spaces '->' 
        spaces typename_here 
        spaces ':-' 
-       @'START_FUN' spaces @'START_BRANCH' toplevel_statements 
+       @'START_FUN' spaces 
+       @'START_BRANCH' @'OPTIONAL_VOID' toplevel_statements 
        @'END_FUN'.
 
 

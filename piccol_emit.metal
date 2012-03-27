@@ -29,14 +29,9 @@ primitive_type :- 'Sym' &''.
 primitive_type_x :- primitive_type &'push'.
 
 val :- 'SET_TYPE' @'PUSH' primitive_type_x 'PUSH' val_literal @'_push_type' &'pop'.
+val :- 'VOID' @'_push_type' @'Void'.
 
 val_primitive :- val.
-
-val_or_call_x :- statement val_or_call_x.
-val_or_call_x :- .
-
-val_or_call :- @'_push_type' @'Void' funcall val_or_call_x.
-val_or_call :- val_or_call_x.
 
 structfield :- val_or_call 
                'SELECT_FIELD' @'_fieldname_deref' val_literal
@@ -71,13 +66,15 @@ funcall :- 'TAILCALL' @'DROP_FRAME' @'_tailcall_or_syscall' val_literal val_lite
 statement :- structval.
 statement :- tupleval.
 statement :- variable.
+statement :- lambda.
 statement :- val_primitive.
 statement :- funcall.
 
 statements_x :- statement statements_x.
 statements_x :- .
 
-statements :- @'_push_type' @'Void' statements_x.
+val_or_call :- statement statements_x.
+
 
 function_fail        :- @'POP_FRAMEHEAD' @'FAIL' @'_pop_funlabel'.
 
@@ -86,34 +83,40 @@ function_succeed     :- @'POP_FRAMEHEAD' @'EXIT' @'_pop_funlabel'.
 function_try_next    :- @'IF_FAIL' @'2' @'EXIT' @'POP_FRAMETAIL'.
 
 
-statements_or_branch :- 'END_FUN'
-                        function_fail @'_drop_types'.
+lambda :- 'START_LAMBDA' @'_push_lambda' val_literal @'CALL'
+          lambda_statements_or_branch.
 
-statements_or_branch :- 'END_LAMBDA' 
-                        function_fail
-                        @'IF_NOT_FAIL' @'2' @'FAIL'
-                        statements_x
-                        statements_or_branch.
+lambda :- 'START_TAIL_LAMBDA' @'DROP_FRAME' @'_push_lambda' val_literal @'TAILCALL'
+          lambda_statements_or_branch.
 
-statements_or_branch :- 'END_BRANCH'
-                        function_succeed 
-                        function_try_next
-                        statements_or_branch.
+lambda_statements_or_branch :- 'END_LAMBDA' 
+                               function_fail
+                               @'IF_NOT_FAIL' @'2' @'FAIL'.
 
-statements_or_branch :- 'START_LAMBDA' @'_push_lambda' val_literal @'CALL'
-                        statements_or_branch.
+lambda_statements_or_branch :- statement_or_branch lambda_statements_or_branch.
 
-statements_or_branch :- 'START_TAIL_LAMBDA' @'DROP_FRAME' @'_push_lambda' val_literal @'TAILCALL'
-                        statements_or_branch.
+branch :- 'START_BRANCH' @'_push_branch' @'CALL_LIGHT'
+          branch_statements_or_branch.
 
-statements_or_branch :- 'START_BRANCH' @'_push_branch' @'CALL_LIGHT'
-                        statements 
-                        statements_or_branch.
+branch_statements_or_branch :- 'END_BRANCH'
+                               function_succeed 
+                               function_try_next.
 
+branch_statements_or_branch :- statement_or_branch branch_statements_or_branch.
+
+
+statement_or_branch :- branch.
+statement_or_branch :- statement.
+
+
+fun_statements_or_branch :- 'END_FUN'
+                            function_fail @'_drop_types'.
+
+fun_statements_or_branch :- statement_or_branch fun_statements_or_branch.
 
 fun :- 'FUN_TYPE' @'_push_funlabel' val_literal val_literal val_literal
        'START_FUN' 
-       statements_or_branch.
+       fun_statements_or_branch.
 
 
 all :- def all.
