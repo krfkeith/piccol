@@ -56,9 +56,10 @@ tailcall_call :- 'CALL' @'TAILCALL' tailcall_name tailcall_name
 tailcall :- tailcall_call.
 tailcall :- tailcall_lambda.
 
-optional_void_call :- 'CALL'.
-optional_void_call :- 'ASMCALL'.
-optional_void_call :- 'START_LAMBDA'.
+optional_void_call_x :- 'CALL'.
+optional_void_call_x :- 'ASMCALL'.
+optional_void_call_x :- 'START_LAMBDA'.
+optional_void_call :- optional_void_call_x &''.
 
 optional_void :- 'OPTIONAL_VOID' @'VOID' optional_void_call.
 optional_void :- 'OPTIONAL_VOID'.
