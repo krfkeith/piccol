@@ -106,13 +106,12 @@ tuplevalfields :- spaces.
 
 tupleval :- spaces '[' @'START_TUPLE' tuplevalfields ']' @'END_TUPLE'.
 
-
-val :- @'SET_TYPE' @'Real' @'PUSH' realval.
-val :- @'SET_TYPE' @'Int'  @'PUSH' intval &''.
-val :- @'SET_TYPE' @'Sym'  @'PUSH' symval.
 val :- nilval  @'SET_TYPE' @'Sym' @'PUSH' @'0'.
 val :- falseval @'SET_TYPE' @'Bool' @'PUSH' @'0'.
 val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
+val :- @'SET_TYPE' @'Sym'  @'PUSH' symval.
+val :- @'SET_TYPE' @'Real' @'PUSH' realval.
+val :- @'SET_TYPE' @'Int'  @'PUSH' intval &''.
 
 val_primitive :- val.
 
