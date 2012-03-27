@@ -13,7 +13,7 @@ fizzbuzz Int->Void :-
   \v print.
 
 fizzbuzz [Int Int]->Void :-
-  <: \a >= \b :> ? ;
+  <: \a >= \b :> ?  ;
   \a fizzbuzz 
   '\n' print 
   [ (<:\a+1:>) \b] fizzbuzz.

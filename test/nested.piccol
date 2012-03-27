@@ -23,7 +23,7 @@ inc Void->A :- [A{a=1 b=''}] inc0->A.
 
 inc Void->Int :- [(->Int(1)) 1] $add.
 
-bug0 [A]->A :- \v; \v \v.
+bug0 [A]->A :- \v; \v .
 bug Void->A :- [A{a=99 b='zz'}] bug0->A.
 
 

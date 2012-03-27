@@ -79,11 +79,11 @@ statements_x :- .
 val_or_call :- statement statements_x.
 
 
-function_fail        :- @'POP_FRAMEHEAD' @'FAIL' @'_drop_funlabel'.
+function_fail        :- @'POP_FRAMEHEAD' @'FAIL' @'_pop_funlabel'.
 
 function_succeed     :- @'POP_FRAMEHEAD' @'EXIT' @'_pop_funlabel'.
 
-function_try_next    :- @'IF_FAIL' @'2' @'EXIT' @'POP_FRAMETAIL' @'_pop_type'.
+function_try_next    :- @'IF_FAIL' @'2' @'EXIT' @'POP_FRAMETAIL'.
 
 
 lambda :- 'START_LAMBDA' @'_push_lambda' val_literal @'CALL'
