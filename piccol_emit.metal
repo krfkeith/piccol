@@ -48,6 +48,8 @@ structval :- 'SET_TYPE' @'_push_type' val_literal
              'END_STRUCT'
              .
 
+change_struct :- 'CHANGE_STRUCT' structfields 'END_CHANGE_STRUCT'.
+
 tuplefields :- val_or_call 'SET_TUPLEFIELD' tuplefields.
 tuplefields :- .
 
@@ -65,6 +67,7 @@ funcall :- 'TAILCALL' @'DROP_FRAME' @'_tailcall_or_syscall' val_literal val_lite
 
 statement :- structval.
 statement :- tupleval.
+statement :- change_struct.
 statement :- variable.
 statement :- lambda.
 statement :- val_primitive.

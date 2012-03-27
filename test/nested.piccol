@@ -4,8 +4,19 @@
 def { a:Int b:Sym } A;
 def { x:A y:A } B;
 
-test B->A :-
+meld B->A :-
   A{a=(\y->Int(\a)) b=(\x->Sym(\b))}.
 
-test Void->A :- B{x=A{a=1 b='one'} y=A{a=2 b='two'}} test->A.
+meld Void->A :- B{x=A{a=1 b='one'} y=A{a=2 b='two'}} meld->A.
+
+
+make_a Void->A :- A{a=0 b='one'}.
+
+def [v:A];
+
+inc0 [A]->A :- \v {a=([(\v->Int(\a)) 1] $add)} \v ; \v.
+
+inc Void->A :- [A{a=1 b=''}] inc0->A.
+
+inc Void->Int :- [(->Int(1)) 1] $add.
 

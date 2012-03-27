@@ -300,6 +300,8 @@ private:
                                          symtab().get(label.fromshape) + "->" +
                                          symtab().get(label.toshape));
             }
+
+            shapestack.push_back(label.fromshape);
         }
 
         void pop_funlabel() {
@@ -308,7 +310,7 @@ private:
 
             const label_t& fname = labelstack.back();
 
-            if (shapestack.empty()) {
+            if (shapestack.size() < 2) {
 
                 if (fname.toshape != symtab().get("Void")) {
                     throw std::runtime_error("Sanity error: _pop_funlabel before _push_type");
@@ -324,6 +326,11 @@ private:
                                              symtab().get(fname.toshape) + " returns " + 
                                              symtab().get(shapestack.back()));
                 }
+
+                Sym tmp = shapestack.back();
+                shapestack.pop_back();
+                shapestack.pop_back();
+                shapestack.push_back(tmp);
             }
 
             labelstack.pop_back();
@@ -339,6 +346,9 @@ private:
 
             if (labelstack.empty())
                 throw std::runtime_error("Sanity error: _push_branch before _push_funlabel");
+
+            if (shapestack.empty())
+                throw std::runtime_error("Sanity error: _push_branch before _push_type");
 
             curbranch++;
 
@@ -357,6 +367,8 @@ private:
 
             labelstack.push_back(l);
             label = labelstack.back();
+
+            shapestack.push_back(shapestack.back());
         }
 
         void push_lambda() {
@@ -657,7 +669,7 @@ private:
 
                 const std::string& op_name = metalan::symtab().get(p_i->sym);
 
-                /*
+
                   std::cout << "!" << op_name << std::endl;
                   for (const auto& s : shapestack) 
                       std::cout << " " << symtab().get(s);
@@ -666,7 +678,7 @@ private:
                       std::cout << symtab().get(s.name) << " " << symtab().get(s.fromshape)
                                 << " " << symtab().get(s.toshape) << std::endl;
                   std::cout << "--- ---" << std::endl;
-                */
+
 
                 if (op_name == "_cmode_on") {
                     cmode_on();

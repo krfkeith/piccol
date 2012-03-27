@@ -132,9 +132,12 @@ funcall :- @'ASMCALL' '$' ident_here.
 funcall :- @'CALL' ident_here spaces '->' spaces typename_here.
 funcall :- @'CALL' ident_here @'Void'.
 
+change_struct :- '{' @'CHANGE_STRUCT' structvalfields '}' @'END_CHANGE_STRUCT'.
+
 statement :- tupleval spaces.
 statement :- structval spaces.
 statement :- variable spaces.
+statement :- change_struct spaces.
 statement :- lambda spaces.
 statement :- val_primitive spaces.
 statement :- funcall spaces.
