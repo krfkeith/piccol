@@ -137,8 +137,8 @@ struct Piccol {
             stage1 = stage2;
         }
 
-        //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-        //std::cout << stage2.print() << std::endl;
+        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        std::cout << stage2.print() << std::endl;
 
         try {
             bm _b("emiting");
@@ -148,8 +148,8 @@ struct Piccol {
             throw std::runtime_error(std::string("Error in stage 3 (piccol_emit): ") + e.what());
         }
 
-        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-        std::cout << stage2.print() << std::endl;
+        //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        //std::cout << stage2.print() << std::endl;
 
         bm _b("assembling");
         as.parse(stage2);
@@ -164,10 +164,7 @@ struct Piccol {
         nanom::label_t l(name, s1, s2);
 
         if (vm.code.codes.find(l) == vm.code.codes.end()) {
-            throw std::runtime_error("Undefined function: " + 
-                                     symtab().get(name) + " " + 
-                                     symtab().get(s1) + "->" +
-                                     symtab().get(s2));
+            throw std::runtime_error("Undefined function: " + l.print());
         }
 
         vm.failbit = false;

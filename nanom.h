@@ -283,6 +283,10 @@ struct label_t {
     bool operator==(const label_t& l) const {
         return (name == l.name && fromshape == l.fromshape && toshape == l.toshape);
     }
+
+    std::string print() const {
+        return symtab().get(name) + " " + symtab().get(fromshape) + "->" + symtab().get(toshape);
+    }
 };
 
 }
@@ -731,9 +735,7 @@ inline void vm_run(Vm& vm,
             auto j = vm.code.callbacks.find(l);
 
             if (j == vm.code.callbacks.end()) {
-                throw std::runtime_error("Callback '" + symtab().get(name.uint) + " " +
-                                         symtab().get(fromtype.uint) + "->" +
-                                         symtab().get(totype.uint) + "' undefined");
+                throw std::runtime_error("Callback '" + l.print() + "' undefined");
             }
 
             vm.failbit = !(j->second)(vm.shapes, shape, vm.shapes.get(totype.uint), tmp, ret);

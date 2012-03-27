@@ -21,9 +21,9 @@
    
    And inserts a required 'Void' where syntax allows for it to be omitted for clarity.
 
-   OPTIONAL_VOID [CALL|ASMCALL|START_LAMBDA]
+   OPTIONAL_VOID [CALL|ASMCALL|START_LAMBDA|END_BRANCH]
      ==>
-   VOID [CALL|ASMCALL|START_LAMBDA]
+   VOID [CALL|ASMCALL|START_LAMBDA|END_BRANCH]
 
 }.
 
@@ -59,6 +59,7 @@ tailcall :- tailcall_lambda.
 optional_void_call_x :- 'CALL'.
 optional_void_call_x :- 'ASMCALL'.
 optional_void_call_x :- 'START_LAMBDA'.
+optional_void_call_x :- 'END_BRANCH'.
 optional_void_call :- optional_void_call_x &''.
 
 optional_void :- 'OPTIONAL_VOID' @'VOID' optional_void_call.

@@ -1,5 +1,8 @@
 
+tmp Int->Bool :- true; true.
 
+buzz Int->Void :- true ? 'Buzz' print.
+trybuzz Int->Void :- \v buzz; .
 
 def { a:Int b:Sym } A;
 def { x:A y:A } B;
@@ -14,9 +17,13 @@ make_a Void->A :- A{a=0 b='one'}.
 
 def [v:A];
 
-inc0 [A]->A :- \v {a=([(\v->Int(\a)) 1] $add)} \v ; \v.
+inc0 [A]->A :- \v {a=([(\v->Int(\a)) 1] $add)} ; \v.
 
 inc Void->A :- [A{a=1 b=''}] inc0->A.
 
 inc Void->Int :- [(->Int(1)) 1] $add.
+
+bug0 [A]->A :- \v; \v \v.
+bug Void->A :- [A{a=99 b='zz'}] bug0->A.
+
 

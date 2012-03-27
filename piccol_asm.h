@@ -216,7 +216,22 @@ private:
             shapestack.pop_back();
         }
 
-        void drop_types() {
+        void drop_funlabel() {
+
+            if (labelstack.empty())
+                throw std::runtime_error("Sanity error: _pop_funlabel before _push_funlabel");
+
+            if (shapestack.size() != 1) {
+                throw std::runtime_error("Function " + label.print() + " returns more than one value.");
+            }
+
+            if (labelstack.size() != 1) {
+                throw std::runtime_error("Sanity error: _drop_funlabel inside a nested function");
+            }
+
+            labelstack.clear();
+            label = nillabel;
+
             shapestack.clear();
         }
 
@@ -295,10 +310,7 @@ private:
             curbranch = 0;
 
             if (code.codes.count(label) != 0) {
-                throw std::runtime_error("Function defined twice: " + 
-                                         symtab().get(label.name) + " " +
-                                         symtab().get(label.fromshape) + "->" +
-                                         symtab().get(label.toshape));
+                throw std::runtime_error("Function defined twice: " + label.print());
             }
 
             shapestack.push_back(label.fromshape);
@@ -320,10 +332,7 @@ private:
 
                 if (fname.toshape != shapestack.back()) {
 
-                    throw std::runtime_error("Wrong return type: " + 
-                                             symtab().get(fname.name) + " " +
-                                             symtab().get(fname.fromshape) + "->" +
-                                             symtab().get(fname.toshape) + " returns " + 
+                    throw std::runtime_error("Wrong return type: " + fname.print() + " returns " + 
                                              symtab().get(shapestack.back()));
                 }
 
@@ -336,7 +345,8 @@ private:
             labelstack.pop_back();
 
             if (labelstack.empty()) {
-                label = nillabel;
+                //label = nillabel;
+                throw std::runtime_error("Sanity error: _pop_funlabel out of a toplevel function");
             } else {
                 label = labelstack.back();
             }
@@ -598,10 +608,7 @@ private:
 
             } else {
             
-                throw std::runtime_error("Undefined function called: " + 
-                                         symtab().get(name) + " " + 
-                                         symtab().get(fromshape) + "->" + 
-                                         symtab().get(toshape));
+                throw std::runtime_error("Undefined function called: " + l.print());
             }
 
             shapestack.pop_back();
@@ -623,6 +630,9 @@ private:
 
                 code.codes[label].push_back(Opcode(IF, (Int)2));
                 code.codes[label].push_back(Opcode(FAIL));
+
+                // This opcode does not have a return type!
+                return true;
                 
             } else {
 
@@ -704,8 +714,8 @@ private:
                     ++p_i;
                     continue;
 
-                } else if (op_name == "_drop_types") {
-                    drop_types();
+                } else if (op_name == "_drop_funlabel") {
+                    drop_funlabel();
 
                     ++p_i;
                     continue;

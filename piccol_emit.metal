@@ -79,11 +79,11 @@ statements_x :- .
 val_or_call :- statement statements_x.
 
 
-function_fail        :- @'POP_FRAMEHEAD' @'FAIL' @'_pop_funlabel'.
+function_fail        :- @'POP_FRAMEHEAD' @'FAIL' @'_drop_funlabel'.
 
 function_succeed     :- @'POP_FRAMEHEAD' @'EXIT' @'_pop_funlabel'.
 
-function_try_next    :- @'IF_FAIL' @'2' @'EXIT' @'POP_FRAMETAIL'.
+function_try_next    :- @'IF_FAIL' @'2' @'EXIT' @'POP_FRAMETAIL' @'_pop_type'.
 
 
 lambda :- 'START_LAMBDA' @'_push_lambda' val_literal @'CALL'
@@ -93,7 +93,7 @@ lambda :- 'START_TAIL_LAMBDA' @'DROP_FRAME' @'_push_lambda' val_literal @'TAILCA
           lambda_statements_or_branch.
 
 lambda_statements_or_branch :- 'END_LAMBDA' 
-                               function_fail
+                               function_fail 
                                @'IF_NOT_FAIL' @'2' @'FAIL'.
 
 lambda_statements_or_branch :- statement_or_branch lambda_statements_or_branch.
@@ -112,8 +112,8 @@ statement_or_branch :- branch.
 statement_or_branch :- statement.
 
 
-fun_statements_or_branch :- 'END_FUN'
-                            function_fail @'_drop_types'.
+fun_statements_or_branch :- 'END_FUN' 
+                            function_fail.
 
 fun_statements_or_branch :- statement_or_branch fun_statements_or_branch.
 
