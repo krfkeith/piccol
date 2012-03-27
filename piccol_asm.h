@@ -159,7 +159,6 @@ private:
             cmode(false),
             cmode_code(compiletime_code.codes[nillabel]),
             code(runtime_code),
-            label(nill),
             curbranch(0)
             {
                 compiletime_vm.shapes = oldshapes;
@@ -185,7 +184,6 @@ private:
         };
 
         std::vector<funsig> labelstack;
-        label_t label;
         size_t curbranch;
 
 
@@ -204,67 +202,88 @@ private:
             cmode_code.clear();
         }
 
-        void push_type() {
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _push_type before _push_funlabel");
+        const label_t& label(bool safe=true) {
 
+            if (labelstack.empty()) {
+                if (safe && !cmode) {
+                    throw std::runtime_error("Sanity error: label() before _push_funlabel");
+                } else {
+                    return nillabel;
+                }
+            }
+
+            return labelstack.back().label;
+        }
+
+        std::vector<Sym>& shapestack() {
+            if (labelstack.empty()) {
+                throw std::runtime_error("Sanity error: shapestack() before _push_funlabel");
+            }
+
+            return labelstack.back().shapestack;
+        }
+
+        Sym next() {
             ++p_i;
 
             if (p_i == p_e)
-                throw std::runtime_error("End of input in _push_type");
+                throw std::runtime_error("Sanity error: end of input in system opcode");
 
-            if (!compiletime_vm.shapes.has_shape(p_i->sym)) 
-                throw std::runtime_error("Undefined shape: " + symtab().get(p_i->sym));
+            return p_i->sym;
+        }
 
-            labelstack.back().shapestack.push_back(p_i->sym);
+
+        void push_type() {
+
+            Sym sym = next();
+
+            if (!compiletime_vm.shapes.has_shape(sym)) 
+                throw std::runtime_error("Undefined shape: " + symtab().get(sym));
+
+            shapestack().push_back(sym);
         }
 
         void pop_type() {
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _pop_type before _push_funlabel");
 
-            if (labelstack.back().shapestack.empty())
+            auto& ss = shapestack();
+
+            if (ss.empty())
                 throw std::runtime_error("Sanity error: _pop_type before _push_type");
 
-            labelstack.back().shapestack.pop_back();
+            ss.pop_back();
         }
 
         void top_type() {
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _top_type before _push_funlabel");
 
-            if (labelstack.back().shapestack.empty())
+            auto& ss = shapestack();
+
+            if (ss.empty())
                 throw std::runtime_error("Sanity error: _top_type before _push_type");
 
             Opcode op;
             op.op = PUSH;
-            op.arg.uint = labelstack.back().shapestack.back();
+            op.arg.uint = ss.back();
 
-            code.codes[label].push_back(op);
+            code.codes[label()].push_back(op);
         }
 
         void mark_tuple() {
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _make_tuple before _push_funlabel");
 
-            labelstack.back().shapestack.push_back(symtab().get(""));
+            shapestack().push_back(symtab().get(""));
         }
 
         void make_tupletype() {
 
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _make_tupletype before _push_funlabel");
-
-            funsig& fs = labelstack.back();
+            auto& ss = shapestack();
         
             std::vector<Sym> tuptypes;
 
             while (1) {
-                if (fs.shapestack.empty()) 
+                if (ss.empty()) 
                     throw std::runtime_error("Sanity error: _make_tupletype before _mark_tuple");
 
-                Sym s = fs.shapestack.back();
-                fs.shapestack.pop_back();
+                Sym s = ss.back();
+                ss.pop_back();
 
                 if (s == symtab().get(""))
                     break;
@@ -286,60 +305,43 @@ private:
             if (!compiletime_vm.shapes.has_shape(tupshs)) 
                 throw std::runtime_error("Undefined shape: " + symtab().get(tupshs));
 
-            fs.shapestack.push_back(tupshs);
+            ss.push_back(tupshs);
         }
 
         void push_funlabel() {
-            ++p_i;
 
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _push_funlabel");
+            Sym name = next();
+            Sym from = next();
+            Sym to = next();
 
-            Sym name = p_i->sym;
+            labelstack.emplace_back(name, from, to);
 
-            ++p_i;
-
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _push_funlabel");
-
-            Sym from = p_i->sym;
-
-            ++p_i;
-
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _push_funlabel");
-
-            labelstack.emplace_back(name, from, p_i->sym);
-
-            funsig& fs = labelstack.back();
-
-            label = fs.label;
+            auto& ss = shapestack();
 
             curbranch = 0;
 
-            if (code.codes.count(label) != 0) {
-                throw std::runtime_error("Function defined twice: " + label.print());
+            if (code.codes.count(label()) != 0) {
+                throw std::runtime_error("Function defined twice: " + label().print());
             }
 
-            fs.shapestack.push_back(label.fromshape);
-            fs.shapestack.push_back(symtab().get("Void"));
+            ss.push_back(label().fromshape);
+            ss.push_back(symtab().get("Void"));
         }
 
         void pop_funlabel() {
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _pop_funlabel before _push_funlabel");
 
-            const funsig& fs = labelstack.back();
-            const label_t& fname = fs.label;
+            const auto& ss = shapestack();
 
-            if (fs.shapestack.size() < 2) {
+            const label_t& fname = label();
+
+            if (ss.size() < 2) {
                 throw std::runtime_error("Function does not return a value: " + fname.print());
             }
 
             static Sym voidsym = symtab().get("Void");
 
-            auto i = fs.shapestack.begin();
-            auto e = fs.shapestack.end();
+            auto i = ss.begin();
+            auto e = ss.end();
             ++i;
 
             size_t ntypes = 0;
@@ -354,143 +356,112 @@ private:
                 throw std::runtime_error("Function returns more than one value: " + fname.print());
             }
 
-            if (fname.toshape != fs.shapestack.back()) {
+            if (fname.toshape != ss.back()) {
 
                 throw std::runtime_error("Wrong return type: " + fname.print() + " returns " + 
-                                         symtab().get(fs.shapestack.back()));
+                                         symtab().get(ss.back()));
             }
 
-            Sym tmp = fs.shapestack.back();
+            Sym tmp = ss.back();
 
             labelstack.pop_back();
 
-            if (labelstack.empty()) {
-                label = nillabel;
-                //throw std::runtime_error("Sanity error: _pop_funlabel out of a toplevel function");
-            } else {
-                label = labelstack.back().label;
-                labelstack.back().shapestack.push_back(tmp);
+            if (!labelstack.empty()) {
+                shapestack().push_back(tmp);
             }
         }
 
         void push_branch() {
 
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _push_branch before _push_funlabel");
+            auto& ss = shapestack();
 
             curbranch++;
 
-            funsig& fs = labelstack.back();
-            label_t l = fs.label;
+            label_t l = label();
 
-            if (fs.shapestack.size() < 2)
+            if (ss.size() < 2)
                 throw std::runtime_error("Sanity error: _push_branch before _push_type");
 
             // Forget the type of the result of the previous branch.
-            fs.shapestack.pop_back();
+            ss.pop_back();
 
-            Sym tmp = fs.shapestack.back();
+            Sym tmp = ss.back();
 
             l.name = symtab().get(symtab().get(l.name) + "$" + uint_to_string(curbranch));
 
-            code.codes[label].push_back(Opcode(PUSH, (UInt)l.name));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)l.name));
 
-            ++p_i;
-
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _push_branch");
+            Sym nextopcode = next();
 
             // HACK
-            code.codes[label].push_back(Opcode(opcodecode(symtab().get(p_i->sym))));
+            code.codes[label()].push_back(Opcode(opcodecode(symtab().get(nextopcode))));
 
             labelstack.emplace_back(l.name, l.fromshape, l.toshape);
-            label = l;
 
-            labelstack.back().shapestack.push_back(tmp);
+            shapestack().push_back(tmp);
         }
 
         void push_lambda() {
 
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _push_branch before _push_funlabel");
+            auto& ss = shapestack();
 
             curbranch++;
 
-            funsig& fs = labelstack.back();
-            label_t l = fs.label;
+            label_t l = label();
 
-            if (fs.shapestack.size() < 2)
+            if (ss.size() < 2)
                 throw std::runtime_error("Sanity error: _push_branch before _push_type");
 
             l.name = symtab().get(symtab().get(l.name) + "$" + uint_to_string(curbranch));
-            l.fromshape = fs.shapestack.back();
+            l.fromshape = ss.back();
 
             //
-            fs.shapestack.pop_back();
+            ss.pop_back();
 
-            ++p_i;
+            l.toshape = next();
 
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _push_lambda");
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)l.name));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)l.fromshape));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)l.toshape));
 
-            l.toshape = p_i->sym;
-
-            code.codes[label].push_back(Opcode(PUSH, (UInt)l.name));
-            code.codes[label].push_back(Opcode(PUSH, (UInt)l.fromshape));
-            code.codes[label].push_back(Opcode(PUSH, (UInt)l.toshape));
-
-            ++p_i;
-
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _push_lambda");
+            Sym nextopcode = next();
 
             // HACK
-            code.codes[label].push_back(Opcode(opcodecode(symtab().get(p_i->sym))));
+            code.codes[label()].push_back(Opcode(opcodecode(symtab().get(nextopcode))));
 
             labelstack.emplace_back(l.name, l.fromshape, l.toshape);
 
-            funsig& fs2 = labelstack.back();
-
-            label = fs2.label;
-
-            fs2.shapestack.push_back(l.fromshape);
-            fs2.shapestack.push_back(symtab().get("Void"));
+            shapestack().push_back(l.fromshape);
+            shapestack().push_back(symtab().get("Void"));
         }
 
         void type_size() {
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _type_size before _push_funlabel");
 
-            if (labelstack.back().shapestack.empty())
+            const auto& ss = shapestack();
+
+            if (ss.empty())
                 throw std::runtime_error("Sanity error: _type_size before _push_type");
 
             Opcode op;
             op.op = PUSH;
-            op.arg.uint = compiletime_vm.shapes.get(labelstack.back().shapestack.back()).size();
+            op.arg.uint = compiletime_vm.shapes.get(ss.back()).size();
 
-            code.codes[label].push_back(op);
+            code.codes[label()].push_back(op);
         }
 
         void fieldname_deref() {
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _fieldname_deref before _push_funlabel");
 
-            const funsig& fs = labelstack.back();
+            const auto& ss = shapestack();
 
-            if (fs.shapestack.empty())
+            if (ss.empty())
                 throw std::runtime_error("Sanity error: _fieldname_deref before _push_type");
 
-            ++p_i;
+            Sym fieldsym = next();
 
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _fieldname_deref");
-
-            Sym fieldsym = p_i->sym;
-
-            if (fs.shapestack.size() < 2) 
+            if (ss.size() < 2) 
                 throw std::runtime_error("Invalid _fieldname_deref");
 
-            Sym structshape = fs.shapestack[fs.shapestack.size()-2];
+            Sym structshape = ss[ss.size()-2];
 
             auto offrange = compiletime_vm.shapes.get(structshape).get_index(fieldsym);
 
@@ -505,33 +476,27 @@ private:
             op.op = PUSH;
             op.arg.uint = offrange.first;
 
-            code.codes[label].push_back(op);
+            code.codes[label()].push_back(op);
 
             op.arg.uint = offrange.second;
 
-            code.codes[label].push_back(op);
+            code.codes[label()].push_back(op);
         }
 
         void fieldtype_check() {
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _fieldtype_check before _push_funlabel");
 
-            const funsig& fs = labelstack.back();
+            const auto& ss = shapestack();
 
-            if (fs.shapestack.empty())
+            if (ss.empty())
                 throw std::runtime_error("Sanity error: _fieldname_deref before _push_type");
 
-            ++p_i;
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _fieldname_deref");
+            Sym fieldsym = next();
 
-            Sym fieldsym = p_i->sym;
-
-            if (fs.shapestack.size() < 2) 
+            if (ss.size() < 2) 
                 throw std::runtime_error("Invalid _fieldtype_check");
 
-            Sym structshape = fs.shapestack[fs.shapestack.size()-2];
-            Sym valtype = fs.shapestack.back();
+            Sym structshape = ss[ss.size()-2];
+            Sym valtype = ss.back();
             const std::string& typestr = symtab().get(valtype);
 
             const auto& typeinfo = compiletime_vm.shapes.get(structshape).get_type(fieldsym);
@@ -593,17 +558,10 @@ private:
         
         void get_fields() {
         
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _get_fields before _push_funlabel");
-
-            Sym framehead = labelstack.back().label.fromshape;
+            Sym framehead = label().fromshape;
             const Shape& sh = compiletime_vm.shapes.get(framehead);
 
-            ++p_i;
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _get_fields");
-
-            Sym fieldsym = p_i->sym;
+            Sym fieldsym = next(); 
 
             const Shape::typeinfo& fieldt = sh.get_type(fieldsym);
             Sym newshape;
@@ -621,56 +579,44 @@ private:
                                          symtab().get(fieldsym));
             }
 
-            labelstack.back().shapestack.push_back(newshape);
+            shapestack().push_back(newshape);
 
-            code.codes[label].push_back(Opcode(PUSH, (UInt)fieldt.ix_from));
-            code.codes[label].push_back(Opcode(PUSH, (UInt)fieldt.ix_to));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)fieldt.ix_from));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)fieldt.ix_to));
         }
 
 
         void call_or_syscall(bool tailcall) {
 
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _fieldname_deref before _push_funlabel");
+            auto& ss = shapestack();
 
-            funsig& fs = labelstack.back();
-
-            if (fs.shapestack.empty()) 
+            if (ss.empty()) 
                 throw std::runtime_error("_call_or_syscall before _push_type");
 
-            ++p_i;
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _call_or_syscall");
-
-            Sym name = p_i->sym;
-
-            ++p_i;
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _call_or_syscall");
-
-            Sym toshape = p_i->sym;
-            Sym fromshape = fs.shapestack.back();
+            Sym name = next();
+            Sym toshape = next();
+            Sym fromshape = ss.back();
         
             label_t l(name, fromshape, toshape);
 
-            code.codes[label].push_back(Opcode(PUSH, (UInt)name));
-            code.codes[label].push_back(Opcode(PUSH, (UInt)fromshape));
-            code.codes[label].push_back(Opcode(PUSH, (UInt)toshape));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)name));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)fromshape));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)toshape));
 
             if (code.codes.find(l) != code.codes.end()) {
-                code.codes[label].push_back(Opcode(tailcall ? TAILCALL : CALL));
+                code.codes[label()].push_back(Opcode(tailcall ? TAILCALL : CALL));
 
             } else if (code.callbacks.find(l) != code.callbacks.end()) {
-                code.codes[label].push_back(Opcode(SYSCALL));
+                code.codes[label()].push_back(Opcode(SYSCALL));
 
             } else {
             
                 throw std::runtime_error("Undefined function called: " + l.print());
             }
 
-            fs.shapestack.pop_back();
+            ss.pop_back();
 
-            fs.shapestack.push_back(toshape);
+            ss.push_back(toshape);
         }
 
 
@@ -686,34 +632,27 @@ private:
             // Too lazy yet to implement a proper multi-opcode feature.
             if (i->second.first.op == IF) {
 
-                code.codes[label].push_back(Opcode(IF, (Int)2));
-                code.codes[label].push_back(Opcode(FAIL));
+                code.codes[label()].push_back(Opcode(IF, (Int)2));
+                code.codes[label()].push_back(Opcode(FAIL));
 
             } else {
 
                 if (i->second.first.op != NOOP) {
-                    code.codes[label].push_back(i->second.first);
+                    code.codes[label()].push_back(i->second.first);
                 }
             }
 
-            labelstack.back().shapestack.push_back(i->second.second);
+            shapestack().push_back(i->second.second);
 
             return true;
         }
 
         void asmcall() {
 
-            if (labelstack.empty())
-                throw std::runtime_error("Sanity error: _asmcall before _push_funlabel");
-            
-            Sym shape = labelstack.back().shapestack.back();
-            labelstack.back().shapestack.pop_back();
+            Sym shape = shapestack().back();
+            shapestack().pop_back();
 
-            ++p_i;
-            if (p_i == p_e)
-                throw std::runtime_error("End of input in _asmcall");
-
-            Sym s = p_i->sym;
+            Sym s = next();
 
             if (!asmcall(shape, s)) {
 
@@ -726,7 +665,6 @@ private:
   
             p_i = prog.syms.begin();
             p_e = prog.syms.end();
-            label = nillabel;
 
 
             while (p_i != p_e) {
@@ -854,7 +792,7 @@ private:
                 }
 
 
-                auto& c = code.codes[label];
+                auto& c = code.codes[label(false)];
 
                 Opcode op;
 
