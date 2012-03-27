@@ -111,6 +111,8 @@ private:
             add("[ Real Real ]", "gt",      GT_REAL,      "Bool");
             add("[ Real Real ]", "gte",     GTE_REAL,     "Bool");
 
+            add("[ Sym Sym ]", "eq", EQ_UINT, "Bool");
+
             add("[ Bool Bool ]", "and",     BAND,         "Bool");
             add("[ Bool Bool ]", "or",      BOR,          "Bool");
             add("Bool",          "not",     BOOL_NOT,     "Bool");
