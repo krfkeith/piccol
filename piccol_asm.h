@@ -863,7 +863,14 @@ public:
     void parse(const metalan::Symlist& prog) {
 
         compile_ctx ctx(VmCode::toplevel_label(), vm__.shapes, vm__.code);
-        ctx.parse(prog);
+
+        try {
+            ctx.parse(prog);
+
+        } catch (std::exception& e) {
+            std::string msg = "In function: " + ctx.label().print() + ": " + e.what();
+            throw std::runtime_error(msg);
+        }
     }
 
     std::string print() {
