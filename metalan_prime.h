@@ -122,6 +122,7 @@ struct MetalanPrime {
          *                 The current capture will be ignored.
          * 'top'         : Emit the symbols in the top capture on the stack.
          *                 The current capture will be ignored.
+         * 'rot'         : Swap the two top stack elements, do not emit anything.
          */
         
 
@@ -181,6 +182,14 @@ struct MetalanPrime {
 
                     ret.syms.push_back(Symcell(Symcell::QATOM, capture_stack.back()));
                     continue;
+
+                } else if (symstr == "rot") {
+                    if (capture_stack.size() < 2)
+                        continue;
+
+                    std::string& s1 = capture_stack.back();
+                    std::string& s2 = capture_stack[capture_stack.size()-2];
+                    s1.swap(s2);
                 }
 
                 ret.syms.push_back(Symcell(Symcell::QATOM, n.capture));

@@ -72,12 +72,6 @@ uintval_x :- digit uintval_x.
 uintval_x :- .
 uintval :- digit uintval_x.
 
-intval :- '-' uintval.
-intval :- uintval.
-
-realval :- intval '.' uintval &''.
-realval :- intval &'' 'f'.
-
 symval_x :- {\\} {'} @{'}  &'combine' symval_x.
 symval_x :- {\\} {t} @{\t} &'combine' symval_x.
 symval_x :- {\\} {n} @{\n} &'combine' symval_x.
@@ -110,8 +104,19 @@ val :- nilval  @'SET_TYPE' @'Sym' @'PUSH' @'0'.
 val :- falseval @'SET_TYPE' @'Bool' @'PUSH' @'0'.
 val :- trueval @'SET_TYPE' @'Bool' @'PUSH' @'1'.
 val :- @'SET_TYPE' @'Sym'  @'PUSH' symval.
-val :- @'SET_TYPE' @'Real' @'PUSH' realval.
-val :- @'SET_TYPE' @'Int'  @'PUSH' intval &''.
+
+
+val_number_neg :- '-' uintval '.' uintval &'push' @'SET_TYPE' @'Real' @'PUSH' &'pop'.
+val_number_neg :- '-' uintval &'push' 'f'         @'SET_TYPE' @'Real' @'PUSH' &'pop'.
+val_number_neg :- '-' uintval &'push'             @'SET_TYPE' @'Int'  @'PUSH' &'pop'.
+
+val_number :- uintval '.' uintval &'push' @'SET_TYPE' @'Real' @'PUSH' &'pop'.
+val_number :- uintval &'push' 'f'         @'SET_TYPE' @'Real' @'PUSH' &'pop'.
+val_number :- uintval &'push' 'u'         @'SET_TYPE' @'UInt' @'PUSH' &'pop'.
+val_number :- uintval &'push'             @'SET_TYPE' @'Int'  @'PUSH' &'pop'.
+
+val :- val_number_neg.
+val :- val_number.
 
 val_primitive :- val.
 

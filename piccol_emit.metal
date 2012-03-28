@@ -22,6 +22,7 @@ def :- 'START_DEF' @'_cmode_on' @'NEW_SHAPE' fields 'DEF_NAME' sym 'END_DEF' @'D
 val_literal :- \any &''.
 
 primitive_type :- 'Int' &''.
+primitive_type :- 'UInt' &''.
 primitive_type :- 'Real' &''.
 primitive_type :- 'Bool' &''.
 primitive_type :- 'Sym' &''.

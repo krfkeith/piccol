@@ -1,7 +1,7 @@
 
 all: metalan_prime metalan_doppel metalan_idem macrolan piccol_test
 
-CFLAGS = -std=c++0x -g -Wall
+CFLAGS = -std=c++0x -O3 -g -Wall
 
 metalan_prime: metalan.h metalan_prime.cc metalan_prime.h
 	g++ $(CFLAGS) metalan_prime.cc -o metalan_prime 
