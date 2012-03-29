@@ -158,6 +158,13 @@ struct Piccol {
         //std::cout << as.print() << std::endl;
     }
 
+    bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, 
+             const nanom::Struct& in, nanom::Struct& out) {
+
+        vm.stack.insert(vm.stack.end(), in.v.begin(), in.v.end());
+        return run(name, s1, s2, out);
+    }
+
     bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out) {
         bm _b("running");
 
@@ -189,6 +196,13 @@ struct Piccol {
     bool run(const std::string& name, const std::string& fr, const std::string& to, nanom::Struct& out) {
         return run(metalan::symtab().get(name), metalan::symtab().get(fr), metalan::symtab().get(to),
                    out);
+    }
+
+    bool run(const std::string& name, const std::string& fr, const std::string& to, 
+             const nanom::Struct& in, nanom::Struct& out) {
+
+        return run(metalan::symtab().get(name), metalan::symtab().get(fr), metalan::symtab().get(to),
+                   in, out);
     }
 };
 
