@@ -150,7 +150,7 @@ paren_statements :- ')'.
 paren_statements :- statement paren_statements.
 
 lambda :- '->' spaces @'START_LAMBDA' typename_here spaces 
-          '(' spaces @'START_BRANCH' lambda_statements.
+          '(' spaces @'START_BRANCH' @'OPTIONAL_VOID' lambda_statements.
 
 lambda_statements :- ')' spaces @'END_BRANCH' @'END_LAMBDA'.
 lambda_statements :- statement_or_branch lambda_statements.
