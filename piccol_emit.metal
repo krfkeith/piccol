@@ -21,15 +21,18 @@ def :- 'START_DEF' @'_cmode_on' @'NEW_SHAPE' fields 'DEF_NAME' sym 'END_DEF' @'D
 
 val_literal :- \any &''.
 
-primitive_type :- 'Int' &''.
-primitive_type :- 'UInt' &''.
-primitive_type :- 'Real' &''.
-primitive_type :- 'Bool' &''.
-primitive_type :- 'Sym' &''.
+primitive_type :- 'Int'.
+primitive_type :- 'UInt'.
+primitive_type :- 'Real'.
+primitive_type :- 'Bool'.
+primitive_type :- 'Sym'.
 
 primitive_type_x :- primitive_type &'push'.
 
-val :- 'SET_TYPE' @'PUSH' primitive_type_x 'PUSH' val_literal @'_push_type' &'pop'.
+push :- 'PUSH' &''.
+push :- 'PUSH_RAW' &''.
+
+val :- 'SET_TYPE' primitive_type_x push &'top' val_literal @'_push_type' &'pop'.
 val :- 'VOID' @'_push_type' @'Void'.
 
 val_primitive :- val.

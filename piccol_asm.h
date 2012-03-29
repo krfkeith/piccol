@@ -797,7 +797,15 @@ private:
 
                 Opcode op;
 
-                op.op = opcodecode(op_name);
+                bool raw_push = false;
+
+                if (op_name == "PUSH_RAW") {
+                    raw_push = true;
+                    op.op = PUSH;
+
+                } else {
+                    op.op = opcodecode(op_name);
+                }
 
                 if (op.op == 0) {
                     throw std::runtime_error("Unknown opcode: " + op_name);
@@ -819,7 +827,10 @@ private:
                         throw std::runtime_error("End of input while looking for opcode argument");
                     }
 
-                    if (arg_type == "Sym") {
+                    if (raw_push) {
+                        op.arg = string_to_uint(metalan::symtab().get(p_i->sym));
+
+                    } else if (arg_type == "Sym") {
                         op.arg = p_i->sym;
 
                     } else if (arg_type == "Int" || arg_type == "Bool") {
@@ -890,6 +901,7 @@ public:
                                                     opcodename(j.op)));
 
                 if (j.op == PUSH || j.op == IF || j.op == IF_NOT || j.op == IF_FAIL || j.op == IF_NOT_FAIL) {
+
                     tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, 
                                                         j.arg.uint)); //int_to_string(j.arg.uint)));
                 }

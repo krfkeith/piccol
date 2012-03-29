@@ -76,6 +76,8 @@ struct MetalanDoppel {
          * 'push' : Push current capture on a stack, do not emit any symbols.
          * 'pop'  : Pop a capture from the stack and emit the symbols is contains. 
          *          The current capture will be ignored.
+         * 'top'  : Emit the symbols of the top capture on the stack.
+         *          The current capture will be ignored.
          * 'drop' : Discard the top capture from the stack, do not emit anything.
          */
 
@@ -100,6 +102,16 @@ struct MetalanDoppel {
                     }
 
                     capture_stack.pop_back();
+                    continue;
+
+                } else if (symstr == "top") {
+
+                    if (capture_stack.empty())
+                        continue;
+                    
+                    for (const auto& nn : capture_stack.back()) {
+                        ret.syms.push_back(Symcell(Symcell::QATOM, nn.sym));
+                    }
                     continue;
 
                 } else if (symstr == "drop") {

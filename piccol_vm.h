@@ -175,7 +175,7 @@ struct Piccol {
         }
 
         vm.failbit = false;
-        nanom::vm_run(vm, l, 0, true);
+        nanom::vm_run(vm, l); //, 0, true);
 
         // This isn't really needed since we shouldn't exit out of middle of a call stack.
 
