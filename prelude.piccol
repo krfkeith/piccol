@@ -47,15 +47,31 @@ ident_pad :- spaces ident spaces.
 
 variable :- '\\' ident.
 
-uinteger_tail :- \digit uinteger_tail.
-uinteger_tail :- .
-uinteger :- \digit uinteger_tail.
+digits_tail :- \digit digits_tail.
+digits_tail :- .
+digits :- \digit digits_tail.
 
-integer :- '-' uinteger.
-integer :- uinteger.
+pos_real :- digits '.' digits.
+pos_real :- digits 'f'.
+neg_real :- '-' pos_real.
+real :- neg_real.
+real :- pos_real.
 
-real :- integer '.' uinteger.
-real :- integer 'f'.
+uinteger :- digits 'u'.
+
+neg_integer :- '-' digits.
+pos_integer :- digits.
+integer :- neg_integer.
+integer :- pos_integer.
+
+number :- real.
+number :- uinteger.
+number :- integer.
+
+sym_tail :- {\\'} sym_tail.
+sym_tail :- {'}.
+sym_tail :- \any sym_tail.
+sym :- {'} sym_tail.
 
 bool :- 'true'.
 bool :- 'false'.
@@ -64,8 +80,8 @@ nil :- 'nil'.
 literal_x :- variable.
 literal_x :- bool.
 literal_x :- nil.
-literal_x :- real.
-literal_x :- integer.
+literal_x :- sym.
+literal_x :- number.
 
 literal :- literal_x &''.
 
