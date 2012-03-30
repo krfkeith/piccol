@@ -10,6 +10,8 @@
 #include <vector>
 #include <unordered_map>
 
+#include <functional>
+
 #include "metalan.h"
 
 
@@ -308,7 +310,7 @@ namespace nanom {
 
 
 
-typedef bool (*callback_t)(const Shapes&, const Shape&, const Shape&, const Struct&, Struct&);
+typedef std::function<bool(const Shapes&, const Shape&, const Shape&, const Struct&, Struct&)> callback_t;
 
 
 struct VmCode {
@@ -321,6 +323,11 @@ struct VmCode {
     std::unordered_map<label_t, callback_t> callbacks;
 
     void register_callback(label_t s, callback_t cb) {
+
+        if (callbacks.find(s) != callbacks.end()) {
+            throw std::runtime_error("Callback registered twice: " + s.print());
+        }
+
         callbacks[s] = cb;
     }
 
