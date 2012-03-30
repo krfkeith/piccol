@@ -103,6 +103,8 @@ int main(int argc, char** argv) {
     mod.register_callback("read", "Void", "Bool", do_cin_uint);
 
     mod.register_callback("random", "[ Int Int ]", "Int", do_unirand);
+
+    mod.init();
     
     nanom::Struct out;
     nanom::Struct inp;

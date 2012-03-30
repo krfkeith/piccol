@@ -48,13 +48,8 @@ using namespace std::placeholders;
 
 struct Modules {
 
-    // This brain-dead contraption is _only_ because g++ does not
-    // yet support 'emplace' for associative containers.
-
-    std::vector<PiccolF> modules_d;
-
     // modulename -> filename, modules_d index
-    std::unordered_map< Sym, std::pair<Sym,size_t> > modules;
+    std::unordered_map< Sym, std::pair<Sym, std::shared_ptr<PiccolF> > > modules;
 
     // funcname -> modulename
     std::unordered_map<nanom::label_t,Sym> exports;
@@ -69,17 +64,14 @@ struct Modules {
             const std::string& ad,
             const std::string& loader) : sysdir(sd), appdir(ad) {
 
-        modules_d.emplace_back(sysdir);
-
-        PiccolF& p = modules_d.back();
+        PiccolF p(sysdir);
 
         _register_system_callbacks(p);
+        static_cast<Piccol&>(p).load("def [module:Sym funname:Sym funintype:Sym funouttype:Sym];");
         p.load(appdir + loader);
 
         nanom::Struct tmp;
         p.run("modules", "Void", "Void", tmp);
-
-        _link();
     }
 
     void _register_system_callbacks(PiccolF& p) {
@@ -103,7 +95,7 @@ struct Modules {
             throw std::runtime_error("Tried to define a module twice: '" + metalan::symtab().get(module) + "'");
         }
 
-        modules[module] = std::make_pair(filename, 0);
+        modules[module] = std::make_pair(filename, std::shared_ptr<PiccolF>(new PiccolF(sysdir)));
         return true;
     }
 
@@ -134,29 +126,22 @@ struct Modules {
 
     void _link() {
 
-        // Create the VMs.
-
-        for (auto& i : modules) {
-            modules_d.emplace_back(sysdir);
-            i.second.second = modules_d.size()-1;
-        }
-
         // Export foreign functions in all other VMs.
 
         for (auto& mod : modules) {
 
-            PiccolF& vm = modules_d[mod.second.second];
+            PiccolF& vm = *(mod.second.second);
+
+            for (const auto& cb : callbacks) {
+                vm.code.register_callback(cb.first, cb.second);
+            }
 
             for (const auto& func : exports) {
 
                 if (func.second == mod.first) 
                     continue;
 
-                PiccolF& othervm = modules_d[modules[func.second].second];
-
-                for (const auto& cb : callbacks) {
-                    vm.code.register_callback(cb.first, cb.second);
-                }
+                PiccolF& othervm = *(modules[func.second].second);
 
                 vm.code.register_callback(func.first, 
                                           std::bind(_route, std::ref(othervm), std::cref(func.first),
@@ -168,7 +153,7 @@ struct Modules {
 
         for (auto& mod : modules) {
 
-            PiccolF& vm = modules_d[mod.second.second];
+            PiccolF& vm = *(mod.second.second);
 
             vm.load(appdir + metalan::symtab().get(mod.second.first));
 
@@ -177,7 +162,7 @@ struct Modules {
                 if (func.second != mod.first)
                     continue;
 
-                if (vm.code.callbacks.count(func.first) == 0) {
+                if (vm.code.codes.count(func.first) == 0) {
                     
                     throw std::runtime_error("Function " + func.first.print() + " is exported but not defined");
                 }
@@ -187,6 +172,10 @@ struct Modules {
 
 
     // Public interface follows.
+
+    void init() {
+        _link();
+    }
 
     void register_callback(const std::string& name, const std::string& from, const std::string& to,
                            nanom::callback_t cb) {
@@ -214,7 +203,7 @@ struct Modules {
             throw std::runtime_error("Unknown exported function called: " + l.print());
         }
 
-        PiccolF& othervm = modules_d[modules[i->second].second];
+        PiccolF& othervm = *(modules[i->second].second);
         
         return othervm.run(l.name, l.fromshape, l.toshape, in, out);
     }

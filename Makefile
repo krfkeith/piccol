@@ -20,6 +20,6 @@ SRC = metalan.h nanom.h piccol_vm.h piccol_asm.h metalan_prime.h metalan_doppel.
 piccol_test: $(SRC) piccol_test.cc 
 	g++ $(CFLAGS) piccol_test.cc -o piccol_test
 
-piccol_modtest: $(SRC) piccol_modtest.cc
+piccol_modtest: $(SRC) piccol_modtest.cc piccol_mod.h
 	g++ $(CFLAGS) piccol_modtest.cc -o piccol_modtest
 
