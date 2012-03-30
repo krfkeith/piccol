@@ -60,27 +60,29 @@ struct Modules {
     std::string sysdir;
     std::string appdir;
 
+    std::string common;
+
     Modules(const std::string& sd, 
             const std::string& ad,
             const std::string& loader) : sysdir(sd), appdir(ad) {
 
         PiccolF p(sysdir);
 
-        _register_system_callbacks(p);
-        static_cast<Piccol&>(p).load("def [module:Sym funname:Sym funintype:Sym funouttype:Sym];");
-        p.load(appdir + loader);
-
-        nanom::Struct tmp;
-        p.run("modules", "Void", "Void", tmp);
-    }
-
-    void _register_system_callbacks(PiccolF& p) {
-
         p.register_callback("module", "[ Sym Sym ]", "Void", 
                             std::bind(&Modules::_cb_module, this, _1, _2, _3, _4, _5));
 
         p.register_callback("exported", "[ Sym Sym Sym Sym ]", "Void",
                             std::bind(&Modules::_cb_exported, this, _1, _2, _3, _4, _5));
+
+        p.register_callback("common", "Sym", "Void",
+                            std::bind(&Modules::_cb_common, this, _1, _2, _3, _4, _5));
+
+        static_cast<Piccol&>(p).load("def [module:Sym funname:Sym funintype:Sym funouttype:Sym];");
+
+        p.load(appdir + loader);
+
+        nanom::Struct tmp;
+        p.run("modules", "Void", "Void", tmp);
     }
 
     bool _cb_module(const nanom::Shapes& shapes, const nanom::Shape& shape, 
@@ -124,6 +126,18 @@ struct Modules {
         return true;
     }
 
+    bool _cb_common(const nanom::Shapes& shapes, const nanom::Shape& shape, 
+                    const nanom::Shape& shapeto, const nanom::Struct& struc, nanom::Struct& ret) {
+
+        if (common.size() != 0) {
+            throw std::runtime_error("Only one 'common' section is allowed in a module spec");
+        }
+
+        common = metalan::symtab().get(struc.v[0].uint);
+        return true;
+    }
+
+
     void _link() {
 
         // Export foreign functions in all other VMs.
@@ -154,6 +168,10 @@ struct Modules {
         for (auto& mod : modules) {
 
             PiccolF& vm = *(mod.second.second);
+
+            if (common.size() != 0) {
+                vm.load(appdir + common);
+            }
 
             vm.load(appdir + metalan::symtab().get(mod.second.first));
 
