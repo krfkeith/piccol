@@ -1,0 +1,10 @@
+
+def {a:Int b:Int} Useless;
+
+nl Void->Void :- '\n' print.
+
+add Useless->Int :- [\a \b] $add->Int( 'mod_a::add' print \v print nl \v ).
+
+af_2 [Int Int]->Int :- Useless{a=\a b=\b} add->Int.
+
+af_1 Int->Void :- 'af1 called with ' print \v print nl.

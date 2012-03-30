@@ -1,0 +1,4 @@
+
+def {a:Sym} Useless;
+
+bf_1 Void->Void :- 42 af_1.

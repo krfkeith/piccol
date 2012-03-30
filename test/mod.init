@@ -1,0 +1,13 @@
+
+
+modules Void->Void :-
+
+  ['aaa' 'mod_a.piccol'] module
+  ['bbb' 'mod_b.piccol'] module
+  ['ccc' 'mod_c.piccol'] module
+  
+  ['aaa' 'af_1' 'Int' 'Void'] exported
+  ['aaa' 'af_2' '[ Int Int ]' 'Int'] exported
+  ['bbb' 'bf_1' 'Void' 'Void'] exported
+  ['ccc' 'cf_1' 'Void' 'Int'] exported  
+.

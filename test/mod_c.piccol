@@ -1,0 +1,5 @@
+
+
+val Void->Int :- 4.
+
+cf_1 Void->Int :- [3 (val->Int)] af_2->Int.
