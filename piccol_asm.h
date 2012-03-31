@@ -878,7 +878,9 @@ public:
             ctx.parse(prog);
 
         } catch (std::exception& e) {
-            std::string msg = "In function: " + ctx.label().print() + ": " + e.what();
+            std::string msg = ("In function: " + 
+                               (ctx.labelstack.empty() ? std::string("<toplevel>") : ctx.label().print()) + 
+                               ": " + e.what());
             throw std::runtime_error(msg);
         }
     }

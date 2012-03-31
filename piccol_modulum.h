@@ -19,7 +19,10 @@ namespace piccol {
 
 struct PiccolF : public Piccol {
 
-    PiccolF(const std::string& sysdir = "") :
+    std::string appdir;
+
+    PiccolF(const std::string& sysdir, const std::string& ad) : 
+        appdir(ad),
         Piccol(piccol::load_file(sysdir + "macrolan.metal"),
                piccol::load_file(sysdir + "piccol_lex.metal"),
                piccol::load_file(sysdir + "piccol_morph.metal"),
@@ -30,7 +33,12 @@ struct PiccolF : public Piccol {
         }
 
     void load(const std::string& fn) {
-        Piccol::load(piccol::load_file(fn));
+        try {
+            Piccol::load(piccol::load_file(appdir + fn));
+        } catch (std::exception& e) {
+            std::string msg = ("In module: " + fn + ": " + e.what());
+            throw std::runtime_error(msg);
+        }
     }
 };
 
@@ -70,7 +78,7 @@ struct Modules {
             const std::string& ad,
             const std::string& loader) : sysdir(sd), appdir(ad) {
 
-        PiccolF p(sysdir);
+        PiccolF p(sysdir, appdir);
 
         p.register_callback("module", "[ Sym Sym ]", "Void", 
                             std::bind(&Modules::_cb_module, this, _1, _2, _3, _4, _5));
@@ -96,7 +104,7 @@ struct Modules {
                                      "          funs."
                                      "::>");
 
-        p.load(appdir + loader);
+        p.load(loader);
 
         Struct tmp;
         p.run("modules", "Void", "Void", tmp);
@@ -114,7 +122,7 @@ struct Modules {
             throw std::runtime_error("Tried to define a module twice: '" + metalan::symtab().get(module) + "'");
         }
 
-        modules[module] = std::make_pair(filename, std::shared_ptr<PiccolF>(new PiccolF(sysdir)));
+        modules[module] = std::make_pair(filename, std::shared_ptr<PiccolF>(new PiccolF(sysdir, appdir)));
         return true;
     }
 
@@ -194,10 +202,10 @@ struct Modules {
             PiccolF& vm = *(mod.second.second);
 
             if (common.size() != 0) {
-                vm.load(appdir + common);
+                vm.load(common);
             }
 
-            vm.load(appdir + metalan::symtab().get(mod.second.first));
+            vm.load(metalan::symtab().get(mod.second.first));
 
             for (const auto& func : exports) {
                 
