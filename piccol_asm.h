@@ -159,8 +159,7 @@ private:
             compiletime_vm(compiletime_code, oldshapes),
             cmode(false),
             cmode_code(compiletime_code.codes[nillabel]),
-            code(runtime_code),
-            curbranch(0)
+            code(runtime_code)
             {
                 compiletime_vm.shapes = oldshapes;
             }
@@ -179,13 +178,13 @@ private:
         struct funsig {
             label_t label;
             std::vector<Sym> shapestack;
+            size_t curbranch;
 
             funsig() {}
-            funsig(Sym a, Sym b, Sym c) : label(a, b, c) {}
+            funsig(Sym a, Sym b, Sym c) : label(a, b, c), curbranch(0) {}
         };
 
         std::vector<funsig> labelstack;
-        size_t curbranch;
 
 
         void cmode_on() {
@@ -319,8 +318,6 @@ private:
 
             auto& ss = shapestack();
 
-            curbranch = 0;
-
             if (code.codes.count(label()) != 0) {
                 throw std::runtime_error("Function defined twice: " + label().print());
             }
@@ -376,6 +373,7 @@ private:
 
             auto& ss = shapestack();
 
+            size_t& curbranch = labelstack.back().curbranch;
             curbranch++;
 
             label_t l = label();
@@ -406,6 +404,7 @@ private:
 
             auto& ss = shapestack();
 
+            size_t& curbranch = labelstack.back().curbranch;            
             curbranch++;
 
             label_t l = label();

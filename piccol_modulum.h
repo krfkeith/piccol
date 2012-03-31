@@ -12,6 +12,7 @@
 #include "piccol_vm.h"
 
 #include <memory>
+#include <unordered_set>
 
 
 namespace piccol {
@@ -35,9 +36,9 @@ struct PiccolF : public Piccol {
 
 namespace {
 
-bool _route(PiccolF& vm, const nanom::label_t& l, 
-            const nanom::Shapes& shapes, const nanom::Shape& shape, 
-            const nanom::Shape& shapeto, const nanom::Struct& struc, nanom::Struct& ret) {
+bool _route(PiccolF& vm, const label_t& l, 
+            const Shapes& shapes, const Shape& shape, 
+            const Shape& shapeto, const Struct& struc, Struct& ret) {
 
     return vm.run(l.name, l.fromshape, l.toshape, struc, ret);
 }
@@ -48,14 +49,17 @@ using namespace std::placeholders;
 
 struct Modules {
 
-    // modulename -> filename, modules_d index
+    // modulename -> filename, vm
     std::unordered_map< Sym, std::pair<Sym, std::shared_ptr<PiccolF> > > modules;
 
     // funcname -> modulename
-    std::unordered_map<nanom::label_t,Sym> exports;
+    std::unordered_map<label_t,Sym> exports;
 
     // callbacks that are common to all modules.
     std::unordered_map<label_t, callback_t> callbacks;
+
+    // functions that are required to be exported
+    std::unordered_set<label_t> _required;
 
     std::string sysdir;
     std::string appdir;
@@ -77,19 +81,32 @@ struct Modules {
         p.register_callback("common", "Sym", "Void",
                             std::bind(&Modules::_cb_common, this, _1, _2, _3, _4, _5));
 
-        static_cast<Piccol&>(p).load("def [module:Sym funname:Sym funintype:Sym funouttype:Sym];");
+        // Warning, ugly hard-coded metaprogramming follows.
+
+        static_cast<Piccol&>(p).load("def [module:Sym funname:Sym funintype:Sym funouttype:Sym]; "
+                                     "<:: module(type_canonical,literals) "
+                                     "modname :- ident &'push'. "
+                                     "ident_here :- ident &''. "
+                                     "funs :- spaces @{['} &'top' @{' '} ident_here @{' '}  "
+                                     "        spaces type_canonical @{' '} spaces '->' "
+                                     "        spaces type_canonical @{'] exported } funs. "
+                                     "funs :- . "
+                                     "sym_here :- sym &''. "
+                                     "module :- spaces modname spaces @{['} &'top' @{' } sym_here @{] module } "
+                                     "          funs."
+                                     "::>");
 
         p.load(appdir + loader);
 
-        nanom::Struct tmp;
+        Struct tmp;
         p.run("modules", "Void", "Void", tmp);
     }
 
-    bool _cb_module(const nanom::Shapes& shapes, const nanom::Shape& shape, 
-                    const nanom::Shape& shapeto, const nanom::Struct& struc, nanom::Struct& ret) {
+    bool _cb_module(const Shapes& shapes, const Shape& shape, 
+                    const Shape& shapeto, const Struct& struc, Struct& ret) {
 
-        nanom::Sym module = struc.v[0].uint;
-        nanom::Sym filename = struc.v[1].uint;
+        Sym module = struc.v[0].uint;
+        Sym filename = struc.v[1].uint;
 
         auto i = modules.find(module);
 
@@ -101,15 +118,15 @@ struct Modules {
         return true;
     }
 
-    bool _cb_exported(const nanom::Shapes& shapes, const nanom::Shape& shape, 
-                      const nanom::Shape& shapeto, const nanom::Struct& struc, nanom::Struct& ret) {
+    bool _cb_exported(const Shapes& shapes, const Shape& shape, 
+                      const Shape& shapeto, const Struct& struc, Struct& ret) {
 
-        nanom::Sym module = struc.v[0].uint;
-        nanom::Sym fnname = struc.v[1].uint;
-        nanom::Sym fnfrom = struc.v[2].uint;
-        nanom::Sym fnto = struc.v[3].uint;
+        Sym module = struc.v[0].uint;
+        Sym fnname = struc.v[1].uint;
+        Sym fnfrom = struc.v[2].uint;
+        Sym fnto = struc.v[3].uint;
 
-        nanom::label_t l(fnname, fnfrom, fnto);
+        label_t l(fnname, fnfrom, fnto);
 
         auto i = exports.find(l);
 
@@ -126,8 +143,8 @@ struct Modules {
         return true;
     }
 
-    bool _cb_common(const nanom::Shapes& shapes, const nanom::Shape& shape, 
-                    const nanom::Shape& shapeto, const nanom::Struct& struc, nanom::Struct& ret) {
+    bool _cb_common(const Shapes& shapes, const Shape& shape, 
+                    const Shape& shapeto, const Struct& struc, Struct& ret) {
 
         if (common.size() != 0) {
             throw std::runtime_error("Only one 'common' section is allowed in a module spec");
@@ -139,6 +156,13 @@ struct Modules {
 
 
     void _link() {
+
+        // Check prerequisites
+        for (const auto& r : _required) {
+            if (exports.count(r) == 0) {
+                throw std::runtime_error("Function " + r.print() + " is required but not exported by any module");
+            }
+        }
 
         // Export foreign functions in all other VMs.
 
@@ -195,12 +219,19 @@ struct Modules {
         _link();
     }
 
-    void register_callback(const std::string& name, const std::string& from, const std::string& to,
-                           nanom::callback_t cb) {
+    void required(const std::string& name, const std::string& from, const std::string& to) {
+        label_t l(metalan::symtab().get(name),
+                  metalan::symtab().get(from), 
+                  metalan::symtab().get(to));
+        _required.insert(l);
+    }
 
-        nanom::label_t l(metalan::symtab().get(name),
-                         metalan::symtab().get(from), 
-                         metalan::symtab().get(to));
+    void register_callback(const std::string& name, const std::string& from, const std::string& to,
+                           callback_t cb) {
+
+        label_t l(metalan::symtab().get(name),
+                  metalan::symtab().get(from), 
+                  metalan::symtab().get(to));
 
         if (callbacks.find(l) != callbacks.end()) {
             throw std::runtime_error("Callback registered twice: " + l.print());
@@ -211,9 +242,9 @@ struct Modules {
 
 
     bool run(const std::string& name, const std::string& fr, const std::string& to, 
-             const nanom::Struct& in, nanom::Struct& out) {
+             const Struct& in, Struct& out) {
 
-        nanom::label_t l(metalan::symtab().get(name), metalan::symtab().get(fr), metalan::symtab().get(to));
+        label_t l(metalan::symtab().get(name), metalan::symtab().get(fr), metalan::symtab().get(to));
 
         auto i = exports.find(l);
 

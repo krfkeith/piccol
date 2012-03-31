@@ -18,6 +18,9 @@ def [v:Bool];
 def [v:Real];
 
 
+/*** ***/
+
+
 <:: spaces
 
 space :- ' '.
@@ -28,6 +31,10 @@ spaces :- space spaces.
 spaces :- .
 
 ::>
+
+
+/*** ***/
+
 
 <:: ident(spaces)
 
@@ -42,6 +49,10 @@ ident :- \locase ident_tail.
 ident_pad :- spaces ident spaces.
 
 ::>
+
+
+/*** ***/
+
 
 <:: literals(ident)
 
@@ -77,24 +88,24 @@ bool :- 'true'.
 bool :- 'false'.
 nil :- 'nil'.
 
-literal_x :- variable.
-literal_x :- bool.
-literal_x :- nil.
-literal_x :- sym.
-literal_x :- number.
-
-literal :- literal_x &''.
-
-literal_pad :- spaces literal spaces.
+literal :- variable.
+literal :- bool.
+literal :- nil.
+literal :- sym.
+literal :- number.
 
 ::>
+
+
+/*** ***/
+
 
 <:: types(ident)
 
 typename :- \upcase ident_tail.
 
 tupletype_tail :- ']'.
-tupletype_tail :- typename spaces tupletype_tail.
+tupletype_tail :- type spaces tupletype_tail.
 
 tupletype :- '[' spaces tupletype_tail.
 
@@ -105,9 +116,33 @@ type_pad :- spaces type spaces.
 
 ::>
 
+
+/*** ***/
+
+
+<:: type_canonical(ident)
+
+typename :- \upcase ident_tail &''.
+tupletype_tail :- ']' @']'.
+tupletype_tail :- type @' ' tupletype_tail.
+tupletype :- '[' @'[ ' spaces tupletype_tail.
+
+type :- spaces typename spaces.
+type :- spaces tupletype spaces.
+
+type_canonical :- type.
+
+::>
+
+
+/*** ***/
+
+
 <:: expr(literals) 
 
-val :- spaces literal spaces.
+literal_here :- literal &''.
+
+val :- spaces literal_here spaces.
 val :- spaces '(' expr ')' spaces.
 
 expr_neg :- spaces '!' spaces val @' $not'.
@@ -168,6 +203,10 @@ expr_and :- expr_and_head noop_tail.
 expr :- expr_and.
 
 ::>
+
+
+/*** ***/
+
 
 <:: default(expr) default :- expr. ::>
 

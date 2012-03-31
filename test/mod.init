@@ -1,7 +1,7 @@
 
 
 modules Void->Void :-
-
+/*
   ['aaa' 'mod_a.piccol'] module
   ['bbb' 'mod_b.piccol'] module
   ['ccc' 'mod_c.piccol'] module
@@ -10,4 +10,27 @@ modules Void->Void :-
   ['aaa' 'af_2' '[ Int Int ]' 'Int'] exported
   ['bbb' 'bf_1' 'Void' 'Void'] exported
   ['ccc' 'cf_1' 'Void' 'Int'] exported  
+*/
+  
+  <:[module]
+
+    aaa 'mod_a.piccol'
+
+    af_1 Int->Void
+    af_2 [Int Int]->Int
+  :>
+
+  <:[module]
+
+   bbb 'mod_b.piccol'
+
+   bf_1 Void->Void
+  :>
+
+  <:[module]
+
+   ccc 'mod_c.piccol'
+
+   cf_1 Void->Int
+  :>
 .
