@@ -1,6 +1,8 @@
 #ifndef __PICCOL_VM_H
 #define __PICCOL_VM_H
 
+#include <initializer_list>
+
 #include "piccol_asm.h"
 
 #include "metalan_prime.h"
@@ -204,6 +206,43 @@ struct Piccol {
         return run(metalan::symtab().get(name), metalan::symtab().get(fr), metalan::symtab().get(to),
                    in, out);
     }
+
+    void check_type(const std::string& shape, std::initializer_list<nanom::Type> types) {
+
+        bool ok = false;
+
+        if (code.shapes.has_shape(metalan::symtab().get(shape))) {
+            
+            const Shape& sh = code.shapes.get(shape);
+
+            if (sh.serialized.size() == types.size()) {
+                
+                if (std::equal(sh.serialized.begin(), sh.serialized.end(), types.begin())) {
+                    ok = true;
+                }
+            }
+        }
+
+        if (!ok) {
+
+            std::string sig = "[ ";
+            for (auto t : types) {
+                switch (t) {
+                case BOOL: sig += "Bool "; break;
+                case SYMBOL: sig += "Sym "; break;
+                case INT: sig += "Int "; break;
+                case UINT: sig += "UInt "; break;
+                case REAL: sig += "Real "; break;
+                }
+            }
+            sig += "]";                    
+
+            throw std::runtime_error("A type named " +
+                                     shape + " with signature " +
+                                     sig + " is required");
+        }
+    }
+
 };
 
 }

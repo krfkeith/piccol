@@ -15,6 +15,7 @@
 #include <unordered_set>
 
 
+
 namespace piccol {
 
 struct PiccolF : public Piccol {
@@ -222,6 +223,18 @@ struct Modules {
 
 
     // Public interface follows.
+
+    void check_type(const std::string& shape, std::initializer_list<nanom::Type> types) {
+
+        for (const auto& mod : modules) {
+            try {
+                mod.second.second->check_type(shape, types);
+            } catch (std::exception& e) {
+                throw std::runtime_error("In module " + metalan::symtab().get(mod.second.first) + ": " +
+                                         e.what());
+            }
+        }
+    }
 
     void init() {
         _link();

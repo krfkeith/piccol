@@ -57,6 +57,7 @@ struct Shape {
     };
 
     std::unordered_map<Sym, typeinfo> sym2field;
+    std::vector<Type> serialized;
 
     size_t nfields;
 
@@ -110,6 +111,17 @@ struct Shape {
     }
 
     size_t size() const { return nfields; }
+
+    bool is_type(size_t n, Type t) const {
+        if (n >= serialized.size() || serialized[n] != t) return false;
+        return true;
+    }
+
+    bool is_bool(size_t n) const { return is_type(n, BOOL); }
+    bool is_sym(size_t n) const { return is_type(n, SYMBOL); }
+    bool is_int(size_t n) const { return is_type(n, INT); }
+    bool is_uint(size_t n) const { return is_type(n, UINT); }
+    bool is_real(size_t n) const { return is_type(n, REAL); }
 };
 
 struct Shapes {
@@ -135,6 +147,8 @@ struct Shapes {
         if (i != shapes.end())
             throw std::runtime_error("Cannot redefine shape: " + symtab().get(shapeid));
 
+        serialize(const_cast<Shape&>(sh));
+
         shapes.insert(i, std::make_pair(shapeid, sh));
     }
 
@@ -145,6 +159,29 @@ struct Shapes {
     void reset() {
         shapes.clear();
     }
+
+private:
+    
+    void serialize(Shape& s) {
+
+        s.serialized.resize(s.size());
+
+        for (const auto& i : s.sym2field) {
+
+            if (i.second.ix_from + 1 == i.second.ix_to) {
+                s.serialized[i.second.ix_from] = i.second.type;
+
+            } else {
+                Shape& subs = const_cast<Shape&>(get(i.second.shape));
+                if (subs.serialized.size() != subs.size()) {
+                    serialize(subs);
+                }
+
+                std::copy(subs.serialized.begin(), subs.serialized.end(), s.serialized.begin() + i.second.ix_from);
+            }
+        }
+    }
+
 };
 
 
