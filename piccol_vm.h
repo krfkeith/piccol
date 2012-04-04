@@ -233,6 +233,7 @@ struct Piccol {
                 case INT: sig += "Int "; break;
                 case UINT: sig += "UInt "; break;
                 case REAL: sig += "Real "; break;
+                default: break;
                 }
             }
             sig += "]";                    

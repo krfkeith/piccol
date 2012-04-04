@@ -23,12 +23,12 @@ struct PiccolF : public Piccol {
     std::string appdir;
 
     PiccolF(const std::string& sysdir, const std::string& ad) : 
-        appdir(ad),
         Piccol(piccol::load_file(sysdir + "macrolan.metal"),
                piccol::load_file(sysdir + "piccol_lex.metal"),
                piccol::load_file(sysdir + "piccol_morph.metal"),
                piccol::load_file(sysdir + "piccol_emit.metal"),
-               piccol::load_file(sysdir + "prelude.piccol"))
+               piccol::load_file(sysdir + "prelude.piccol")),
+        appdir(ad)
         {
             Piccol::init();
         }
