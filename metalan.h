@@ -115,6 +115,16 @@ struct Symlist {
         syms.swap(sl.syms);
     }
 
+    Symlist& operator=(const Symlist& sl) {
+        syms = sl.syms;
+        return *this;
+    }
+
+    Symlist& operator=(Symlist&& sl) {
+        syms.swap(sl.syms);
+        return *this;
+    }
+    
     bool operator==(const Symlist& a) const {
 
         list_t::const_iterator b = syms.begin();

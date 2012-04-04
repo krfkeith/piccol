@@ -199,6 +199,16 @@ struct Struct {
         v.swap(s.v);
     }
 
+    Struct& operator=(const Struct& s) {
+        v = s.v;
+        return *this;
+    }
+
+    Struct& operator=(Struct&& s) {
+        v.swap(s.v);
+        return *this;
+    }
+
     const Val& get_field(size_t i) const {
         return v.at(i);
     }
