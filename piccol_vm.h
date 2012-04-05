@@ -180,18 +180,10 @@ struct Piccol {
             throw std::runtime_error("Undefined function: " + l.print());
         }
 
-        std::cout << "-- " << symtab().get(name) << std::endl;
-        std::cout << "-------------------------------------------------------------------" << std::endl;
-
         vm.frame.emplace_back(l, 0, framehead, vm.stack.size() - framehead);
 
-        //size_t stack_size = vm.stack.size();
-
         vm.failbit = false;
-        nanom::vm_run(vm, l, 0, true);
-
-        //out.v.assign(vm.stack.begin() + stack_size, vm.stack.end());
-        //vm.stack.erase(vm.stack.begin() + framehead, vm.stack.end());
+        nanom::vm_run(vm, l); //, 0, true);
 
         out.v.assign(vm.stack.begin() + framehead, vm.stack.end());
         vm.stack.erase(vm.stack.begin() + framehead, vm.stack.end());
