@@ -60,6 +60,7 @@ tuplefields :- .
 tupleval :- 'START_TUPLE' @'_mark_tuple' tuplefields 'END_TUPLE' @'_make_tupletype'.
 
 variable :- 'DEREF' @'_get_fields' val_literal @'GET_FRAMEHEAD_FIELDS'.
+variable :- 'DEREF_HEAD' @'_get_all_fields' @'GET_FRAMEHEAD_FIELDS'.
 
 funcall :- 'ASMCALL' @'_asmcall' val_literal.
 

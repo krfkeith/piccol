@@ -121,6 +121,7 @@ val :- val_number.
 val_primitive :- val.
 
 variable :- @'DEREF' '\\' ident_here.
+variable :- '\\\\' @'DEREF_HEAD'.
 
 
 val_or_call :- tupleval.

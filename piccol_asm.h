@@ -585,6 +585,17 @@ private:
             code.codes[label()].push_back(Opcode(PUSH, (UInt)fieldt.ix_to));
         }
 
+        void get_all_fields() {
+        
+            Sym framehead = label().fromshape;
+            const Shape& sh = compiletime_vm.shapes.get(framehead);
+
+            shapestack().push_back(framehead);
+
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)0));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)sh.size()));
+        }
+
 
         void call_or_syscall(bool tailcall) {
 
@@ -768,6 +779,12 @@ private:
 
                 } else if (op_name == "_get_fields") {
                     get_fields();
+                
+                    ++p_i;
+                    continue;
+
+                } else if (op_name == "_get_all_fields") {
+                    get_all_fields();
                 
                     ++p_i;
                     continue;

@@ -27,3 +27,6 @@ bug0 [A]->A :- \v; \v .
 bug Void->A :- [A{a=99 b='zz'}] bug0->A.
 
 
+inc A->A :- \\ {a=(<:\a+1:>)}.
+
+inc2 Void->A :- inc->A inc->A inc->A inc->A.
