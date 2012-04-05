@@ -592,13 +592,11 @@ inline void vm_run(Vm& vm,
                    size_t ip = 0, 
                    bool verbose = false) {
 
-    bool done = false;
+    size_t topframe = vm.frame.size();
 
     VmCode::code_t* code = &(vm.code.codes[label]);
 
-    vm.frame.emplace_back(label, 0, 0, vm.stack.size());
-
-    while (!done) {
+    while (1) {
 
         if (ip >= code->size()) {
             throw std::runtime_error("Sanity error: instruction pointer out of bounds.");
@@ -612,7 +610,7 @@ inline void vm_run(Vm& vm,
             for (const auto& ii : vm.stack) {
                 std::cout << " " << ii.inte << ":" << symtab().get(ii.uint);
             }
-            std::cout << " [" << vm.stack.size() << "]";
+            std::cout << " [" << vm.stack.size() << "]  " << topframe;
             for (const auto& ii : vm.frame) {
                 std::cout << "\n\t\t" << ii.prev_ip << "/" << ii.stack_ix << "," << ii.struct_size 
                           << "," << symtab().get(ii.prev_label.name)
@@ -696,7 +694,7 @@ inline void vm_run(Vm& vm,
         case FAIL: {
             vm.failbit = true;
 
-            if (vm.frame.size() == 1) {
+            if (vm.frame.size() == topframe) {
                 vm.frame.pop_back();
                 return;
 
@@ -713,7 +711,7 @@ inline void vm_run(Vm& vm,
         case EXIT: {
             vm.failbit = false;
 
-            if (vm.frame.size() == 1) {
+            if (vm.frame.size() == topframe) {
                 vm.frame.pop_back();
                 return;
 

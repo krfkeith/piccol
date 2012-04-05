@@ -158,16 +158,20 @@ struct Piccol {
 
         //std::cout << "-----------------" << std::endl;
         //std::cout << as.print() << std::endl;
+
+        vm.reset();
     }
 
     bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, 
              const nanom::Struct& in, nanom::Struct& out) {
 
+        size_t stack_size = vm.stack.size();
         vm.stack.insert(vm.stack.end(), in.v.begin(), in.v.end());
-        return run(name, s1, s2, out);
+
+        return run(name, s1, s2, out, stack_size);
     }
 
-    bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out) {
+    bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out, size_t framehead) {
         bm _b("running");
 
         nanom::label_t l(name, s1, s2);
@@ -179,28 +183,26 @@ struct Piccol {
         std::cout << "-- " << symtab().get(name) << std::endl;
         std::cout << "-------------------------------------------------------------------" << std::endl;
 
+        vm.frame.emplace_back(l, 0, framehead, vm.stack.size() - framehead);
+
+        //size_t stack_size = vm.stack.size();
+
         vm.failbit = false;
         nanom::vm_run(vm, l, 0, true);
 
-        // This isn't really needed since we shouldn't exit out of middle of a call stack.
+        //out.v.assign(vm.stack.begin() + stack_size, vm.stack.end());
+        //vm.stack.erase(vm.stack.begin() + framehead, vm.stack.end());
 
-        if (vm.frame.size() > 0) {
-            out.v.assign(vm.stack.begin() + vm.frame.back().stack_ix + vm.frame.back().struct_size,
-                         vm.stack.end());
-
-        } else {
-            out.v.assign(vm.stack.begin(), vm.stack.end());
-        }
+        out.v.assign(vm.stack.begin() + framehead, vm.stack.end());
+        vm.stack.erase(vm.stack.begin() + framehead, vm.stack.end());
 
         bool ret = !(vm.failbit);
-
-        vm.reset();
         return ret;
     }
 
     bool run(const std::string& name, const std::string& fr, const std::string& to, nanom::Struct& out) {
         return run(metalan::symtab().get(name), metalan::symtab().get(fr), metalan::symtab().get(to),
-                   out);
+                   out, vm.stack.size());
     }
 
     bool run(const std::string& name, const std::string& fr, const std::string& to, 

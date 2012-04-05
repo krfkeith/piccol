@@ -205,6 +205,8 @@ private:
             op.op = EXIT;
             cmode_code.push_back(op);
 
+            compiletime_vm.frame.emplace_back(nillabel, 0, 0, 0);
+
             vm_run(compiletime_vm, nillabel);
 
             cmode_code.clear();
