@@ -176,8 +176,11 @@ struct Piccol {
             throw std::runtime_error("Undefined function: " + l.print());
         }
 
+        std::cout << "-- " << symtab().get(name) << std::endl;
+        std::cout << "-------------------------------------------------------------------" << std::endl;
+
         vm.failbit = false;
-        nanom::vm_run(vm, l); //, 0, true);
+        nanom::vm_run(vm, l, 0, true);
 
         // This isn't really needed since we shouldn't exit out of middle of a call stack.
 
