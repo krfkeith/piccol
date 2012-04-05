@@ -38,20 +38,21 @@ typetag_field :- 'SELECT_FIELD' @'SELECT_FIELD' typetag_name_x  @'CHECK_TYPE' &'
 end_branch :- 'END_BRANCH' @'END_BRANCH'.
 end_fun :- 'END_FUN' @'END_FUN'.
 end_lambda :- 'END_LAMBDA' @'END_LAMBDA'.
-end_fun_or_lambda :- end_fun.
-end_fun_or_lambda :- end_lambda.
+
+end_fun_or_lambda :- end_branch end_fun.
+end_fun_or_lambda :- end_branch end_lambda end_fun_or_lambda.
 
 lambda_x :- 'START_LAMBDA' @'START_LAMBDA' lambda_x lambda_x.
 lambda_x :- end_lambda.
 lambda_x :- \any &'' lambda_x.
 lambda :- 'START_LAMBDA' @'START_TAIL_LAMBDA' lambda_x.
 
-tailcall_lambda :- lambda end_branch end_fun_or_lambda.
+tailcall_lambda :- lambda end_fun_or_lambda.
 
 tailcall_name :- \any &''.
 
 tailcall_call :- 'CALL' @'TAILCALL' tailcall_name tailcall_name 
-                 end_branch end_fun_or_lambda.
+                 end_fun_or_lambda.
 
 tailcall :- tailcall_call.
 tailcall :- tailcall_lambda.
