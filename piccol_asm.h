@@ -141,14 +141,22 @@ private:
             add("[ Sym ]",  "noop", NOOP, "Sym");
 
             add("Bool",          "if",      IF,           "Void");
-            add("Void",          "fail",    FAIL,         "Void");
+            add("Void",          "fail",    FAIL,         "");
         }
 
         void add(const std::string& typefrom, const std::string& name,
                  op_t op, const std::string& typeto) {
 
+            Sym s_typeto;
+
+            if (typeto == "") {
+                s_typeto = 0;
+            } else {
+                s_typeto = symtab().get(typeto);
+            }
+
             map[std::make_pair(symtab().get(typefrom), symtab().get(name))] = 
-                std::make_pair(Opcode(op), symtab().get(typeto));
+                std::make_pair(Opcode(op), s_typeto);
         }
     };
 
@@ -354,13 +362,21 @@ private:
                 throw std::runtime_error("Function returns more than one value: " + fname.print());
             }
 
-            if (fname.toshape != ss.back()) {
-
-                throw std::runtime_error("Wrong return type: " + fname.print() + " returns " + 
-                                         symtab().get(ss.back()));
-            }
-
             Sym tmp = ss.back();
+
+            // The 'nil' type denotes a function that fails.
+            // If a function fails, then it doesn't really have a return type.
+            if (tmp == 0) {
+                tmp = fname.toshape;
+
+            } else {
+
+                if (fname.toshape != tmp) {
+
+                    throw std::runtime_error("Wrong return type: " + fname.print() + " returns " + 
+                                             symtab().get(ss.back()));
+                }
+            }
 
             labelstack.pop_back();
 
