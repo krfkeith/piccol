@@ -605,6 +605,38 @@ inline void vm_run(Vm& vm,
         Opcode& c = (*code)[ip];
 
         if (verbose) {
+
+            std::string pref;
+            for (size_t n = 0; n < vm.frame.size(); ++n) {
+                pref += "  ";
+            }
+            switch (c.op) {
+            case CALL:
+                std::cout << pref << "CALL " << symtab().get((vm.stack.rbegin()+2)->uint) << " "
+                          << symtab().get((vm.stack.rbegin()+1)->uint) << " "
+                          << symtab().get(vm.stack.rbegin()->uint) << std::endl;
+                break;
+            case TAILCALL:
+                std::cout << pref << "CALL " << symtab().get((vm.stack.rbegin()+2)->uint) << " "
+                          << symtab().get((vm.stack.rbegin()+1)->uint) << " "
+                          << symtab().get(vm.stack.rbegin()->uint) << std::endl;
+                break;
+            case SYSCALL:
+                break;
+            case CALL_LIGHT:
+                std::cout << pref << "CALL_LIGHT " << symtab().get(vm.stack.rbegin()->uint) << std::endl;
+                break;
+            case EXIT:
+                std::cout << pref << "EXIT" << std::endl;
+                break;
+            case FAIL:
+                std::cout << pref << "FAIL" << std::endl;
+                break;
+            default:
+                break;
+            }                
+
+            /*
             std::cout << ">" << ip << " " << opcodename(c.op) << "(" << c.arg.inte << ") "
                       << vm.failbit << " ||\t\t\t";
             for (const auto& ii : vm.stack) {
@@ -618,6 +650,7 @@ inline void vm_run(Vm& vm,
                           << "," << symtab().get(ii.prev_label.toshape) << " ";
             }
             std::cout << std::endl;
+            */
         }
 
         switch (c.op) {
