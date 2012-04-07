@@ -627,7 +627,7 @@ struct Parser {
 
             } else if (sc.type == Symcell::VAR) {
 
-                if (!apply(symtab().get(sc.sym), b, e, subout, length, depth + 1)) {
+                if (!apply(sc.sym, b, e, subout, length, depth + 1)) {
                     b = savedb;
                     length = savedl;
                     return false;
@@ -650,16 +650,16 @@ struct Parser {
         return true;
     }
 
-    bool apply(const std::string& rule, 
+    bool apply(Sym rule, 
                tokeniter_t& b, tokeniter_t e, 
                outlist_t& out, 
                size_t& length,
                size_t depth = 0) {
 
-        auto it = rules.find(symtab().get(rule));
+        auto it = rules.find(rule);
 
         if (it == rules.end())
-            throw std::runtime_error("Unknown rule referenced: '" + rule + "'");
+            throw std::runtime_error("Unknown rule referenced: '" + symtab().get(rule) + "'");
 
         tokeniter_t savedb = b;
         size_t savedl = length;
@@ -677,7 +677,7 @@ struct Parser {
         /**/
         if (verbose) {
             for (size_t i = 0; i < depth; ++i) std::cout << " . ";
-            std::cout << "+> " << rule << ".. :-";
+            std::cout << "+> " << symtab().get(rule) << ".. :-";
             for (const auto& sc : it->second.common_head)
                 std::cout << " " << symtab().get(sc.sym);
             std::cout << std::endl;
@@ -690,7 +690,7 @@ struct Parser {
             /**/
             if (verbose) {
                 for (size_t i = 0; i < depth; ++i) std::cout << " . ";
-                std::cout << "xx " << rule << std::endl;
+                std::cout << "xx " << symtab().get(rule) << std::endl;
             }
             /**/
 
@@ -703,7 +703,7 @@ struct Parser {
             /**/
             if (verbose) {
                 for (size_t i = 0; i < depth; ++i) std::cout << " . ";
-                std::cout << "+- .." << rule << " :-";
+                std::cout << "+- .." << symtab().get(rule) << " :-";
                 for (const auto& sc : r)
                     std::cout << " " << symtab().get(sc.sym);
                 std::cout << std::endl;
@@ -717,7 +717,7 @@ struct Parser {
                 /**/
                 if (verbose) {
                     for (size_t i = 0; i < depth; ++i) std::cout << " . ";
-                    std::cout << "<< ok " << rule << std::endl;
+                    std::cout << "<< ok " << symtab().get(rule) << std::endl;
                 }
                 /**/
 
@@ -737,7 +737,7 @@ struct Parser {
         /**/
         if (verbose) {
             for (size_t i = 0; i < depth; ++i) std::cout << " . ";
-            std::cout << "xx failed " << rule << std::endl;
+            std::cout << "xx failed " << symtab().get(rule) << std::endl;
         }
         /**/
 
@@ -773,7 +773,7 @@ struct Parser {
         largest_length = 0;
 
         size_t length = 0;
-        bool ok = apply(mainrule, sb, se, out, length);
+        bool ok = apply(symtab().get(mainrule), sb, se, out, length);
 
         if (!ok || sb != se) {
             unprocessed.assign(sb, se);

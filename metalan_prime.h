@@ -18,18 +18,21 @@ struct charmatcher {
         if (b == e)
             return false;
 
-        const std::string& str = symtab().get(sc.sym);
+        static Sym any = symtab().get("any");
+        static Sym digit = symtab().get("digit");
+        static Sym locase = symtab().get("locase");
+        static Sym upcase = symtab().get("upcase");
 
         //std::cout << str << "~[" << std::string(b, e).substr(0, 10) << "]" << std::endl;
 
         if (sc.type == Symcell::ESCAPE) {
 
-            if (str == "any") {
+            if (sc.sym == any) {
                 ++b;
                 ++n;
                 return true;
 
-            } else if (str == "digit") {
+            } else if (sc.sym == digit) {
                 if (::isdigit(*b)) {
                     ++b;
                     ++n;
@@ -38,7 +41,7 @@ struct charmatcher {
                     return false;
                 }
 
-            } else if (str == "locase") {
+            } else if (sc.sym == locase) {
                 if (::islower(*b)) {
                     ++b;
                     ++n;
@@ -47,7 +50,7 @@ struct charmatcher {
                     return false;
                 }
 
-            } else if (str == "upcase") {
+            } else if (sc.sym == upcase) {
                 if (::isupper(*b)) {
                     ++b;
                     ++n;
@@ -57,6 +60,8 @@ struct charmatcher {
                 }
             }
         }
+
+        const std::string& str = symtab().get(sc.sym);
 
         for (unsigned char c : str) {
             if (b == e || c != *b) {

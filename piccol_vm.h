@@ -1,19 +1,6 @@
 #ifndef __PICCOL_VM_H
 #define __PICCOL_VM_H
 
-#include <initializer_list>
-
-#include "piccol_asm.h"
-
-#include "metalan_prime.h"
-#include "metalan_doppel.h"
-#include "macrolan.h"
-
-#include <iostream>
-#include <fstream>
-#include <streambuf>
-
-
 #include <sys/time.h>
 struct bm {
     struct timeval b;
@@ -31,9 +18,24 @@ struct bm {
 };
 
 
+#include <initializer_list>
+
+#include "piccol_asm.h"
+
+#include "metalan_prime.h"
+#include "metalan_doppel.h"
+#include "macrolan.h"
+
+#include <iostream>
+#include <fstream>
+#include <streambuf>
+
+
 namespace piccol {
 
 inline std::string load_file(const std::string& fname) {
+
+    std::cout << "  loading: " << fname << std::endl;
 
     std::ifstream file(fname);
 
