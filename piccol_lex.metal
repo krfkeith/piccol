@@ -72,11 +72,20 @@ uintval_x :- digit uintval_x.
 uintval_x :- .
 uintval :- digit uintval_x.
 
-symval_x :- {\\} {'} @{'}  &'combine' symval_x.
-symval_x :- {\\} {t} @{\t} &'combine' symval_x.
-symval_x :- {\\} {n} @{\n} &'combine' symval_x.
+symval_quote :- {t} @{\t} &'combine'.
+symval_quote :- {n} @{\n} &'combine'.
+symval_quote :- \any &'append'.
+
+symval_special :- {'}.
+symval_special :- {\\}.
+
+symval_str :- !symval_special symval_str.
+symval_str :- .
+
 symval_x :- {'} &'pop'.
-symval_x :- \any &'append' symval_x.
+symval_x :- {\\} symval_quote symval_x.
+symval_x :- symval_str &'append' symval_x.
+
 symval :- &'push' {'} symval_x.
 
 nilval :- 'nil'.

@@ -1,5 +1,6 @@
 
 #include <random>
+#include <iostream>
 
 #include "piccol_modulum.h"
 

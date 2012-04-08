@@ -78,7 +78,8 @@ struct Symcell {
         VAR,
         ESCAPE,
         ACTION_DATA,
-        ACTION_CODE
+        ACTION_CODE,
+        NEGATE
     };
 
     type_t type;
@@ -454,6 +455,7 @@ struct Parser {
         static Sym at = symtab().get("@");
         static Sym amp = symtab().get("&");
         static Sym backslash = symtab().get("\\");
+        static Sym exclam = symtab().get("!");
 
         Sym head = consume(Symcell::VAR, 0, b, e, "Rule head must be a variable");
         consume(Symcell::ATOM, colon, b, e, "Invalid rule syntax");
@@ -479,12 +481,13 @@ struct Parser {
                     ++b;
                     return b;
 
-                } else if (b->sym == at || b->sym == amp || b->sym == backslash) {
+                } else if (b->sym == at || b->sym == amp || b->sym == backslash || b->sym == exclam) {
 
                     bool ishead = (b == rstart);
                     bool isat = (b->sym == at);
                     bool isamp = (b->sym == amp);
                     bool isbackslash = (b->sym == backslash);
+                    bool isexclam = (b->sym == exclam);
 
                     b = l.erase(b);
                     if (b == e)
@@ -493,7 +496,7 @@ struct Parser {
                     if (ishead)
                         rstart = b;
 
-                    if (b->type == Symcell::VAR && !isbackslash) {
+                    if ((isat || isamp) && b->type == Symcell::VAR) {
                         auto i = actions.find(b->sym);
 
                         if (i == actions.end())
@@ -501,6 +504,11 @@ struct Parser {
                                                      symtab().get(b->sym));
 
                         b->sym = i->second;
+
+                    } else if (isexclam) {
+
+                        if (b->type != Symcell::VAR || rules.find(b->sym) == rules.end()) 
+                            throw std::runtime_error("Invalid rule for the '!' operator: " + symtab().get(b->sym));
                     }
 
                     if (isat) {
@@ -511,6 +519,9 @@ struct Parser {
 
                     } else if (isbackslash) {
                         b->type = Symcell::ESCAPE;
+
+                    } else if (isexclam) {
+                        b->type = Symcell::NEGATE;
                     }
 
                 }
@@ -625,9 +636,23 @@ struct Parser {
                     return false;
                 }
 
-            } else if (sc.type == Symcell::VAR) {
+            } else if (sc.type == Symcell::VAR || sc.type == Symcell::NEGATE) {
 
-                if (!apply(sc.sym, b, e, subout, length, depth + 1)) {
+                bool res = apply(sc.sym, b, e, subout, length, depth + 1);
+
+                if (sc.type == Symcell::NEGATE) {
+                    res = !res;
+
+                    if (res) {
+                        if (b == e) {
+                            res = false;
+                        } else {
+                            ++b;
+                        }
+                    }
+                }
+
+                if (!res) {
                     b = savedb;
                     length = savedl;
                     return false;

@@ -1,77 +1,24 @@
 
+<:: symval
 
-space :- ' '.
-space :- '\n'.
-space :- '\t'.
+symval_quote :- {t} @{\\t } @'COMBINE '.
+symval_quote :- {n} @{\\n } @'COMBINE '.
+symval_quote :- \any @'APPEND ' &''.
 
-spaces :- space spaces.
-spaces :- .
+symval_special :- {'}.
+symval_special :- {\\}.
 
+symval_str :- !symval_special symval_str.
+symval_str :- .
 
-ident_tail :- \upcase ident_tail.
-ident_tail :- \locase ident_tail.
-ident_tail :- \digit ident_tail.
-ident_tail :- '_' ident_tail.
-ident_tail :- .
-
-ident :- \locase ident_tail.
-
-variable :- '\\' ident.
-
-uinteger_tail :- \digit uinteger_tail.
-uinteger_tail :- .
-uinteger :- \digit uinteger_tail.
-
-integer :- '-' uinteger.
-integer :- uinteger.
-
-real :- integer '.' uinteger.
-real :- integer 'f'.
-
-bool :- 'true'.
-bool :- 'false'.
-
-literal_x :- variable.
-literal_x :- bool.
-literal_x :- real.
-literal_x :- integer.
-
-literal :- literal_x &''.
-
-literal_pad :- spaces literal spaces.
+symval_run :- {'}.
+symval_run :- {\\} symval_quote symval_run.
+symval_run :- @'PUSH ' @{'' } symval_str @'APPEND \'' &'' @{' }symval_run.
 
 
-val :- spaces literal spaces.
-val :- spaces '(' expr ')' spaces.
 
-expr_neg :- spaces '!' val.
-expr_neg :- spaces 'bool' spaces '(' val ')' spaces.
-expr_neg :- spaces 'int' spaces '(' val ')' spaces.
-expr_neg :- spaces 'uint' spaces '(' val ')' spaces.
-expr_neg :- spaces 'real' spaces '(' val ')' spaces.
-expr_neg :- spaces val.
+symval :- {'} @'START[' symval_run @']END'.
+::>
 
-expr_add :- @'[(' expr_neg @')' '+' @'(' expr_add @')] $add'.
-expr_add :- expr_neg '-' expr_add.
-expr_add :- expr_neg.
+<:[symval]'hello \'world\'':>
 
-expr_mul :- expr_add '*' expr_mul.
-expr_mul :- expr_add '/' expr_mul.
-expr_mul :- expr_add.
-
-expr_eq :- @'[(' expr_mul @')' '=' @'(' expr_mul @')] $eq'.
-expr_eq :- expr_mul '==' expr_mul.
-expr_eq :- expr_mul '!=' expr_mul.
-expr_eq :- expr_mul '<' expr_mul.
-expr_eq :- expr_mul '<=' expr_mul.
-expr_eq :- expr_mul '>' expr_mul.
-expr_eq :- expr_mul '>=' expr_mul.
-expr_eq :- expr_mul.
-
-expr_and :- expr_eq '&&' expr_and.
-expr_and :- expr_eq '||' expr_and.
-expr_and :- expr_eq.
-
-expr :- expr_and.
-
-main :- expr spaces.
