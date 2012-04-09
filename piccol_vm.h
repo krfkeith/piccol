@@ -62,6 +62,8 @@ struct Piccol {
     std::string emiter_code;
     std::string prelude_code;
 
+    bool verbose;
+
     Piccol(std::string&& macrolan_,
            std::string&& lexer_, 
            std::string&& morpher_,
@@ -72,7 +74,8 @@ struct Piccol {
         lexer_code(lexer_),
         morpher_code(morpher_),
         emiter_code(emiter_),
-        prelude_code(prelude_)
+        prelude_code(prelude_),
+        verbose(false)
         {}
 
     void register_callback(const std::string& name, const std::string& from, const std::string& to,
@@ -185,7 +188,7 @@ struct Piccol {
         vm.frame.emplace_back(l, 0, framehead, vm.stack.size() - framehead);
 
         vm.failbit = false;
-        nanom::vm_run(vm, l); //, 0, true);
+        nanom::vm_run(vm, l, 0, verbose);
 
         out.v.assign(vm.stack.begin() + framehead, vm.stack.end());
         vm.stack.erase(vm.stack.begin() + framehead, vm.stack.end());

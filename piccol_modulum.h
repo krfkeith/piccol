@@ -22,7 +22,7 @@ struct PiccolF : public Piccol {
 
     std::string appdir;
 
-    PiccolF(const std::string& sysdir, const std::string& ad) : 
+    PiccolF(const std::string& sysdir, const std::string& ad, bool _verbose = false) : 
         Piccol(piccol::load_file(sysdir + "macrolan.metal"),
                piccol::load_file(sysdir + "piccol_lex.metal"),
                piccol::load_file(sysdir + "piccol_morph.metal"),
@@ -31,6 +31,7 @@ struct PiccolF : public Piccol {
         appdir(ad)
         {
             Piccol::init();
+            verbose = _verbose;
         }
 
     void load(const std::string& fn) {
@@ -75,11 +76,14 @@ struct Modules {
 
     std::string common;
 
+    bool verbose;
+
     Modules(const std::string& sd, 
             const std::string& ad,
-            const std::string& loader) : sysdir(sd), appdir(ad) {
+            const std::string& loader, 
+            bool _verbose = false) : sysdir(sd), appdir(ad), verbose(_verbose) {
 
-        PiccolF p(sysdir, appdir);
+        PiccolF p(sysdir, appdir, verbose);
 
         p.register_callback("module", "[ Sym Sym ]", "Void", 
                             std::bind(&Modules::_cb_module, this, _1, _2, _3, _4, _5));
@@ -123,7 +127,7 @@ struct Modules {
             throw std::runtime_error("Tried to define a module twice: '" + metalan::symtab().get(module) + "'");
         }
 
-        modules[module] = std::make_pair(filename, std::shared_ptr<PiccolF>(new PiccolF(sysdir, appdir)));
+        modules[module] = std::make_pair(filename, std::shared_ptr<PiccolF>(new PiccolF(sysdir, appdir, verbose)));
         return true;
     }
 
