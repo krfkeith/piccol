@@ -62,10 +62,11 @@ struct StructMap {
         return true;
     }
 
-    bool del(const Struct& k) {
+    bool del(const Struct& k, Struct& v) {
         auto i = map.find(k);
         if (i == map.end())
             return false;
+        v = i->second;
         map.erase(i);
         return true;
     }
@@ -96,7 +97,7 @@ inline bool structmap_get(const Shapes& shapes, const Shape& shape, const Shape&
 template <typename T>
 inline bool structmap_del(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
                           const Struct& struc, Struct& ret) {
-    return structmap<T>().del(struc);
+    return structmap<T>().del(struc, ret);
 }
 
 template <typename MAP, typename VM>
@@ -119,7 +120,7 @@ void register_map(VM& vm, const std::string& shapefrom, const std::string& shape
 
     vm.register_callback("set", twoshapes, "Void", std::bind(structmap_set<MAP>, _1, _2, _3, _4, _5, midpoint));
     vm.register_callback("get", shapefrom, shapeto, structmap_get<MAP>);
-    vm.register_callback("del", shapefrom, "Void", structmap_del<MAP>);
+    vm.register_callback("del", shapefrom, shapeto, structmap_del<MAP>);
 }
 
 }
