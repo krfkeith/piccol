@@ -415,7 +415,9 @@ struct Parser {
 
     tokeniter_t largest_extent;
     size_t largest_length;
+
     bool verbose;
+
 
     Parser() : largest_length(0), verbose(false) {}
 
