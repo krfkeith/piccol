@@ -206,6 +206,10 @@ struct Piccol {
                    in, out);
     }
 
+    const nanom::Shape& get_type(const std::string& shape) {
+        return code.shapes.get(shape);
+    }
+
     void check_type(const std::string& shape, std::initializer_list<nanom::Type> types) {
 
         bool ok = false;

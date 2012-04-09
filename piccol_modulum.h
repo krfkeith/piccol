@@ -224,6 +224,23 @@ struct Modules {
 
     // Public interface follows.
 
+    const Shape& get_type(const std::string& shape) {
+        // Very much HACK.
+        const Shape* ret = NULL;
+
+        for (const auto& mod : modules) {
+            try {
+                ret = &(mod.second.second->get_type(shape));
+
+            } catch (std::exception& e) {
+                throw std::runtime_error("In module " + metalan::symtab().get(mod.second.first) + ": " +
+                                         e.what());
+            }
+        }
+
+        return *ret;
+    }
+
     void check_type(const std::string& shape, std::initializer_list<nanom::Type> types) {
 
         for (const auto& mod : modules) {
