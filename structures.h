@@ -99,6 +99,8 @@ struct StructPool {
 
     bool put(const Struct& k, const Struct& v, size_t n) {
 
+        if (n == 0) return true;
+
         auto& i = map[k];
         auto& j = i[v];
         j += n;
