@@ -323,6 +323,8 @@ enum op_t {
 
     INT_TO_REAL,
     REAL_TO_INT,
+    UINT_TO_REAL,
+    REAL_TO_UINT,
     INT_TO_CHAR,
     UINT_TO_CHAR
 
@@ -516,6 +518,8 @@ struct _mapper {
         m[(size_t)GTE_REAL] = "GTE_REAL";
         m[(size_t)INT_TO_REAL] = "INT_TO_REAL";
         m[(size_t)REAL_TO_INT] = "REAL_TO_INT";
+        m[(size_t)UINT_TO_REAL] = "UINT_TO_REAL";
+        m[(size_t)REAL_TO_UINT] = "REAL_TO_UINT";
         m[(size_t)INT_TO_CHAR] = "INT_TO_CHAR";
         m[(size_t)UINT_TO_CHAR] = "UINT_TO_CHAR";
         
@@ -581,6 +585,8 @@ struct _mapper {
         n["GTE_REAL"] = GTE_REAL;
         n["INT_TO_REAL"] = INT_TO_REAL;
         n["REAL_TO_INT"] = REAL_TO_INT;
+        n["UINT_TO_REAL"] = UINT_TO_REAL;
+        n["REAL_TO_UINT"] = REAL_TO_UINT;
         n["INT_TO_CHAR"] = INT_TO_CHAR;
         n["UINT_TO_CHAR"] = UINT_TO_CHAR;
     }
@@ -1192,6 +1198,20 @@ inline void vm_run(Vm& vm,
         case REAL_TO_INT: {
             Val v = vm.pop();
             Val ret = (Int)v.real;
+            vm.stack.push_back(ret);
+            break;
+        }
+
+        case UINT_TO_REAL: {
+            Val v = vm.pop();
+            Val ret = (Real)v.uint;
+            vm.stack.push_back(ret);
+            break;
+        }
+
+        case REAL_TO_UINT: {
+            Val v = vm.pop();
+            Val ret = (UInt)v.real;
             vm.stack.push_back(ret);
             break;
         }

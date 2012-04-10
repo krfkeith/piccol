@@ -98,6 +98,7 @@ struct StructPool {
     // Insert N objects of V with key K to the pool.
 
     bool put(const Struct& k, const Struct& v, size_t n) {
+
         auto& i = map[k];
         auto& j = i[v];
         j += n;
@@ -116,7 +117,6 @@ struct StructPool {
     // Get the Nth object with key K -> V.
 
     bool get(const Struct& k, Struct& v, size_t n) {
-
         auto i = map.find(k);
         if (i == map.end()) {
             return false;
@@ -124,7 +124,7 @@ struct StructPool {
 
         size_t q = 0;
         for (auto& j : i->second) {
-            if (q >= n && q < n + j.second) {
+            if (n >= q && n < q + j.second) {
                 v = j.first;
                 j.second--;
 
