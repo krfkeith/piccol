@@ -57,6 +57,8 @@ struct Shape {
     };
 
     std::unordered_map<Sym, typeinfo> sym2field;
+    std::vector<typeinfo> n2field;
+
     std::vector<Type> serialized;
 
     size_t nfields;
@@ -72,6 +74,16 @@ struct Shape {
         }
 
         return i->second;
+    }
+
+    const typeinfo& get_nth_type(size_t n) const {
+
+        if (n >= n2field.size()) {
+            static typeinfo notype;
+            return notype;
+        }
+
+        return n2field[n];
     }
 
     std::pair<size_t,size_t> get_index(Sym s) const {
@@ -100,6 +112,8 @@ struct Shape {
         }
 
         ti.ix_to = nfields;
+
+        n2field.push_back(ti);
     }
 
     const typeinfo& get_type(const std::string& s) const { 

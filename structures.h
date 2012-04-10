@@ -40,34 +40,14 @@ struct equal_to<nanom::Struct> {
 
 namespace piccol {
 
-namespace {
-
-int find_midpoint(int midpoint, const Shape& s) {
-
-    if (midpoint >= 0) return midpoint;
-
-    auto it = shape.sym2field.begin();
-    const Shape::typeinfo& ti1 = it->second;
-    ++it;
-    const Shape::typeinfo& ti2 = it->second;
-
-    if (ti1.ix_to == ti2.ix_from) {
-        midpoint = ti1.ix_to;
-    } else {
-        midpoint = ti2.ix_to;
-    }
-}
-
-}
 
 struct StructMap {
     
     typedef std::unordered_map<Struct, Struct> map_t;
     
     map_t map;
-    int midpoint;
 
-    StructMap() : midpoint(-1) {}
+    StructMap() {}
 
     bool set(const Struct& k, const Struct& v) { 
         auto i = map.find(k);
@@ -79,7 +59,7 @@ struct StructMap {
 
     bool set(const Shape& shape, const Struct& kv) {
 
-        midpoint = find_midpoint(midpoint, shape);
+        size_t midpoint = shape.get_nth_type(0).ix_to;
 
         return set(kv.substruct(0, midpoint), kv.substruct(midpoint, shape.size()));
     }
@@ -112,32 +92,38 @@ struct StructPool {
     typedef std::unordered_map< Struct, std::unordered_map<Struct, size_t> > map_t;
 
     map_t map;
-    int midpoint;
 
-    StructPool() : midpoint(-1) {}
+    StructPool() {}
 
-    bool add(const Struct& k, const Struct& v) {
+    // Insert N objects of V with key K to the pool.
+
+    bool put(const Struct& k, const Struct& v, size_t n) {
         auto& i = map[k];
         auto& j = i[v];
-        ++(j->second);
+        j += n;
         return true;
     }
 
-    bool add(const Shape& shape, const Struct& kv) {
+    bool put(const Shape& shape, const Struct& kvn) {
         
-        midpoint = find_midpoint(midpoint, shape);
+        size_t midpoint = shape.get_nth_type(0).ix_to;
 
-        return add(kv.substruct(0, midpoint), kv.substruct(midpoint, shape.size()));
+        return put(kvn.substruct(0, midpoint), 
+                   kvn.substruct(midpoint, shape.size()-1),
+                   kvn.v.back().uint);
     }
 
+    // Get the Nth object with key K -> V.
+
     bool get(const Struct& k, Struct& v, size_t n) {
+
         auto i = map.find(k);
         if (i == map.end()) {
             return false;
         }
 
         size_t q = 0;
-        for (const auto& j : i->second) {
+        for (auto& j : i->second) {
             if (q >= n && q < n + j.second) {
                 v = j.first;
                 j.second--;
@@ -158,6 +144,51 @@ struct StructPool {
         return false;
     }
 
+    // Check that object V exists with key K, decrement its counter.
+
+    bool get(const Struct& k, const Struct& v) {
+
+        auto i = map.find(k);
+        if (i == map.end()) {
+            return false;
+        }
+
+        auto j = i->second.find(v);
+        if (j == i->second.end()) {
+            return false;
+        }
+
+        --(j->second);
+
+        if (j->second == 0) {
+            i->second.erase(j->first);
+
+            if (i->second.empty()) {
+                map.erase(i);
+            }
+        }
+
+        return true;
+    }
+
+    // [ K N ] -> V
+    
+    bool get(const Shape& shape, const Struct& kn, Struct& v) {
+
+        return get(kn.substruct(0, shape.size()-1), v, kn.v.back().uint);
+    }
+
+    // [ K V ] -> Void
+
+    bool get(const Shape& shape, const Struct& kv) {
+
+        size_t midpoint = shape.get_nth_type(0).ix_to;
+
+        return get(kv.substruct(0, midpoint), kv.substruct(midpoint, shape.size()));
+    }
+
+    // Return the size of pool with key K.
+
     bool size(const Struct& k, size_t& v) {
         auto i = map.find(k);
         if (i == map.end()) {
@@ -171,6 +202,18 @@ struct StructPool {
 
         v = q;
         return true;
+    }
+
+    bool size(const Struct& k, Struct& n) {
+        
+        size_t tmp;
+        bool ret = size(k, tmp);
+
+        if (ret) {
+            n.v.push_back((nanom::UInt)tmp);
+        }
+
+        return ret;
     }
 };
 
@@ -221,6 +264,7 @@ inline StructPool& structpool() {
     return ret;
 }
 
+
 template <typename T>
 inline bool structmap_set(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
                           const Struct& struc, Struct& ret) {
@@ -239,6 +283,7 @@ inline bool structmap_del(const Shapes& shapes, const Shape& shape, const Shape&
                           const Struct& struc, Struct& ret) {
     return structmap<T>().del(struc, ret);
 }
+
 
 template <typename T>
 inline bool globalstruct_set(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
@@ -259,6 +304,33 @@ inline bool globalstruct_del(const Shapes& shapes, const Shape& shape, const Sha
     return globalstruct<T>().del(ret);
 }
 
+
+template <typename T>
+inline bool structpool_put(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
+                           const Struct& struc, Struct& ret) {
+
+    return structpool<T>().put(shape, struc);
+}
+
+template <typename T>
+inline bool structpool_get_n(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
+                           const Struct& struc, Struct& ret) {
+    return structpool<T>().get(shape, struc, ret);
+}
+
+template <typename T>
+inline bool structpool_get_k(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
+                           const Struct& struc, Struct& ret) {
+    return structpool<T>().get(shape, struc);
+}
+
+template <typename T>
+inline bool structpool_size(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
+                            const Struct& struc, Struct& ret) {
+    return structpool<T>().size(struc, ret);
+}
+
+
 template <typename MAP, typename VM>
 void register_map(VM& vm, const std::string& shapefrom, const std::string& shapeto) {
 
@@ -276,6 +348,20 @@ void register_global(VM& vm, const std::string& shape) {
     vm.register_callback("set", shape,  "Void", globalstruct_set<GLOBJ>);
     vm.register_callback("get", "Void", shape,  globalstruct_get<GLOBJ>);
     vm.register_callback("del", "Void", shape,  globalstruct_del<GLOBJ>);
+}
+
+
+template <typename POOL, typename VM>
+void register_pool(VM& vm, const std::string& shapefrom, const std::string& shapeto) {
+
+    std::string thrshapes = "[ " + shapefrom + " " + shapeto + " UInt ]";
+    std::string nshapes = "[ " + shapefrom + " UInt ]";
+    std::string kshapes = "[ " + shapefrom + " " + shapeto + " ]";
+
+    vm.register_callback("put",  thrshapes, "Void",  structpool_put<POOL>);
+    vm.register_callback("get",  nshapes,   shapeto, structpool_get_n<POOL>);
+    vm.register_callback("get",  kshapes,   "Void",  structpool_get_k<POOL>);
+    vm.register_callback("size", shapefrom, "UInt",  structpool_size<POOL>);
 }
 
 
