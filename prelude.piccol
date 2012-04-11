@@ -23,12 +23,12 @@ def [v:Real];
 
 <:: spaces
 
-space :- ' '.
-space :- '\n'.
-space :- '\t'.
+  space :- ' '.
+  space :- '\n'.
+  space :- '\t'.
 
-spaces :- space spaces.
-spaces :- .
+  spaces :- space spaces.
+  spaces :- .
 
 ::>
 
@@ -38,15 +38,15 @@ spaces :- .
 
 <:: ident(spaces)
 
-ident_tail :- \upcase ident_tail.
-ident_tail :- \locase ident_tail.
-ident_tail :- \digit ident_tail.
-ident_tail :- '_' ident_tail.
-ident_tail :- .
+  ident_tail :- \upcase ident_tail.
+  ident_tail :- \locase ident_tail.
+  ident_tail :- \digit ident_tail.
+  ident_tail :- '_' ident_tail.
+  ident_tail :- .
 
-ident :- \locase ident_tail.
+  ident :- \locase ident_tail.
 
-ident_pad :- spaces ident spaces.
+  ident_pad :- spaces ident spaces.
 
 ::>
 
@@ -56,43 +56,43 @@ ident_pad :- spaces ident spaces.
 
 <:: literals(ident)
 
-variable :- '\\' ident.
+  variable :- '\\' ident.
 
-digits_tail :- \digit digits_tail.
-digits_tail :- .
-digits :- \digit digits_tail.
+  digits_tail :- \digit digits_tail.
+  digits_tail :- .
+  digits :- \digit digits_tail.
 
-pos_real :- digits '.' digits.
-pos_real :- digits 'f'.
-neg_real :- '-' pos_real.
-real :- neg_real.
-real :- pos_real.
+  pos_real :- digits '.' digits.
+  pos_real :- digits 'f'.
+  neg_real :- '-' pos_real.
+  real :- neg_real.
+  real :- pos_real.
 
-uinteger :- digits 'u'.
+  uinteger :- digits 'u'.
 
-neg_integer :- '-' digits.
-pos_integer :- digits.
-integer :- neg_integer.
-integer :- pos_integer.
+  neg_integer :- '-' digits.
+  pos_integer :- digits.
+  integer :- neg_integer.
+  integer :- pos_integer.
 
-number :- real.
-number :- uinteger.
-number :- integer.
+  number :- real.
+  number :- uinteger.
+  number :- integer.
 
-sym_tail :- {\\'} sym_tail.
-sym_tail :- {'}.
-sym_tail :- \any sym_tail.
-sym :- {'} sym_tail.
+  sym_tail :- {\\'} sym_tail.
+  sym_tail :- {'}.
+  sym_tail :- \any sym_tail.
+  sym :- {'} sym_tail.
 
-bool :- 'true'.
-bool :- 'false'.
-nil :- 'nil'.
+  bool :- 'true'.
+  bool :- 'false'.
+  nil :- 'nil'.
 
-literal :- variable.
-literal :- bool.
-literal :- nil.
-literal :- sym.
-literal :- number.
+  literal :- variable.
+  literal :- bool.
+  literal :- nil.
+  literal :- sym.
+  literal :- number.
 
 ::>
 
@@ -102,17 +102,17 @@ literal :- number.
 
 <:: types(ident)
 
-typename :- \upcase ident_tail.
+  typename :- \upcase ident_tail.
 
-tupletype_tail :- ']'.
-tupletype_tail :- type spaces tupletype_tail.
+  tupletype_tail :- ']'.
+  tupletype_tail :- type spaces tupletype_tail.
 
-tupletype :- '[' spaces tupletype_tail.
+  tupletype :- '[' spaces tupletype_tail.
 
-type :- typename.
-type :- tupletype.
+  type :- typename.
+  type :- tupletype.
 
-type_pad :- spaces type spaces.
+  type_pad :- spaces type spaces.
 
 ::>
 
@@ -122,15 +122,15 @@ type_pad :- spaces type spaces.
 
 <:: type_canonical(ident)
 
-typename :- \upcase ident_tail &''.
-tupletype_tail :- ']' @']'.
-tupletype_tail :- type @' ' tupletype_tail.
-tupletype :- '[' @'[ ' spaces tupletype_tail.
+  typename :- \upcase ident_tail &''.
+  tupletype_tail :- ']' @']'.
+  tupletype_tail :- type @' ' tupletype_tail.
+  tupletype :- '[' @'[ ' spaces tupletype_tail.
 
-type :- spaces typename spaces.
-type :- spaces tupletype spaces.
+  type :- spaces typename spaces.
+  type :- spaces tupletype spaces.
 
-type_canonical :- type.
+  type_canonical :- type.
 
 ::>
 
@@ -140,67 +140,67 @@ type_canonical :- type.
 
 <:: expr(literals) 
 
-literal_here :- literal &''.
+  literal_here :- literal &''.
 
-val :- spaces literal_here spaces.
-val :- spaces '(' expr ')' spaces.
+  val :- spaces literal_here spaces.
+  val :- spaces '(' expr ')' spaces.
 
-expr_neg :- spaces '!' spaces val @' $not'.
-expr_neg :- spaces '-' spaces val @' $neg'.
-expr_neg :- spaces '~' spaces val @' $bnot'.
-expr_neg :- spaces 'bool' spaces '(' expr ')' spaces @' $to_bool'.
-expr_neg :- spaces 'int'  spaces '(' expr ')' spaces @' $to_int'.
-expr_neg :- spaces 'uint' spaces '(' expr ')' spaces @' $to_uint'.
-expr_neg :- spaces 'real' spaces '(' expr ')' spaces @' $to_real'.
-expr_neg :- spaces val.
+  expr_neg :- spaces '!' spaces val @' $not'.
+  expr_neg :- spaces '-' spaces val @' $neg'.
+  expr_neg :- spaces '~' spaces val @' $bnot'.
+  expr_neg :- spaces 'bool' spaces '(' expr ')' spaces @' $to_bool'.
+  expr_neg :- spaces 'int'  spaces '(' expr ')' spaces @' $to_int'.
+  expr_neg :- spaces 'uint' spaces '(' expr ')' spaces @' $to_uint'.
+  expr_neg :- spaces 'real' spaces '(' expr ')' spaces @' $to_real'.
+  expr_neg :- spaces val.
 
-noop_tail :- @'] $noop'.
+  noop_tail :- @'] $noop'.
 
-expr_bit_head :- @'[(' expr_neg @')'.
-expr_bit_tail :- @'('  expr_bit @')] '.
+  expr_bit_head :- @'[(' expr_neg @')'.
+  expr_bit_tail :- @'('  expr_bit @')] '.
 
-expr_bit :- expr_bit_head '&' expr_bit_tail @'$band'.
-expr_bit :- expr_bit_head '|' expr_bit_tail @'$bor'.
-expr_bit :- expr_bit_head '^' expr_bit_tail @'$bxor'.
-expr_bit :- expr_bit_head '<<' expr_bit_tail @'$bshl'.
-expr_bit :- expr_bit_head '>>' expr_bit_tail @'$bshr'.
-expr_bit :- expr_bit_head noop_tail.
+  expr_bit :- expr_bit_head '&' expr_bit_tail @'$band'.
+  expr_bit :- expr_bit_head '|' expr_bit_tail @'$bor'.
+  expr_bit :- expr_bit_head '^' expr_bit_tail @'$bxor'.
+  expr_bit :- expr_bit_head '<<' expr_bit_tail @'$bshl'.
+  expr_bit :- expr_bit_head '>>' expr_bit_tail @'$bshr'.
+  expr_bit :- expr_bit_head noop_tail.
 
-expr_mul_head :- @'[(' expr_bit @')'.
-expr_mul_tail :- @'('  expr_mul @')] '.
+  expr_mul_head :- @'[(' expr_bit @')'.
+  expr_mul_tail :- @'('  expr_mul @')] '.
 
-expr_mul :- expr_mul_head '*' expr_mul_tail @'$mul'.
-expr_mul :- expr_mul_head '/' expr_mul_tail @'$div'.
-expr_mul :- expr_mul_head '%' expr_mul_tail @'$mod'.
-expr_mul :- expr_mul_head noop_tail.
+  expr_mul :- expr_mul_head '*' expr_mul_tail @'$mul'.
+  expr_mul :- expr_mul_head '/' expr_mul_tail @'$div'.
+  expr_mul :- expr_mul_head '%' expr_mul_tail @'$mod'.
+  expr_mul :- expr_mul_head noop_tail.
 
-expr_add_head :- @'[(' expr_mul @')'.
-expr_add_tail :- @'('  expr_add @')] '.
+  expr_add_head :- @'[(' expr_mul @')'.
+  expr_add_tail :- @'('  expr_add @')] '.
 
-expr_add :- expr_add_head '+' expr_add_tail @'$add'.
-expr_add :- expr_add_head '-' expr_add_tail @'$sub'.
-expr_add :- expr_add_head noop_tail.
+  expr_add :- expr_add_head '+' expr_add_tail @'$add'.
+  expr_add :- expr_add_head '-' expr_add_tail @'$sub'.
+  expr_add :- expr_add_head noop_tail.
 
-expr_eq_head :- @'[(' expr_add @')'.
-expr_eq_tail :- @'('  expr_add @')] '.
+  expr_eq_head :- @'[(' expr_add @')'.
+  expr_eq_tail :- @'('  expr_add @')] '.
 
-expr_eq :- expr_eq_head '='  expr_eq_tail @'$eq'.
-expr_eq :- expr_eq_head '==' expr_eq_tail @'$eq'.
-expr_eq :- expr_eq_head '!=' expr_eq_tail @'$eq $not'.
-expr_eq :- expr_eq_head '<'  expr_eq_tail @'$lt'.
-expr_eq :- expr_eq_head '<=' expr_eq_tail @'$lte'.
-expr_eq :- expr_eq_head '>'  expr_eq_tail @'$gt'.
-expr_eq :- expr_eq_head '>=' expr_eq_tail @'$gte'.
-expr_eq :- expr_eq_head noop_tail.
+  expr_eq :- expr_eq_head '='  expr_eq_tail @'$eq'.
+  expr_eq :- expr_eq_head '==' expr_eq_tail @'$eq'.
+  expr_eq :- expr_eq_head '!=' expr_eq_tail @'$eq $not'.
+  expr_eq :- expr_eq_head '<'  expr_eq_tail @'$lt'.
+  expr_eq :- expr_eq_head '<=' expr_eq_tail @'$lte'.
+  expr_eq :- expr_eq_head '>'  expr_eq_tail @'$gt'.
+  expr_eq :- expr_eq_head '>=' expr_eq_tail @'$gte'.
+  expr_eq :- expr_eq_head noop_tail.
 
-expr_and_head :- @'[(' expr_eq @')'.
-expr_and_tail :- @'('  expr_and @')] '.
+  expr_and_head :- @'[(' expr_eq @')'.
+  expr_and_tail :- @'('  expr_and @')] '.
 
-expr_and :- expr_and_head '&&' expr_and_tail @'$and'.
-expr_and :- expr_and_head '||' expr_and_tail @'$or'.
-expr_and :- expr_and_head noop_tail.
+  expr_and :- expr_and_head '&&' expr_and_tail @'$and'.
+  expr_and :- expr_and_head '||' expr_and_tail @'$or'.
+  expr_and :- expr_and_head noop_tail.
 
-expr :- expr_and.
+  expr :- expr_and.
 
 ::>
 
@@ -209,4 +209,24 @@ expr :- expr_and.
 
 
 <:: default(expr) default :- expr. ::>
+
+
+/*** ***/
+
+<:: case(literals)
+
+  body :- ';' @';\n'.
+  body :- \any &'' body.
+  body :- .
+
+  literal_here :- literal &''.
+
+  branches :- spaces @'[' &'top' @' ' literal_here @'] $eq ? ' spaces '?' body branches.
+  branches :- spaces.
+
+  variable_here :- variable &'push'.
+
+  case :- spaces variable_here spaces ':' branches.
+
+::>
 

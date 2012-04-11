@@ -30,13 +30,21 @@ macroname :- ident_here spaces.
 macrodef_data :- '::>' &'pop' push_empty.
 macrodef_data :- \any &'append' macrodef_data.
 
-macroapp_data :- ':>' &'pop' push_empty.
+macroapp_data :- ':>' @'ARG' &'pop' @'END' push_empty.
+macroapp_data :- @'ARG' &'pop' '<:' macroapp macroapp_data.
 macroapp_data :- \any &'append' macroapp_data.
 
-macro :- @'DEFINE' ':' spaces macroname push_empty @':' macrodef_data.
-macro :- @'APPLY' '[' ident_here ']' push_empty macroapp_data.
-macro :- @'APPLY' @'default' push_empty macroapp_data.
+macroapp :- @'APPLY' '[' ident_here ']' push_empty macroapp_data.
+macroapp :- @'APPLY' @'default' push_empty macroapp_data.
 
+macro :- @'DEFINE' ':' spaces macroname push_empty @':' macrodef_data.
+macro :- macroapp.
+
+:- comment { Note: the funky 'spaceship' marker is really an invalid character sequence. 
+             It is used internally for nested macro application magic. 
+             It is passed through unchaged when encountered in source text. }.
+
+all :- '<:[]:>' &'' all.
 all :- &'pop' '<:' macro @'TEXT' push_empty all.
 all :- \any &'append' all.
 all :- &'pop'.

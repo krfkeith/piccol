@@ -17,6 +17,79 @@ struct Macrolan {
         code.parse(c);
     }
 
+    std::string apply(metalan::Symlist::list_t::iterator& b, 
+                      metalan::Symlist::list_t::iterator e) {
+
+        static metalan::Sym apply_ = metalan::symtab().get("APPLY");
+        static metalan::Sym arg = metalan::symtab().get("ARG");
+        static metalan::Sym end = metalan::symtab().get("END");
+
+        auto tmp = macros.find(b->sym);
+
+        const std::string& rulename = metalan::symtab().get(b->sym);
+
+        if (tmp == macros.end())
+            throw std::runtime_error("Unknown macro applied: " + rulename);
+
+        std::string argtext;
+
+        // HACK
+        std::vector<std::string> splices;
+
+        while (b != e) {
+
+            ++b;
+            if (b == e)
+                throw std::runtime_error("End of input in 'APPLY'");
+            
+            metalan::Sym op = b->sym;
+
+            if (op == arg) {
+
+                ++b;
+                if (b == e)
+                    throw std::runtime_error("End of input in 'APPLY'");
+                
+                argtext += metalan::symtab().get(b->sym);
+
+            } else if (op == apply_) {
+
+                ++b;
+                if (b == e)
+                    throw std::runtime_error("End of input in 'APPLY'");
+
+                argtext += "<:[]:>";
+                splices.push_back(apply(b, e));
+
+            } else if (op == end) {
+
+                metalan::MetalanPrime map;
+                metalan::Symlist sl = tmp->second;
+
+                try {
+                    std::string ret = map.parse(sl, argtext, false, rulename).print_raw();
+
+                    for (const auto& spl : splices) {
+                        size_t n = ret.find("<:[]:>");
+
+                        if (n == std::string::npos)
+                            throw std::runtime_error("Sanity error, submacros are not marked in output");
+
+                        ret = (ret.substr(0, n) + spl + ret.substr(n+6));
+                    }
+
+                    return ret;
+
+                } catch (std::exception& e) {
+                    throw std::runtime_error("Error while applying macro '" + rulename +
+                                             std::string("': ") + e.what());
+                }
+            }
+        }
+
+        throw std::runtime_error("End of input in 'APPLY'");
+    }
+
     std::string parse(const std::string& inp) {
         
         metalan::Symlist code_ = code;
@@ -27,42 +100,27 @@ struct Macrolan {
         auto b = o.syms.begin();
         auto e = o.syms.end();
 
+        static metalan::Sym text = metalan::symtab().get("TEXT");
+        static metalan::Sym apply_ = metalan::symtab().get("APPLY");
+        static metalan::Sym define = metalan::symtab().get("DEFINE");
+
         while (b != e) {
 
-            const std::string& op = metalan::symtab().get(b->sym);
+            metalan::Sym op = b->sym;
 
             ++b;
             if (b == e)
                 throw std::runtime_error("Unexpected end of input");
 
-            if (op == "TEXT") {
+            if (op == text) {
+
                 ret += metalan::symtab().get(b->sym);
 
-            } else if (op == "APPLY") {
-                auto tmp = macros.find(b->sym);
+            } else if (op == apply_) {
 
-                const std::string& rulename = metalan::symtab().get(b->sym);
+                ret += apply(b, e);
 
-                if (tmp == macros.end())
-                    throw std::runtime_error("Unknown macro applied: " + rulename);
-
-                ++b;
-                if (b == e)
-                    throw std::runtime_error("End of input in 'APPLY'");
-
-                metalan::MetalanPrime map;
-                metalan::Symlist sl = tmp->second;
-
-                try {
-                    ret += map.parse(sl, metalan::symtab().get(b->sym), false,
-                                     rulename).print_raw();
-
-                } catch (std::exception& e) {
-                    throw std::runtime_error("Error while applying macro '" + rulename +
-                                             std::string("': ") + e.what());
-                }
-
-            } else if (op == "DEFINE") {
+            } else if (op == define) {
 
                 auto tmp = macros.find(b->sym);
 

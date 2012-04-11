@@ -256,6 +256,14 @@ struct Symlist {
 
                     buff += *i;
 
+                } else {
+                    syms.push_back(Symcell(Symcell::VAR, buff));
+                    buff.clear();
+                    state = IN_BLANK;
+                    continue;
+                }
+
+                    /*
                 } else if (*i == ' ' || *i == '\t' || *i == '\n' || *i == '\r') {
                     syms.push_back(Symcell(Symcell::VAR, buff));
                     buff.clear();
@@ -268,6 +276,7 @@ struct Symlist {
                     syms.push_back(Symcell(Symcell::ATOM, std::string(1, *i)));
                     state = IN_BLANK;
                 }
+                    */
                 break;
             }
 
