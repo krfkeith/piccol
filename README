@@ -1,0 +1,26 @@
+
+== Intro ==
+
+Piccol is a simple, small, strict and statically-typed scripting 
+extension language for embedding into a larger application.
+
+== Mission statement ==
+
+Why not Lua, Javascript, Scheme, Tcl, Python?
+
+Existing extension languages (Lua is a great example) are wonderful, and I use them daily. 
+But they are made for a specific purpose: to allow for easy and rapid prototyping 
+of features, especially by people who are not professional programmers or not 
+very familiar with the app they are trying to extend. 
+
+Piccol is made to fill a very different niche. 
+
+Existing languages are designed to make adding new features easy.
+Piccol is designed to make breaking existing functionality is hard.
+
+Piccol is a very strict, bondage-and-discipline, "hairshirt" language 
+which has extensive compile-time checking and a limited feature set.
+
+== Features ==
+
+ * Static 
