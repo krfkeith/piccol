@@ -28,20 +28,20 @@ inline Real string_to_real(const std::string& s) {
 }
 
 inline std::string int_to_string(Int i) {
-    static char buff[1024];
-    ::snprintf(buff, 1023, "%" PRIi64, i);
+    char buff[256];
+    ::snprintf(buff, 255, "%" PRIi64, i);
     return buff;
 }
 
 inline std::string uint_to_string(UInt i) {
-    static char buff[1024];
-    ::snprintf(buff, 1023, "%" PRIu64, i);
+    char buff[256];
+    ::snprintf(buff, 255, "%" PRIu64, i);
     return buff;
 }
 
 inline std::string real_to_string(Real i) {
-    static char buff[1024];
-    ::snprintf(buff, 1023, "%g", i);
+    char buff[256];
+    ::snprintf(buff, 255, "%g", i);
     return buff;
 }
 
@@ -652,7 +652,7 @@ private:
 
 
         bool asmcall(Sym shape, Sym call) {
-            static asmcall_map_ amap;
+            static const asmcall_map_ amap;
 
             auto i = amap.map.find(std::make_pair(shape, call));
 

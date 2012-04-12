@@ -46,13 +46,17 @@ struct StructMap {
     typedef std::unordered_map<Struct, Struct> map_t;
     
     map_t map;
+    std::mutex mutex;
 
     StructMap() {}
 
     bool set(const Struct& k, const Struct& v) { 
+        std::lock_guard<std::mutex> l(mutex);
+
         auto i = map.find(k);
         if (i != map.end())
             return false;
+
         map[k] = v;
         return true;
     }
@@ -64,7 +68,9 @@ struct StructMap {
         return set(kv.substruct(0, midpoint), kv.substruct(midpoint, shape.size()));
     }
 
-    bool get(const Struct& k, Struct& v) const {
+    bool get(const Struct& k, Struct& v) {
+        std::lock_guard<std::mutex> l(mutex);
+
         auto i = map.find(k);
         if (i == map.end())
             return false;
@@ -73,6 +79,8 @@ struct StructMap {
     }
 
     bool del(const Struct& k, Struct& v) {
+        std::lock_guard<std::mutex> l(mutex);
+
         auto i = map.find(k);
         if (i == map.end())
             return false;
@@ -82,6 +90,8 @@ struct StructMap {
     }
 
     void clear() {
+        std::lock_guard<std::mutex> l(mutex);
+
         map.clear();
     }
 };
@@ -92,6 +102,7 @@ struct StructPool {
     typedef std::unordered_map< Struct, std::unordered_map<Struct, size_t> > map_t;
 
     map_t map;
+    std::mutex mutex;
 
     StructPool() {}
 
@@ -100,6 +111,8 @@ struct StructPool {
     bool put(const Struct& k, const Struct& v, size_t n) {
 
         if (n == 0) return true;
+
+        std::lock_guard<std::mutex> l(mutex);
 
         auto& i = map[k];
         auto& j = i[v];
@@ -119,6 +132,8 @@ struct StructPool {
     // Get the Nth object with key K -> V.
 
     bool get(const Struct& k, Struct& v, size_t n) {
+        std::lock_guard<std::mutex> l(mutex);
+
         auto i = map.find(k);
         if (i == map.end()) {
             return false;
@@ -149,6 +164,7 @@ struct StructPool {
     // Check that object V exists with key K, decrement its counter.
 
     bool get(const Struct& k, const Struct& v) {
+        std::lock_guard<std::mutex> l(mutex);
 
         auto i = map.find(k);
         if (i == map.end()) {
@@ -192,6 +208,8 @@ struct StructPool {
     // Return the size of pool with key K.
 
     bool size(const Struct& k, size_t& v) {
+        std::lock_guard<std::mutex> l(mutex);
+
         auto i = map.find(k);
         if (i == map.end()) {
             return false;
@@ -224,22 +242,29 @@ struct GlobalStruct {
 
     Struct obj;
     bool init;
+    std::mutex mutex;
 
     GlobalStruct() : init(false) {}
 
     bool set(const Struct& v) {
+        std::lock_guard<std::mutex> l(mutex);
+
         obj = v;
         init = true;
         return true;
     }
 
-    bool get(Struct& v) const {
+    bool get(Struct& v) {
+        std::lock_guard<std::mutex> l(mutex);
+
         if (!init) return false;
         v = obj;
         return true;
     }
 
     bool del(Struct& v) {
+        std::lock_guard<std::mutex> l(mutex);
+
         if (!init) return false;
         init = false;
         v = obj;

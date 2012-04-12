@@ -453,6 +453,7 @@ namespace {
 struct _mapper {
     std::unordered_map<size_t,std::string> m;
     std::unordered_map<std::string,op_t> n;
+
     _mapper() {
         m[(size_t)NOOP] = "NOOP";
         m[(size_t)PUSH] = "PUSH";
@@ -590,18 +591,38 @@ struct _mapper {
         n["INT_TO_CHAR"] = INT_TO_CHAR;
         n["UINT_TO_CHAR"] = UINT_TO_CHAR;
     }
+
+    const std::string& name(op_t opc) const {
+        auto i = m.find(opc);
+
+        if (i == m.end()) {
+            throw std::runtime_error("Invalid opcode requested");
+        }
+
+        return i->second;
+    }
+
+    const op_t code(const std::string& opc) const {
+        auto i = n.find(opc);
+
+        if (i == n.end()) {
+            throw std::runtime_error("Invalid opcode requested: " + opc);
+        }
+
+        return i->second;
+    }
 };
 
 
 const std::string& opcodename(op_t opc) {
-    static _mapper m;
-    return m.m[opc];
+    static const _mapper m;
+    return m.name(opc);
 }
 
 
 const op_t opcodecode(const std::string& opc) {
-    static _mapper m;
-    return m.n[opc];
+    static const _mapper m;
+    return m.code(opc);
 }
 
 }

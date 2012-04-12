@@ -13,6 +13,8 @@
 #include <fstream>
 #include <streambuf>
 
+#include <mutex>
+
 
 namespace {
 
@@ -41,8 +43,10 @@ struct Symtab {
 
     std::unordered_map<std::string,Sym> _syms;
     std::unordered_map<Sym,std::string> _strs;
+    std::mutex _m;
 
     Sym get(const std::string& s) {
+        std::lock_guard<std::mutex> l(_m);
 
         auto i = _syms.find(s);
         if (i != _syms.end()) {
@@ -56,6 +60,8 @@ struct Symtab {
     }
 
     const std::string& get(Sym s) {
+        std::lock_guard<std::mutex> l(_m);
+
         static std::string emptystr;
 
         auto i = _strs.find(s);
