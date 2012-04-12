@@ -238,6 +238,78 @@ struct StructPool {
 };
 
 
+struct StructStack {
+
+    typedef std::unordered_map< Struct, std::vector<Struct> > map_t;
+
+    map_t map;
+    std::mutex mutex;
+
+    StructStack() {}
+
+    bool put(const Struct& k, const Struct& v) {
+
+        std::lock_guard<std::mutex> l(mutex);
+
+        map[k].push_back(v);
+        return true;
+    }
+
+    bool put(const Shape& shape, const Struct& kv) {
+        
+        size_t midpoint = shape.get_nth_type(0).ix_to;
+
+        return put(kv.substruct(0, midpoint), 
+                   kv.substruct(midpoint, shape.size()));
+    }
+
+    bool get(const Struct& k, Struct& v, size_t n) {
+        std::lock_guard<std::mutex> l(mutex);
+
+        auto i = map.find(k);
+        if (i == map.end()) {
+            return false;
+        }
+
+        if (n >= i->second.size()) {
+            return false;
+        }
+
+        v = i->second[i->second.size()-1-n];
+        return true;
+    }
+
+    bool get(const Shape& shape, const Struct& kn, Struct& v) {
+
+        return get(kn.substruct(0, shape.size()-1), v, kn.v.back().uint);
+    }
+
+    bool size(const Struct& k, size_t& v) {
+        std::lock_guard<std::mutex> l(mutex);
+
+        auto i = map.find(k);
+        if (i == map.end()) {
+            return false;
+        }
+
+        v = i->second.size();
+        return true;
+    }
+
+    bool size(const Struct& k, Struct& n) {
+        
+        size_t tmp;
+        bool ret = size(k, tmp);
+
+        if (ret) {
+            n.v.push_back((nanom::UInt)tmp);
+        }
+
+        return ret;
+    }
+};
+
+
 struct GlobalStruct {
 
     Struct obj;
@@ -288,6 +360,12 @@ inline GlobalStruct& globalstruct() {
 template <typename T>
 inline StructPool& structpool() {
     static StructPool ret;
+    return ret;
+}
+
+template <typename T>
+inline StructStack& structstack() {
+    static StructStack ret;
     return ret;
 }
 
@@ -358,6 +436,27 @@ inline bool structpool_size(const Shapes& shapes, const Shape& shape, const Shap
 }
 
 
+template <typename T>
+inline bool structstack_put(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
+                            const Struct& struc, Struct& ret) {
+
+    return structstack<T>().put(shape, struc);
+}
+
+template <typename T>
+inline bool structstack_get(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
+                           const Struct& struc, Struct& ret) {
+    return structstack<T>().get(shape, struc, ret);
+}
+
+
+template <typename T>
+inline bool structstack_size(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
+                            const Struct& struc, Struct& ret) {
+    return structstack<T>().size(struc, ret);
+}
+
+
 template <typename MAP, typename VM>
 void register_map(VM& vm, const std::string& shapefrom, const std::string& shapeto) {
 
@@ -389,6 +488,18 @@ void register_pool(VM& vm, const std::string& shapefrom, const std::string& shap
     vm.register_callback("get",  nshapes,   shapeto, structpool_get_n<POOL>);
     vm.register_callback("get",  kshapes,   "Void",  structpool_get_k<POOL>);
     vm.register_callback("size", shapefrom, "UInt",  structpool_size<POOL>);
+}
+
+
+template <typename STACK, typename VM>
+void register_stack(VM& vm, const std::string& shapefrom, const std::string& shapeto) {
+
+    std::string twoshapes = "[ " + shapefrom + " " + shapeto + " ]";
+    std::string nshapes = "[ " + shapefrom + " UInt ]";
+
+    vm.register_callback("put",  twoshapes, "Void",  structstack_put<STACK>);
+    vm.register_callback("get",  nshapes,   shapeto, structstack_get<STACK>);
+    vm.register_callback("size", shapefrom, "UInt",  structstack_size<STACK>);
 }
 
 
