@@ -307,6 +307,12 @@ struct StructStack {
 
         return ret;
     }
+
+    void clear() {
+        std::lock_guard<std::mutex> l(mutex);
+
+        map.clear();
+    }
 };
 
 
