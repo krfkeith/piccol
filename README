@@ -50,20 +50,20 @@ which has extensive compile-time checking and a limited feature set.
    at all, since there is no concept of a function pointer.)
    Inline lambda-functions (as a control construct) are fully supported, however.
 
- * Types are nominal, not structural. That is, 'def { port:Int } NetAddr' and 
-   'def { no:Int } TelephoneNo' would be considered different types by the 
+ * Types are nominal, not structural. That is, `def { port:Int } NetAddr` and 
+   `def { no:Int } TelephoneNo` would be considered different types by the 
    compiler, even though their structure is the same.
 
  * Functions are polymorphic on their _return_ type, not only on their input type.
-   That is, 'get_foo Void->Real' and 'get_foo Void->Int' are different functions
+   That is, `get_foo Void->Real` and `get_foo Void->Int` are different functions
    with different implementations.
 
  * There is no type inference, types are fully specified at the time of a 
    function call. (This is partly for readability, partly because of the
    previous bullet point about polymorphic return types.)
 
- * No type coercion whatsoever. '1 + 0.5' is a type error. 
-   (Even more: '1 + 2u' is _also_ a type error; write 'uint(1) + 2u' instead.)
+ * No type coercion whatsoever. `1 + 0.5` is a type error. 
+   (Even more: `1 + 2u` is _also_ a type error; write `uint(1) + 2u` instead.)
 
  * There are no variables or scopes; Piccol is a stack-based language and
    a function can only access the top value on the stack.
@@ -105,12 +105,12 @@ which has extensive compile-time checking and a limited feature set.
 
  * It is written in portable C++11 with no OS dependencies. 
    (Tested with the latest gcc.) 
-   There are bindings for pure C at the moment.
+   There are no bindings for pure C at the moment.
 
 == Wait, what? ==
 
 Piccol is a real language and has been extensively field-tested on a real, moderately complex program.
-See here: .
+
 
 
 
