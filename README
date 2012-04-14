@@ -58,8 +58,9 @@ which has extensive compile-time checking and a limited feature set.
    That is, `get_foo Void->Real` and `get_foo Void->Int` are different functions
    with different implementations.
 
- * There is no type inference, types are fully specified at the time of a 
-   function call. (This is partly for readability, partly because of the
+ * There is no type inference, types are fully specified by the programmer at the 
+   point where the function is called.
+   (This is partly for readability, partly because of the
    previous bullet point about polymorphic return types.)
 
  * No type coercion whatsoever. `1 + 0.5` is a type error. 
