@@ -491,8 +491,140 @@ Here the object that is constructed is really Foo { a=0 b=nil c=false }
 
 === Variables ===
 
+'Variables' (however incorrectly names; really they should be called 'fieldrefs') are a way to access the data
+of a function's input type.
+
+(See 'variable identifies' above in 'lexical structure'.)
+
+There are two ways to access the function's input type:
+
+  * By accessing the contents of a certain field of the input value. (By using the '\<fieldname>' syntax.)
+  * By accessing the input value as a whole. (The special token '\\')
+
+Examples:
+
+Here 'myfunc' accepts a 'MyType' value and returns the contents of its field 'a'.
+
+  def { bar:Int } Foo;
+  def { a:Int b:Foo } MyType;
+
+  myfunc MyType->Int :- \a.
+
+Here the field 'b' is returned instead:
+
+  myfunc2 MyType->Foo :- \b.
+
+Here 'func' accepts a 'MyType' value and passes it to another function, 'frob', returning nothing.
+
+  func MyType->Void :- \\ frob.
+
+Field references work exactly the same for tuples as they do for structures:
+
+  def [one:Int two:Int three:Int];
+
+  foo [Int Int Int]->Int :- [ ([\one \two] add->Int) \three ] add->Int.
+
+(!) Note: Piccol provides several predefined types:
+
+  def [ a:Int  b:Int  ];
+  def [ a:UInt b:UInt ];
+  def [ a:Bool b:Bool ];
+  def [ a:Real b:Real ];
+  def [ a:Sym  b:Sym  ];
+
+  def [ v:Int ];
+  def [ v:UInt ];
+  def [ v:Sym ];
+  def [ v:Bool ];
+  def [ v:Real ];
 
 
+  Keep that in mind when reading Piccol code.
 
+=== Control constructs ===
 
+There are three control constructs in Piccol:
 
+  * ';'
+  * 'fail'
+  * '?'
+
+The body of a function (whether a 'normal' toplevel function or a lambda) can be segmented into several
+so-called 'branches'.
+
+Piccol has a simple runtime model: if, while evaluating a function body, any function fails, then the evaluation
+of the current branch is aborted (discarding any intermediate results) and evaluation jumps to the next branch in list.
+If all branches fail, then the function itself fails.
+If a branch succeeds, then the functions successfully returns and the remaining branches are ignored.
+
+=== Branches ===
+
+Branches are delimited by the ';' token. 
+
+Examples:
+
+  one_of_3 [Int Int Int]->Void :- 
+     \a foo ;
+     \b foo ;
+     \c foo.
+
+Here, 'one_of_3' tries to call the function 'foo' with one of three arguments, returning successfully if any of the
+three variants succeeds. If all three attempts at calling 'foo' fail, then 'one_of_3' iteself fails.
+
+  pick_one [Sym Sym]->Int :- [ 'foo' (\\->Sym(\a foo->Sym; \b foo->Sym)) ] bar->Int.
+
+This is a more complex example, demonstrating branches inside a lambda function.
+Here the function 'pick_one' accepts two symbol values, passing either one of them to 'bar', 
+depending on whether 'foo' succeeds or not.
+Note that if 'foo' fails for both values, then 'pick_one' itself will fail. 
+(Failures are bubbled up through the evaluation stack.)
+
+  tryit Something->Void :- \\ foo; .
+
+In this example the function 'tryit' attempts to call 'foo' with an argument of type 'Something'; if 'foo' fails, then
+'tryit' succeeds anyways.
+
+(!) Note: The function could be rewritten as 
+
+     tryit Something->Void :- \\ foo->Void; Void{} .
+
+  The compiler inserts proper 'Void{}' constructs where necessary and allows you to omit '->Void' for functions
+  that return 'Void'.
+
+Note, however, that when returning a real type you need to annotate types and return values properly.
+
+Example:
+
+  tryit Thing->Int :- \\ convert->Int; 42.
+
+This version of 'tryit' tries to convert a value of type 'Thing' to an 'Int', using the 'convert' function; if 'convert'
+fails, then 'tryit' returns the default value of '42'.
+
+=== Tests and fails ===
+
+The special token 'fail' fails the current branch, unconditionally. It acts like a 'Void->Void' function that always
+fails.
+
+It can be useful for implementing certain control structures. For example:
+
+  try_all [Int Int Int]->Void :-
+     \a foo fail ;
+     \b foo fail ;
+     \c foo fail ;
+     .
+
+Here 'try_all' calls 'foo' three times with three different 'Int' arguments. 'try_all' ignores failures of 'foo' and
+succeeds unconditionally.
+
+The specials token '?' checks its boolean argument and succeeds or fails accordingly.
+It acts like a 'Bool->Void' function; its argument on the left must be a 'Bool'. If it is 'true', then '?' succeds,
+if it is 'false', then '?' fails. There are no other effects.
+
+Example:
+
+  test Sym->Void :- \\ ok->Bool ? func_then; func_else.
+
+This example shows how to implement a traditional 'if-then-else' control structure in Piccol.
+If 'ok' returns 'true', then 'func_then' will be called; if it returns 'false', then 'func_else'.
+
+== Arithmetic and logic ==
