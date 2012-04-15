@@ -7,11 +7,13 @@ namespace macrolan {
 
 struct Macrolan {
 
-    metalan::MetalanPrime mlp;
     metalan::Symlist code;
 
     std::unordered_map<metalan::Sym,metalan::Symlist> macros;
 
+    Macrolan(const Macrolan& ml) : code(ml.code), macros(ml.macros) {}
+
+    Macrolan(Macrolan&& ml) : code(ml.code), macros(ml.macros) {}
 
     Macrolan(const std::string& c) {
         code.parse(c);
@@ -91,6 +93,8 @@ struct Macrolan {
     }
 
     std::string parse(const std::string& inp) {
+
+        metalan::MetalanPrime mlp;
         
         metalan::Symlist code_ = code;
         metalan::Symlist o = mlp.parse(code_, inp);
@@ -121,6 +125,8 @@ struct Macrolan {
                 ret += apply(b, e);
 
             } else if (op == define) {
+
+                std::cout << "!! " << metalan::symtab().get(b->sym) << std::endl;
 
                 auto tmp = macros.find(b->sym);
 

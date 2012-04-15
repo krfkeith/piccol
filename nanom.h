@@ -141,6 +141,12 @@ struct Shape {
 struct Shapes {
     std::unordered_map<Sym,Shape> shapes;
 
+    Shapes() {}
+
+    Shapes(const Shapes& s) : shapes(s.shapes) {}
+
+    Shapes(Shapes&& s) : shapes(s.shapes) {}
+
     const Shape& get(Sym shapeid) const {
         auto i = shapes.find(shapeid);
 
@@ -384,6 +390,12 @@ struct VmCode {
     Shapes shapes;
 
     std::unordered_map<label_t, callback_t> callbacks;
+
+    VmCode() {}
+
+    VmCode(const VmCode& vc) : codes(vc.codes), shapes(vc.shapes), callbacks(vc.callbacks) {}
+
+    VmCode(VmCode&& vc) : codes(vc.codes), shapes(vc.shapes), callbacks(vc.callbacks) {}
 
     void register_callback(label_t s, callback_t cb) {
 

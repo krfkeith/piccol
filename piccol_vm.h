@@ -64,6 +64,24 @@ struct Piccol {
 
     bool verbose;
 
+    Piccol(const Piccol& p) : code(p.code), vm(code), as(vm),
+                              macro(p.macro),
+                              macro_code(p.macro_code),
+                              lexer_code(p.lexer_code),
+                              morpher_code(p.morpher_code),
+                              emiter_code(p.emiter_code),
+                              prelude_code(p.prelude_code),
+                              verbose(p.verbose) {}
+
+    Piccol(Piccol&& p) : code(p.code), vm(code), as(vm),
+                         macro(p.macro),
+                         macro_code(p.macro_code),
+                         lexer_code(p.lexer_code),
+                         morpher_code(p.morpher_code),
+                         emiter_code(p.emiter_code),
+                         prelude_code(p.prelude_code),
+                         verbose(p.verbose) {}
+
     Piccol(std::string&& macrolan_,
            std::string&& lexer_, 
            std::string&& morpher_,

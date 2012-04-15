@@ -22,6 +22,10 @@ struct PiccolF : public Piccol {
 
     std::string appdir;
 
+    PiccolF(const PiccolF& p) : Piccol(static_cast<const Piccol&>(p)), appdir(p.appdir) {}
+
+    PiccolF(PiccolF&& p) : Piccol(static_cast<const Piccol&&>(p)), appdir(p.appdir) {}
+
     PiccolF(const std::string& sysdir, const std::string& ad, bool _verbose = false) : 
         Piccol(piccol::load_file(sysdir + "macrolan.metal"),
                piccol::load_file(sysdir + "piccol_lex.metal"),
@@ -127,7 +131,8 @@ struct Modules {
             throw std::runtime_error("Tried to define a module twice: '" + metalan::symtab().get(module) + "'");
         }
 
-        modules[module] = std::make_pair(filename, std::shared_ptr<PiccolF>(new PiccolF(sysdir, appdir, verbose)));
+        modules[module] = std::make_pair(filename, std::shared_ptr<PiccolF>());
+
         return true;
     }
 
@@ -177,10 +182,21 @@ struct Modules {
             }
         }
 
+        // Load common code.
+        PiccolF comvm(sysdir, appdir, verbose);
+
+        if (common.size() != 0) {
+            comvm.load(common);
+        }
+
         // Export foreign functions in all other VMs.
 
         for (auto& mod : modules) {
 
+            mod.second.second = std::shared_ptr<PiccolF>(new PiccolF(comvm));
+        }
+
+        for (auto& mod : modules) {
             PiccolF& vm = *(mod.second.second);
 
             for (const auto& cb : callbacks) {
@@ -200,15 +216,11 @@ struct Modules {
             }
         }
 
-        // Load the module source and check that all exports are defined.
+        // Load the module sources and check that all exports are defined.
 
         for (auto& mod : modules) {
 
             PiccolF& vm = *(mod.second.second);
-
-            if (common.size() != 0) {
-                vm.load(common);
-            }
 
             vm.load(metalan::symtab().get(mod.second.first));
 

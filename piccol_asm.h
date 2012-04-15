@@ -171,7 +171,7 @@ private:
             cmode_code(compiletime_code.codes[nillabel]),
             code(runtime_code)
             {
-                compiletime_vm.shapes = oldshapes;
+                //compiletime_vm.shapes = oldshapes;
             }
 
         label_t nillabel;
