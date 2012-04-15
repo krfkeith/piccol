@@ -355,18 +355,26 @@ private:
             ++i;
 
             size_t ntypes = 0;
+            std::set<Sym> rtypes;
+
             while (i != e) {
                 if (*i != voidsym) {
                     ntypes++;
+                    rtypes.insert(*i);
                 }
                 ++i;
             }
 
-            if (ntypes > 1) {
+            if (rtypes.size() == 0 && ntypes == 0) {
+                ntypes = 1;
+                rtypes.insert(voidsym);
+            }
+
+            if (ntypes > 1 || rtypes.size() > 1) {
                 throw std::runtime_error("Function returns more than one value: " + fname.print());
             }
 
-            Sym tmp = ss.back();
+            Sym tmp = *(rtypes.begin());
 
             // The 'nil' type denotes a function that fails.
             // If a function fails, then it doesn't really have a return type.
@@ -377,8 +385,7 @@ private:
 
                 if (fname.toshape != tmp) {
 
-                    throw std::runtime_error("Wrong return type: " + fname.print() + " returns " + 
-                                             symtab().get(ss.back()));
+                    throw std::runtime_error("Wrong return type: " + fname.print() + " returns " + symtab().get(tmp));
                 }
             }
 
@@ -528,29 +535,35 @@ private:
                 if (typestr == "Bool") {
                     ok = true;
                 }
-                fieldtypename = "<bool>";
+                fieldtypename = "Bool";
                 break;
 
             case INT:
-            case UINT:
-                if (typestr == "Int" || typestr == "UInt") {
+                if (typestr == "Int") {
                     ok = true;
                 }
-                fieldtypename = "<integer>";
+                fieldtypename = "Int";
+                break;
+
+            case UINT:
+                if (typestr == "UInt") {
+                    ok = true;
+                }
+                fieldtypename = "UInt";
                 break;
 
             case REAL:
                 if (typestr == "Real") {
                     ok = true;
                 }
-                fieldtypename = "<real>";
+                fieldtypename = "Real";
                 break;
 
             case SYMBOL:
                 if (typestr == "Sym") {
                     ok = true;
                 }
-                fieldtypename = "<symbol>";
+                fieldtypename = "Sym";
                 break;
 
             case STRUCT:
