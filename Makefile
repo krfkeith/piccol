@@ -1,25 +1,28 @@
 
-all: metalan_prime metalan_doppel metalan_idem macrolan piccol_test modulum_test
+all: utils/metalan_prime utils/metalan_doppel utils/metalan_idem utils/macrolan utils/piccol_test utils/modulum_test
 
-CFLAGS = -std=c++0x -O3 -g -Wall
+CFLAGS = -std=c++0x -O3 -g -Wall -I.
 
-metalan_prime: metalan.h metalan_prime.cc metalan_prime.h
-	g++ $(CFLAGS) metalan_prime.cc -o metalan_prime 
+clean:
+	-rm utils/metalan_prime utils/metalan_doppel utils/metalan_idem utils/macrolan utils/piccol_test utils/modulum_test
 
-metalan_doppel: metalan.h metalan_doppel.cc metalan_doppel.h
-	g++ $(CFLAGS) metalan_doppel.cc -o metalan_doppel 
+utils/metalan_prime: metalan.h utils/metalan_prime.cc metalan_prime.h
+	g++ $(CFLAGS) utils/metalan_prime.cc -o utils/metalan_prime 
 
-metalan_idem: metalan_prime
-	g++ $(CFLAGS) metalan_idem.cc -o metalan_idem
+utils/metalan_doppel: metalan.h utils/metalan_doppel.cc metalan_doppel.h
+	g++ $(CFLAGS) utils/metalan_doppel.cc -o utils/metalan_doppel 
 
-macrolan: macrolan.h metalan_prime
-	g++ $(CFLAGS) macrolan.cc -o macrolan
+utils/metalan_idem: utils/metalan_prime
+	g++ $(CFLAGS) utils/metalan_idem.cc -o utils/metalan_idem
+
+utils/macrolan: macrolan.h utils/metalan_prime
+	g++ $(CFLAGS) utils/macrolan.cc -o utils/macrolan
 
 SRC = metalan.h nanom.h piccol_vm.h piccol_asm.h metalan_prime.h metalan_doppel.h macrolan.h 
 
-piccol_test: $(SRC) piccol_test.cc 
-	g++ $(CFLAGS) piccol_test.cc -o piccol_test
+utils/piccol_test: $(SRC) utils/piccol_test.cc 
+	g++ $(CFLAGS) utils/piccol_test.cc -o utils/piccol_test
 
-modulum_test: $(SRC) modulum_test.cc piccol_modulum.h
-	g++ $(CFLAGS) modulum_test.cc -o modulum_test
+utils/modulum_test: $(SRC) utils/modulum_test.cc piccol_modulum.h
+	g++ $(CFLAGS) utils/modulum_test.cc -o utils/modulum_test
 
