@@ -3,6 +3,7 @@
 
 #include <cinttypes>
 #include <map>
+#include <set>
 
 #include "metalan.h"
 
@@ -953,8 +954,7 @@ public:
 
                 if (j.op == PUSH || j.op == IF || j.op == IF_NOT || j.op == IF_FAIL || j.op == IF_NOT_FAIL) {
 
-                    tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, 
-                                                        j.arg.uint)); //int_to_string(j.arg.uint)));
+                    tmp.syms.push_back(metalan::Symcell(metalan::Symcell::QATOM, j.arg.uint));
                 }
             }
         }
