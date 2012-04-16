@@ -245,8 +245,45 @@ struct Struct {
 };
 
 
+}
 
 
+namespace std {
+
+template <>
+struct hash<nanom::Struct> {
+    size_t operator()(const nanom::Struct& v) const {
+        size_t h = 0;
+        for (const auto& i : v.v) {
+            h += hash<nanom::UInt>()(i.uint);
+        }
+        return hash<size_t>()(h);
+    }
+};
+
+template <>
+struct equal_to<nanom::Struct> {
+
+    bool operator()(const nanom::Struct& a, const nanom::Struct& b) const {
+        auto ai = a.v.begin();
+        auto bi = b.v.begin();
+        auto ae = a.v.end();
+        auto be = b.v.end();
+
+        while (1) {
+            if (ai == ae && bi == be) return true;
+            if (ai == ae || bi == be) return false;
+            if (ai->uint != bi->uint) return false;
+            ++ai;
+            ++bi;
+        }
+    }
+};
+
+}
+
+
+namespace nanom {
 
 enum op_t {
     NOOP = 0,
