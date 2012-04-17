@@ -1,10 +1,12 @@
 
-== Intro ==
+Intro
+=====
 
 Piccol is a simple, small, strict and statically-typed scripting 
 extension language for embedding into a larger application.
 
-== Mission statement ==
+Mission statement
+=================
 
 Why not Lua, Javascript, Scheme, Tcl, Python?
 
@@ -21,14 +23,21 @@ Piccol is designed to make breaking existing functionality is hard.
 Piccol is a very strict, bondage-and-discipline, "hairshirt" language 
 which has extensive compile-time checking and a limited feature set.
 
-== Language features of Piccol ==
+Piccol is also in the tradition of 'elegant' languages like Scheme, Prolog and Forth: it has 
+a very tight, easy to grasp semantic and syntactic core and a macro mechanism for extending
+syntax and adding sugar.
 
- * It is meant to function _only_ as an extension language in a host C++ program.
+Language features of Piccol
+===========================
+
+ * It is meant to function *only* as an extension language in a host C++ program.
    It can't function stand-alone, since basic functionality is missing.
+
 
  * It has static typing at compile time.
 
- * _All_ data is pass-by-value; there are no pointers. 
+
+ * *All* data is pass-by-value; there are no pointers. 
    (When data is passed to a function it is copied.)
 
  * All structures are fixed-size: there are no recursive structures,
@@ -50,12 +59,12 @@ which has extensive compile-time checking and a limited feature set.
    at all, since there is no concept of a function pointer.)
    Inline lambda-functions (as a control construct) are fully supported, however.
 
- * Types are nominal, not structural. That is, `def { port:Int } NetAddr` and 
-   `def { no:Int } TelephoneNo` would be considered different types by the 
+ * Types are nominal, not structural. That is, ``def { port:Int } NetAddr`` and 
+   ``def { no:Int } TelephoneNo`` would be considered different types by the 
    compiler, even though their structure is the same.
 
- * Functions are polymorphic on their _return_ type, not only on their input type.
-   That is, `get_foo Void->Real` and `get_foo Void->Int` are different functions
+ * Functions are polymorphic on their *return* type, not only on their input type.
+   That is, ``get_foo Void->Real`` and ``get_foo Void->Int`` are different functions
    with different implementations.
 
  * There is no type inference, types are fully specified by the programmer at the 
@@ -63,8 +72,8 @@ which has extensive compile-time checking and a limited feature set.
    (This is partly for readability, partly because of the
    previous bullet point about polymorphic return types.)
 
- * No type coercion whatsoever. `1 + 0.5` is a type error. 
-   (Even more: `1 + 2u` is _also_ a type error; write `uint(1) + 2u` instead.)
+ * No type coercion whatsoever. ``1 + 0.5`` is a type error. 
+   (Even more: ``1 + 2u`` is *also* a type error; write ``uint(1) + 2u`` instead.)
 
  * There are no variables or scopes; Piccol is a stack-based language and
    a function can only access the top value on the stack.
@@ -75,9 +84,10 @@ which has extensive compile-time checking and a limited feature set.
 
  * It has a non-standard syntax inspired by ML, Prolog and Forth. (Not a curly-brace syntax!)
 
-== Implementation details of Piccol ==
+Implementation details of Piccol
+================================
 
- * It _strongly_ adheres to a "layered-cake" compiler architecture; you can use (or change)
+ * It *strongly* adheres to a "layered-cake" compiler architecture; you can use (or change)
    any aspect of the language in isolation without hard dependencies on the other parts.
    For example, you can change the language syntax by tweaking a text file; rebuilding the
    compiler is not even necessary. The module system is a separate layer on top of the
@@ -108,7 +118,8 @@ which has extensive compile-time checking and a limited feature set.
    (Tested with the latest gcc.) 
    There are no bindings for pure C at the moment.
 
-== Wait, what? ==
+Wait, what?
+===========
 
 Piccol is a real language and has been extensively field-tested on a real, moderately complex program.
 
