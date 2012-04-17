@@ -1,6 +1,7 @@
 
+*****
 Intro
-=====
+*****
 
 Piccol is a simple, small, strict and statically-typed scripting 
 extension language for embedding into a larger application.

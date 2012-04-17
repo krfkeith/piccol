@@ -1,13 +1,13 @@
 
-.. highlight:: html
+.. highlight:: piccol
 
 .. role:: raw-html(raw)
    :format: html
 
 
-*******************
-The Piccol tutorial
-*******************
+*****************************
+The Piccol language reference
+*****************************
 
 What follows is an informal but complete documentation on how to write Piccol programs.
 
@@ -468,7 +468,7 @@ The same hold for using a tuple type, too: ::
 
 is the exact same thing as ::
 
-  [ Int Int Sym ] {a=12 b=89 c='tag} foo->Int
+  [ Int Int Sym ] {a=12 b=89 c='tag'} foo->Int
 
 .. note::
 

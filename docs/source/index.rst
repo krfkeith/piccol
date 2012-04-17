@@ -6,7 +6,17 @@
 The Piccol programming language
 ===============================
 
-Introduction: :doc:`README`
+
+
+Introduction
+------------
+
+:doc:`README`
+
+Language reference
+-------------------------------
+
+:doc:`DOCS`
 
 Contents:
 
@@ -15,16 +25,6 @@ Contents:
 
    README
    DOCS
-
-
-Stuff
-
-.. note::
-  Whoops
-
-Other text
-
-text ``32->42`` test
 
 Indices and tables
 ==================
