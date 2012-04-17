@@ -70,6 +70,23 @@ struct Symtab {
         }
         return emptystr;
     }
+
+    template <typename FUNC>
+    void save(FUNC f) {
+        std::lock_guard<std::mutex> l(_m);
+        for (const auto& i : _strs) {
+            f(i.first, i.second);
+        }
+        f(0, "");
+    }
+
+    bool load(Sym sn, const std::string& ss) {
+        if (sn == 0) return false;
+        std::lock_guard<std::mutex> l(_m);
+        _strs[sn] = ss;
+        _syms[ss] = sn;
+        return true;
+    }
 };
 
 inline Symtab& symtab() {
