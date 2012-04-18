@@ -631,6 +631,43 @@ private:
         }
 
 
+        void get_struct_fields() {
+
+            auto& ss = shapestack();
+
+            if (ss.empty())
+                throw std::runtime_error("Sanity error: _get_struct_fields before _push_type");
+
+            Sym fieldsym = next(); 
+
+            Sym toptype = ss.back();
+
+            const Shape& sh = compiletime_vm.shapes.get(toptype);
+            const Shape::typeinfo& fieldt = sh.get_type(fieldsym);
+            Sym newshape;
+
+            switch (fieldt.type) {
+            case BOOL:   newshape = symtab().get("Bool"); break;
+            case INT:    newshape = symtab().get("Int"); break;
+            case UINT:   newshape = symtab().get("UInt"); break;
+            case REAL:   newshape = symtab().get("Real"); break;
+            case SYMBOL: newshape = symtab().get("Sym"); break;
+            case STRUCT: newshape = fieldt.shape; break;
+            case NONE:
+                throw std::runtime_error("No such field: " + 
+                                         symtab().get(toptype) + "." +
+                                         symtab().get(fieldsym));
+            }
+
+            ss.pop_back();
+            ss.push_back(newshape);
+
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)fieldt.ix_from));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)fieldt.ix_to));
+            code.codes[label()].push_back(Opcode(PUSH, (UInt)sh.size()));
+        }
+
+
         void call_or_syscall(bool tailcall) {
 
             auto& ss = shapestack();
@@ -819,6 +856,12 @@ private:
 
                 } else if (op_name == "_get_all_fields") {
                     get_all_fields();
+                
+                    ++p_i;
+                    continue;
+
+                } else if (op_name == "_get_struct_fields") {
+                    get_struct_fields();
                 
                     ++p_i;
                     continue;

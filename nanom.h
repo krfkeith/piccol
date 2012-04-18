@@ -314,6 +314,7 @@ enum op_t {
 
     NEW_STRUCT,
     SET_FIELDS,
+    GET_FIELDS,
     GET_FRAMEHEAD_FIELDS,
 
     /***/
@@ -527,6 +528,7 @@ struct _mapper {
         m[(size_t)DEF_SHAPE] = "DEF_SHAPE";
         m[(size_t)NEW_STRUCT] = "NEW_STRUCT";
         m[(size_t)SET_FIELDS] = "SET_FIELDS";
+        m[(size_t)GET_FIELDS] = "GET_FIELDS";
         m[(size_t)GET_FRAMEHEAD_FIELDS] = "GET_FRAMEHEAD_FIELDS";
         m[(size_t)ADD_INT] = "ADD_INT";
         m[(size_t)SUB_INT] = "SUB_INT";
@@ -596,6 +598,7 @@ struct _mapper {
         n["DEF_SHAPE"] = DEF_SHAPE;
         n["NEW_STRUCT"] = NEW_STRUCT;
         n["SET_FIELDS"] = SET_FIELDS;
+        n["GET_FIELDS"] = GET_FIELDS;
         n["GET_FRAMEHEAD_FIELDS"] = GET_FRAMEHEAD_FIELDS;
         n["ADD_INT"] = ADD_INT;
         n["SUB_INT"] = SUB_INT;
@@ -982,6 +985,24 @@ inline void vm_run(Vm& vm,
             vm.stack.resize(vm.stack.size() - topsize);
             break;
         } 
+
+        case GET_FIELDS: {
+            Val strusize = vm.pop();
+            Val offs_end = vm.pop();
+            Val offs_beg = vm.pop();
+
+            auto stbeg = vm.stack.end();
+            stbeg = stbeg - strusize.uint;
+            auto fb = stbeg + offs_beg.uint;
+            auto fe = stbeg + offs_end.uint;
+
+            for (; fb != fe; ++fb) {
+                vm.stack.push_back(*fb);
+            }
+            
+            vm.stack.erase(stbeg, stbeg + strusize.uint);
+            break;
+        }
 
         case GET_FRAMEHEAD_FIELDS: {
             Val offs_end = vm.pop();

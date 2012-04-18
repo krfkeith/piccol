@@ -126,8 +126,6 @@ struct Macrolan {
 
             } else if (op == define) {
 
-                std::cout << "!! " << metalan::symtab().get(b->sym) << std::endl;
-
                 auto tmp = macros.find(b->sym);
 
                 if (tmp != macros.end())

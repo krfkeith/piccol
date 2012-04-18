@@ -1,0 +1,15 @@
+
+
+def { v:Real } R_t;
+def [ one:R_t two:R_t ];
+def {  a:[UInt UInt] s_val:Real q:[R_t R_t] } A_t;
+def [ a:Int b:Int c:Int ];
+def {  ana:A_t b:[Int Int Int] } B_t;
+
+
+test Void->Void :- 
+  R_t {v=1.23} ->v print '\n' print
+  B_t { ana=A_t{q=[R_t{v=1.2} R_t{v=3.4}]}} ->Void(
+    R_t{v=(\\->ana->q->two->v)}->v print '\n' print
+  )
+.

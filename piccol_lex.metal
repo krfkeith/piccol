@@ -148,10 +148,13 @@ funcall :- @'CALL' ident_here @'Void'.
 
 change_struct :- '{' @'CHANGE_STRUCT' structvalfields '}' @'END_CHANGE_STRUCT'.
 
+getf_struct :- '->' @'GETF_STRUCT' spaces ident_here.
+
 statement :- tupleval spaces.
 statement :- structval spaces.
 statement :- variable spaces.
 statement :- change_struct spaces.
+statement :- getf_struct spaces.
 statement :- lambda spaces.
 statement :- val_primitive spaces.
 statement :- funcall spaces.
