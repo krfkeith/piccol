@@ -794,6 +794,7 @@ Here is the list of supported operators, in order of precedence. (The more tight
 
 .. csv-table:: 
   :header: "Precedence level","Operator","Accepted types","Operation"
+  :widths: 15,20,20,45
   :delim: ;
 
   1;``!`` *X*;Bool;Boolean negation
