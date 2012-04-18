@@ -276,7 +276,7 @@ A **value** is one of:
 
   * A constructed tuple 
   * A constructed structure
-  * A variable
+  * A function argument field
   * A literal value
 
 A **constructed tuple** looks like this: 
@@ -317,7 +317,7 @@ A **constructed structure** looks like this:
     * ``Void{}``
     * ``SubExpr{ val=([1u 2u] complex_calculation->Real) }``
 
-A **variable** is a variable identifier, see :ref:`lexical-structure` above.
+A **function argument field** is a variable identifier, see :ref:`lexical-structure` above.
 
 For **literal values** see :ref:`literal-values` above.
 
@@ -394,6 +394,21 @@ Structure modifiers
 Examples:
   * ``{a=1}``
   * ``{ x=(get_x->Int) y=(get_y->Int) }``
+
+.. _structure-accessors:
+
+Structure accessors
+-------------------
+
+**Structure accessors** are a way to access only a particular field of a structure. The syntax is similar to a
+lambda function call, except with a field name instead of a typename to the right of the ``->``. ::
+
+  -> <name>
+
+Examples:
+  * ``FooBar{foo=1 bar='hello'} ->bar``
+  * ``[ [1 2] [3 4] ] ->a->b``
+
 
 Control constructs
 ------------------
@@ -554,6 +569,41 @@ Then this code is fully equivalent to the following: ::
 That is, the structure is accepted by the modifier, the fields specified in the modifier are changed, and 
 the structure is then returned. (Without changing any other fields!)
 
+Structure accessors
+-------------------
+
+(See :ref:`structure-accessors` above.)
+
+Likewise, a structure accessor is really a special kind of syntactic sugar for accessing a field in a structure.
+
+It, also, could be replaced by a lambda function, except that structure accessor syntax is much terser.
+
+For example, given the structure ::
+
+  def { a:Int b:[UInt UInt] c:Real } Foo;
+
+the following code will access the field named ``c``: ::
+
+  Foo{ c=3.1415 } ->c
+
+This code is equivalent to ::
+
+  Foo{ c=3.1415 }->Real(\c)
+
+You can also nest accessors in the obvious way: ::
+
+  def { one:Int two:Int } Baz;
+  def { baz:Baz } Bar;
+  def { bar:Bar } Foo;
+
+  Foo {} ->bar->baz->two
+
+.. note::
+
+  Unlike the equivalent lambda function, you don't need to specify the field's type when using the accessor.
+  This makes using nested structures much more sane.
+
+
 Constructing structures
 -----------------------
 
@@ -576,15 +626,14 @@ For example: ::
 
 Here the object that is constructed is really ``Foo { a=0 b=nil c=false }``
 
-Variables
----------
+Function argument fields
+------------------------
 
-'Variables' (however incorrectly names; really they should be called 'fieldrefs') are a way to access the data
-of a function's input type.
+Function argument fields is how you access the data of a function's input value.
 
 (See 'variable identifiers' above in :ref:`lexical-structure`.)
 
-There are two ways to access the function's input type:
+There are two ways to access the function's input value:
 
   * By accessing the contents of a certain field of the input value. (By using the ``\<fieldname>`` syntax.)
   * By accessing the input value as a whole. (The special token ``\\``)
