@@ -792,44 +792,50 @@ The example above would be turned into something resembling the following code: 
 
 Here is the list of supported operators, in order of precedence. (The more tightly binding ones are listed first.)
 
-=================== =================  ===================================
+.. csv-table:: 
+  :header: "Precedence level","Operator","Accepted types","Operation"
+  :delim: ;
+
+  1;``!`` *X*;Bool;Boolean negation
+  1;``-`` *X*;Int,Real;The negation of a number
+
+
+=================== =================  =====================================
 Operator            Accepted types     Operation
-=================== =================  ===================================
+=================== =================  =====================================
 ``!`` *X*           Bool               Boolean negation
 ``-`` *X*           Int,Real           The negation of a number
 ``~`` *X*           UInt               Binary 'not'. (Bit flipping.)
 ``bool(`` *X* ``)`` Int,UInt           Converts the argument to a Bool
 ``int(`` *X* ``)``  UInt,Real,Bool     Converts the argument to an Int
 ``uint(`` *X* ``)`` Real,Int,Bool      Converts the argument to a UInt
-``real(`` *X* ``)`` Int,UInt           Converts the argument to a Real     
-=================== =================  ===================================
-
+``real(`` *X* ``)`` Int,UInt           Converts the argument to a Real    
 
 *X* ``&`` *Y*       UInt               Binary 'AND'.
 *X* ``|`` *Y*       UInt               Binary 'OR'.
 *X* ``^`` *Y*       UInt               Binary 'XOR'.
 *X* ``<<`` *Y*      UInt               Bit shift left.
 *X* ``>>`` *Y*      UInt               Bit shift right.
-=================== =================  ===================================
 
-*X* ``*`` *Y*      Int,UInt,Real      Multiplication.
-*X* ``/`` *Y*      Int,UInt,Real      Division.
-*X* ``%`` *Y*      Int,UInt           'Modulo division'.
-=================  =================  ===================================
-*X* ``+`` *Y*      Int,UInt,Real      Addition.
-*X* ``-`` *Y*      Int,UInt,Real      Subtraction.
-=================  =================  ===================================
-*X* ``==`` *Y*     Int,UInt,Real,Sym  Test for equality. (Returns Bool.)
-*X* ``=`` *Y*      Int,UInt,Real,Sym  Synonym for ``==``.
-*X* ``!=`` *Y*     Int,UInt,Real,Sym  Synonym for ``!(``*X*``==``*Y*``)``.
-*X* ``<`` *Y*      Int,UInt,Real      'Less than'.
-*X* ``<=`` *Y*     Int,UInt,Real      'Less than or equal to'.
-*X* ``>`` *Y*      Int,UInt,Real      'Greater than'.
-*X* ``>=`` *Y*     Int,UInt,Real      'Greater than or equal to'.
-=================  =================  ===================================
-*X* ``&&`` *Y*     Bool               Boolean 'AND'. (Not short-circuited!)
-*X* ``||`` *Y*     Bool               Boolean 'OR'. (Not short-circuited!)
-=================  =================  ===================================
+*X* ``*`` *Y*       Int,UInt,Real      Multiplication.
+*X* ``/`` *Y*       Int,UInt,Real      Division.
+*X* ``%`` *Y*       Int,UInt           'Modulo division'.
+
+*X* ``+`` *Y*       Int,UInt,Real      Addition.
+*X* ``-`` *Y*       Int,UInt,Real      Subtraction.
+
+*X* ``==`` *Y*      Int,UInt,Real,Sym  Test for equality. (Returns Bool.)
+*X* ``=`` *Y*       Int,UInt,Real,Sym  Synonym for ``==``.
+*X* ``!=`` *Y*      Int,UInt,Real,Sym  Synonym for ``!(``*X*``==``*Y*``)``.
+*X* ``<`` *Y*       Int,UInt,Real      'Less than'.
+*X* ``<=`` *Y*      Int,UInt,Real      'Less than or equal to'.
+*X* ``>`` *Y*       Int,UInt,Real      'Greater than'.
+*X* ``>=`` *Y*      Int,UInt,Real      'Greater than or equal to'.
+
+*X* ``&&`` *Y*      Bool               Boolean 'AND'. (Not short-circuited!)
+*X* ``||`` *Y*      Bool               Boolean 'OR'. (Not short-circuited!)
+=================== =================  =====================================
+
 
 
 
