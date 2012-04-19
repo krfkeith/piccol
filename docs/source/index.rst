@@ -24,6 +24,7 @@ Table of contents
 
    README
    DOCS
+   examples
 
 Indices and tables
 ------------------
