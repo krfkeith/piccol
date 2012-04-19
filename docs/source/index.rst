@@ -6,19 +6,18 @@
 The Piccol programming language
 ===============================
 
+Piccol is programming language that is
 
+  * Embeddable and small
+  * Statically-typed and strict
+  * Purely functional
+  * Very easy to extend and modify
 
-Introduction
-------------
+It is a language in the spirit of Lua, Tcl and Scheme, only on the other end of the strictness scale, inspired by
+Standard ML, C++ and Haskell.
 
-:doc:`README`
-
-Language reference
--------------------------------
-
-:doc:`DOCS`
-
-Contents:
+Table of contents
+-----------------
 
 .. toctree::
    :maxdepth: 2
@@ -27,7 +26,7 @@ Contents:
    DOCS
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`search`

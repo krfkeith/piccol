@@ -21,9 +21,11 @@ Lexical structure
 
 Piccol has three kinds of identifiers:
 
+.. index:: Type identifiers
+
 **Type identifiers**
 
-    Typenames *must* start with a capital letter, otherwise it is a syntax error!
+    Typenames *must* start with a capital letter, otherwise it is a syntax error! 
     Capital letters are the ASCII characters ``[A-Z]``. (No Unicode support yet.)
 
     Regex: ``[A-Z][A-Za-z0-9_]*``
@@ -32,6 +34,8 @@ Piccol has three kinds of identifiers:
       * ``Int``
       * ``FooBar``
       * ``Type_1``
+
+.. index:: Name identifiers
 
 **Name identifiers** 
 
@@ -45,35 +49,47 @@ Piccol has three kinds of identifiers:
       * ``aFunc``
       * ``a_11``
 
-**Variable identifiers**
+.. index:: Field identifiers
 
-    Variables are like name identifiers, except they start with a
+**Field identifiers**
+
+    Field identifiers are like name identifiers, except they start with a
     backslash, ``'\'``. 
 
-    Also, the special token ``\\`` (two backslashes) is parsed as a special variable identifier.
+    Also, the special token ``\\`` (two backslashes) is parsed as a special field identifier.
 
     Examples:
       * ``\foo``
       * ``\x_AB``
       * ``\\``
 
+.. index:: Syntax tokens
+
 This is the complete list of all **tokens** that are used for parsing Piccol:
 
   ``\`` ``{`` ``}`` ``[`` ``]`` ``(`` ``)`` ``->`` ``:-`` ``=`` ``?`` ``;`` ``.`` ``/*`` ``*/`` ``#``
 
+.. index:: Reserved words
+
 This is the complete list of **reserved words** used in Piccol:
 
   ``def`` ``nil`` ``false`` ``true``
+
+.. index:: Preprocessor tokens
 
 These tokens are used in Piccol's **macro preprocessor**. They are also reserved, though not
 strictly part of Piccol proper.
 
   ``<:`` ``:>`` ``<::`` ``::>``
 
+.. index:: Whitespace
+
 Whitespace is not significant, except as a delimiter.
 
 Comments
 --------
+
+.. index:: Comments
 
 Piccol has two types of comments: C-style ``/* ... */`` and script-style ``# ...``
 
@@ -84,6 +100,8 @@ Comments are parsed as whitespace.
 Literal values
 --------------
 
+.. index:: Literals
+
 Piccol **literals** can be of four primitive types:
   
   * Real numbers. ("Doubles".)
@@ -91,6 +109,8 @@ Piccol **literals** can be of four primitive types:
   * Unsigned integers.
   * Booleans.
   * Symbolic constants. (Like Lisp 'symbols' or Prolog 'atoms'. Piccol calls them 'symbols'.)
+
+... index:: Real number literals
 
 **Real numbers** can be of two forms:
 
@@ -108,6 +128,8 @@ Piccol **literals** can be of four primitive types:
 
     Example: ``3f``
 
+.. index:: Unsigned integer literals
+
 **Unsigned integers** have one form:
    
   A string of digits, followed by the mandatory character ``'u'``.
@@ -116,6 +138,8 @@ Piccol **literals** can be of four primitive types:
     Regex: ``[0-9]+u`` 
 
     Example: ``0u``
+
+.. index:: Signed integer literals
 
 **Signed integers** have one form:
 
@@ -128,7 +152,11 @@ Piccol **literals** can be of four primitive types:
 
     Example: ``123``
 
+.. index:: Booleans
+
 **Booleans** are either the token ``true`` or the token ``false``.
+
+.. index:: Symbolic constant literals, Special characters
 
 **Symbolic constants** have two forms:
 
@@ -170,6 +198,8 @@ Examples of symbolic constants:
 Typenames
 ---------
 
+.. index:: Typenames
+
 A **typename** is either a type identifier, or a tuple name.
 
 Type identifiers -- see :ref:`lexical-structure` above.
@@ -178,6 +208,8 @@ Examples:
   * ``Int`` 
   * ``MyType``
   * ``Type_1``.
+
+.. index:: Tuples
 
 A **tuple name** is a space-separated list (possibly empty) of typenames between ``[`` and ``]``.
 
@@ -190,6 +222,8 @@ For example:
 
 Type definitions
 ----------------
+
+.. index:: Type definitions
 
 A **type definition** starts with the keyword 'def' and ends in a semicolon, and has two forms: ::
 
@@ -224,6 +258,8 @@ Examples of type definitions: ::
 Function definitions
 --------------------
 
+.. index:: Function definitions
+
 A **function definition** looks like this: ::
 
   <name> <typename> -> <typename> :- <expression> .
@@ -246,6 +282,8 @@ Examples of functions: ::
  
 Expressions
 -----------
+
+.. index:: Expressions
 
 Piccol has a postfix function call syntax, similar to stack-based languages like Forth and Factor.
 
@@ -272,12 +310,16 @@ Examples of function bodies: ::
 Values
 ------
 
+.. index:: Values
+
 A **value** is one of: 
 
   * A constructed tuple 
   * A constructed structure
   * A function argument field
   * A literal value
+
+.. index:: Tuples
 
 A **constructed tuple** looks like this: 
 
@@ -301,6 +343,8 @@ A **constructed tuple** looks like this:
     * ``[ \one \two ]``
     * ``[ (one->Int) (two->Int) (1 inc->Int) ]``
 
+.. index:: Structures
+
 A **constructed structure** looks like this: 
 
   ::
@@ -317,7 +361,9 @@ A **constructed structure** looks like this:
     * ``Void{}``
     * ``SubExpr{ val=([1u 2u] complex_calculation->Real) }``
 
-A **function argument field** is a variable identifier, see :ref:`lexical-structure` above.
+.. index:: Function arguments
+
+A **function argument field** is a field identifier, see :ref:`lexical-structure` above.
 
 For **literal values** see :ref:`literal-values` above.
 
@@ -336,6 +382,8 @@ For **literal values** see :ref:`literal-values` above.
 
 Function calls
 --------------
+
+.. index:: Function calls
 
 A **function call** looks like this: ::
 
@@ -365,8 +413,10 @@ Examples:
 Lambda function calls
 ---------------------
 
-A **lambda function** in Piccol is an anonymous function that is defined in-line while an expression is parsed and 
-immediately called.
+.. index:: Lambda functions, Function calls
+
+A **lambda function** in Piccol is an anonymous function that is defined in-line while an expression is parsed, and 
+is immediately called at the corresponding place at runtime.
 
 It looks like this: ::
 
@@ -385,6 +435,8 @@ Examples:
 Structure modifiers
 -------------------
 
+.. index:: Structures, Structure modifiers
+
 **Structure modifiers** look exactly like curly-brace structure constructors, except without the leading ``<typename>``: ::
 
   { <fieldlist> }
@@ -400,6 +452,8 @@ Examples:
 Structure accessors
 -------------------
 
+.. index:: Structures, Structure accessors
+
 **Structure accessors** are a way to access only a particular field of a structure. The syntax is similar to a
 lambda function call, except with a field name instead of a typename to the right of the ``->``. ::
 
@@ -413,6 +467,8 @@ Examples:
 Control constructs
 ------------------
 
+.. index:: Control constructs
+
 There are exactly three **control constructs**. All three are reserved tokens in the language.
 
   * ``?``
@@ -424,6 +480,8 @@ Semantics
 
 Types
 -----
+
+.. index:: Built-in types
 
 Piccol types have several very restrictive properties:
   * They are always fixed-size. The size (in bytes) of a value of any given type is always constant at runtime.
@@ -452,6 +510,8 @@ reference themselves. ::
   def { v:Bool } Bool;
   def { v:Sym } Sym;
   def { } Void;
+
+.. index:: Tuples, Structures
 
 There are two kinds of non-atomic composite types in Piccol: tuples and structures.
 
@@ -492,6 +552,8 @@ is the exact same thing as ::
 Function evaluation
 -------------------
 
+.. index:: Function calls
+
 Function names have three elements: 
   * the function name proper
   * the function's input type
@@ -529,6 +591,8 @@ Examples:
 Lambda functions
 ----------------
 
+.. index:: Lambda functions
+
 (See :ref:`lambda-function-calls` syntax above.)
 
 A 'lambda function' is exactly the same as a 'normal' function, except that it 
@@ -545,6 +609,8 @@ Note that lambda functions will succeed or fail, just like 'normal' functions!
 
 Structure modifiers
 -------------------
+
+.. index:: Structures, Structure modifiers
 
 (See :ref:`structure-modifiers` syntax above.)
 
@@ -571,6 +637,8 @@ the structure is then returned. (Without changing any other fields!)
 
 Structure accessors
 -------------------
+
+.. index:: Structures, Structure accessors
 
 (See :ref:`structure-accessors` syntax above.)
 
@@ -607,6 +675,8 @@ You can also nest accessors in the obvious way: ::
 Constructing structures
 -----------------------
 
+.. index:: Structures
+
 .. note::
 
   When constructing a structure, you don't have to specify all of its fields. The fields you leave out
@@ -631,9 +701,11 @@ Here the object that is constructed is really ``Foo { a=0 b=nil c=false }``
 Function argument fields
 ------------------------
 
+.. index:: Function arguments, Field identifiers
+
 Function argument fields is how you access the data of a function's input value.
 
-(See 'variable identifiers' above in :ref:`lexical-structure`.)
+(See 'field identifiers' above in :ref:`lexical-structure`.)
 
 There are two ways to access the function's input value:
 
@@ -657,11 +729,13 @@ Here ``func`` accepts a ``MyType`` value and passes it to another function, ``fr
 
   func MyType->Void :- \\ frob.
 
-Field references work exactly the same for tuples as they do for structures: ::
+Field identifiers work exactly the same for tuples as they do for structures: ::
 
   def [one:Int two:Int three:Int];
 
   foo [Int Int Int]->Int :- [ ([\one \two] add->Int) \three ] add->Int.
+
+.. index:: Built-in types
 
 .. note::
 
@@ -684,6 +758,8 @@ Field references work exactly the same for tuples as they do for structures: ::
 Control constructs
 ------------------
 
+.. index:: Control constructs
+
 There are three control constructs in Piccol:
 
   * ``;``
@@ -700,6 +776,8 @@ If a branch succeeds, then the functions successfully returns and the remaining 
 
 Branches
 --------
+
+.. index:: Branches, Control constructs
 
 Branches are delimited by the ``;`` token. 
 
@@ -747,6 +825,8 @@ fails, then ``tryit`` returns the default value of ``42``.
 Tests and fails
 ---------------
 
+.. index:: Failure, Control constructs
+
 The special token ``fail`` fails the current branch, unconditionally. It acts like a ``Void->Void`` function that always
 fails.
 
@@ -774,6 +854,8 @@ If ``ok`` returns ``true``, then ``func_then`` will be called; if it returns ``f
 
 Arithmetic and logic
 ====================
+
+.. index:: Arithmetic, Logic, Bitwise operations, Operators
 
 The standard arithmetic, bit and boolean infix operators are realized in Piccol through macro expansion.
 
@@ -889,6 +971,8 @@ The code should be rewritten with parentheses: ::
 
 Inline assembly functions
 =========================
+
+.. index:: Arithmetic, Logic, Bitwise operations, Operators
 
 'Inline assembly' (see :ref:`function-calls` syntax) is a lower-level, postfix notation for arithmetic, logic and boolean 
 operators.
