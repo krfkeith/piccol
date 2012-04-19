@@ -194,6 +194,8 @@ Examples of symbolic constants:
     .. note::
 
       The backslash in this symbol is ignored! It is equivalent to ``'oops: 032'``.
+
+.. _typenames:
   
 Typenames
 ---------
@@ -279,6 +281,7 @@ Examples of functions: ::
   maketwoints UInt-> [ Int Int ] :- 
     [ (one->Int) (two->Int) ].
 
+.. _expression:
  
 Expressions
 -----------
@@ -855,6 +858,11 @@ If ``ok`` returns ``true``, then ``func_then`` will be called; if it returns ``f
 Arithmetic and logic
 ====================
 
+.. _infix-expressions:
+
+Infix expressions
+-----------------
+
 .. index:: Arithmetic, Logic, Bitwise operations, Operators
 
 The standard arithmetic, bit and boolean infix operators are realized in Piccol through macro expansion.
@@ -970,7 +978,7 @@ The code should be rewritten with parentheses: ::
 
 
 Inline assembly functions
-=========================
+-------------------------
 
 .. index:: Arithmetic, Logic, Bitwise operations, Operators
 
@@ -1073,5 +1081,59 @@ The following is a table of all inline assembly functions.
 
   ``Bool``,           ``if``,               ``Void``, Equivalent to the ``?`` control construct.
   ``Void``,           ``fail``,              A special type of 'fail', Equivalent to the ``fail`` control construct. Does not return any type.
+
+
+Macro preprocessor
+==================
+
+.. index:: Predefined macros
+
+All Piccol source files are automatically preprocessed with :doc:`Macrolan </macrolan>` before parsing.
+
+There are several macros predefined in Piccol, some to make it easier for the user to write other macros, 
+some to be used directly as syntactic sugar.
+
+The infix syntax for operators (:ref:`infix-expressions`) is a predefined as a macro named ``expr`` and ``default``.
+
+(``expr`` if you want to use infix syntax expressions in your own macros, ``default`` so you can type ``<: ... :>`` 
+instead of ``<:[expr] ... :>``.)
+
+Some other predefined macros:
+
+  * ``spaces``: matches zero or more whitespace characters.
+  * ``ident``: matches name identifiers. (:ref:`lexical-structure`)
+  * ``literals``: matches literals (:ref:`literal-values`) or function argument fields. (:ref:`funarg-fields`)
+  * ``types``: matches typenames. (:ref:`typenames`)
+  * ``type_canonical``: reformats a typename to 'canonical form', required in the C++ API.
+  * ``case``: the 'switch-case' construct, see below.
+
+The 'case' macro has the following syntax: ::
+
+  <:[case] <fieldref> :
+      <literal> ? <expr> ;
+      ...
+   :>
+
+where ``<fieldref>`` is a field identifier (:ref:`lexical-structure`), ``<literal>`` is a literal 
+(:ref:`literal-values`) and ``<expr>`` is an arbitrary expression. (:ref:`expression`)
+
+The trailing ``;`` is optional. Whitespace is optional too.
+
+The ``case`` macro expands to something like the following: ::
+
+  <: <fieldref> == <literal1> :> ? <body1> ;
+  <: <fieldref> == <literal2> :> ? <body2> ;
+  ...
+
+You can also nest macros, which is especially useful with 'case': ::
+
+  <:[case] \a : 
+     'one' ? \b->Int( <:[case] \v : 
+                            'one' ? 11 ; 
+                            'two' ? 12 :> )
+     'two' ? \b->Int( <:[case] \v :
+                            'one' ? 21 ;
+                            'two' ? 22 :> )
+   :>
 
 
