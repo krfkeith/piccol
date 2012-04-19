@@ -16,6 +16,13 @@ Piccol is programming language that is
 It is a language in the spirit of Lua, Tcl and Scheme, only on the other end of the strictness scale, inspired by
 Standard ML, C++ and Haskell.
 
+Piccol is implemented as a C++11 header-only library, along with a set of executable grammar definitions. 
+(These can be compiled into your app if you so wish.)
+
+You will need a C++11 compiler to use Piccol. 
+(Piccol has been tested and works with modern versions of gcc.)
+
+
 Table of contents
 -----------------
 
