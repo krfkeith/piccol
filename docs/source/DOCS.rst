@@ -5,9 +5,9 @@
    :format: html
 
 
-*****************************
-The Piccol language reference
-*****************************
+===============================
+ The Piccol language reference
+===============================
 
 What follows is an informal but complete documentation on how to write Piccol programs.
 
@@ -513,7 +513,7 @@ When a function is called it will either *succeed*, returning a type, or it will
 ('Failure' is very similar to exceptions in other languages, except that Piccol failures don't have a type and
 have a ligher implementation in the VM.)
 
-When a function is called, (see :ref:`function-calls` above) Piccol's syntax puts the input value on the *left* of the 
+When a function is called, (see :ref:`function-calls` syntax above) Piccol's syntax puts the input value on the *left* of the 
 function name, while the function's return type must be specified on the *right*.
 
 .. note::
@@ -529,7 +529,7 @@ Examples:
 Lambda functions
 ----------------
 
-(See :ref:`lambda-function-calls` above.)
+(See :ref:`lambda-function-calls` syntax above.)
 
 A 'lambda function' is exactly the same as a 'normal' function, except that it 
   * doesn't have a name (it still has an input and return type, though!)
@@ -546,7 +546,7 @@ Note that lambda functions will succeed or fail, just like 'normal' functions!
 Structure modifiers
 -------------------
 
-(See :ref:`structure-modifiers` above.)
+(See :ref:`structure-modifiers` syntax above.)
 
 A structure modifier is really a special kind of syntactic sugar for changing fields in a structure.
 It could be replaced by a lambda function, except that structure modifiers are implemented in a slightly
@@ -572,7 +572,7 @@ the structure is then returned. (Without changing any other fields!)
 Structure accessors
 -------------------
 
-(See :ref:`structure-accessors` above.)
+(See :ref:`structure-accessors` syntax above.)
 
 Likewise, a structure accessor is really a special kind of syntactic sugar for accessing a field in a structure.
 
@@ -625,6 +625,8 @@ For example: ::
   Foo {}
 
 Here the object that is constructed is really ``Foo { a=0 b=nil c=false }``
+
+.. _funarg-fields:
 
 Function argument fields
 ------------------------
@@ -794,52 +796,198 @@ Here is the list of supported operators, in order of precedence. (The more tight
 
 .. csv-table:: 
   :header: "Precedence level","Operator","Accepted types","Operation"
-  :widths: 15,20,20,45
+  :widths: 10,20,20,45
   :delim: ;
 
-  1;``!`` *X*;Bool;Boolean negation
-  1;``-`` *X*;Int,Real;The negation of a number
+  0;``(`` *EXPR* ``)``;  ;                   Parentheses can be used for grouping
+  0;*LITERAL*;           ;                   Literal values or function argument fields
+
+  1;``!`` *X*;           Bool;               Boolean negation
+  1;``-`` *X*;           Int,Real;           The negation of a number
+  1;``~`` *X*;           UInt;               Binary 'not' (bit flipping)
+  1;``bool(`` *EXPR* ``)``; Int,UInt;           Converts the argument to a Bool
+  1;``int(`` *EXPR* ``)``;  UInt,Real,Bool;     Converts the argument to an Int
+  1;``uint(`` *EXPR* ``)``; Real,Int,Bool;      Converts the argument to a UInt
+  1;``real(`` *EXPR* ``)``; Int,UInt;           Converts the argument to a Real    
+
+  2;*X* ``&`` *Y*;       UInt;               Binary 'AND'
+  2;*X* ``|`` *Y*;       UInt;               Binary 'OR'
+  2;*X* ``^`` *Y*;       UInt;               Binary 'XOR'
+  2;*X* ``<<`` *Y*;      UInt;               Bit shift left
+  2;*X* ``>>`` *Y*;      UInt;               Bit shift right
+
+  3;*X* ``*`` *Y*;       Int,UInt,Real;      Multiplication
+  3;*X* ``/`` *Y*;       Int,UInt,Real;      Division
+  3;*X* ``%`` *Y*;       Int,UInt;           'Modulo division'
+
+  4;*X* ``+`` *Y*;       Int,UInt,Real;      Addition
+  4;*X* ``-`` *Y*;       Int,UInt,Real;      Subtraction
+
+  5;*X* ``==`` *Y*;      Int,UInt,Real,Sym;  Test for equality. (Returns Bool)
+  5;*X* ``=`` *Y*;       Int,UInt,Real,Sym;  Synonym for ``==``
+  5;*X* ``!=`` *Y*;      Int,UInt,Real,Sym;  Synonym for ``!(``*X*``==``*Y*``)``
+  5;*X* ``<`` *Y*;       Int,UInt,Real;      'Less than'
+  5;*X* ``<=`` *Y*;      Int,UInt,Real;      'Less than or equal to'
+  5;*X* ``>`` *Y*;       Int,UInt,Real;      'Greater than'
+  5;*X* ``>=`` *Y*;      Int,UInt,Real;      'Greater than or equal to'
+
+  6;*X* ``&&`` *Y*;      Bool;               Boolean 'AND'. (Not short-circuited!)
+  6;*X* ``||`` *Y*;      Bool;               Boolean 'OR'. (Not short-circuited!)
+
+You can use parentheses for grouping expressions, so something like this ::
+
+  <: (1+3)*(2+4) :> 
+
+works as expected.
+
+.. note::
+
+  You can only use literals or function argument fields as values in infix expressions!
+
+  (See :ref:`literal-values`, :ref:`funarg-fields`)
+
+That means, for example, that this code will result in a parse error: ::
+
+  <: \a->b + 1 :>
+
+(Because ``\a->b`` is an expression, not a function argument field; simply ``\a`` would be fine, though.)
+
+You should rewrite this code using lambda functions: ::
+
+  \a->Int(<: \b + 1 :>)
+
+.. note::
+
+  Arithmetic expressions **do not** do any type coercion.
+
+An expression like ::
+
+  <: 1 + 1.0 :>
+
+is a type error. Moreover, ::
+
+  <: \a + 1 :> 
+
+is *also* a type error if ``\a`` is a ``UInt``. (Use ``<: \a + 1u :>`` instead.)
+
+.. note::
+
+  Arithmetic expressions are *not* parenthesised.
+
+That means that this code ::
+
+  Foo { a=<:\one + 1:> }
+
+is a syntax error, since it will be expanded to something like ::
+
+  Foo { a=[\one 1] $add }
+
+The code should be rewritten with parentheses: ::
+
+  Foo { a=(<: \one + 1 :>) }
 
 
-=================== =================  =====================================
-Operator            Accepted types     Operation
-=================== =================  =====================================
-``!`` *X*           Bool               Boolean negation
-``-`` *X*           Int,Real           The negation of a number
-``~`` *X*           UInt               Binary 'not'. (Bit flipping.)
-``bool(`` *X* ``)`` Int,UInt           Converts the argument to a Bool
-``int(`` *X* ``)``  UInt,Real,Bool     Converts the argument to an Int
-``uint(`` *X* ``)`` Real,Int,Bool      Converts the argument to a UInt
-``real(`` *X* ``)`` Int,UInt           Converts the argument to a Real    
+Inline assembly functions
+=========================
 
-*X* ``&`` *Y*       UInt               Binary 'AND'.
-*X* ``|`` *Y*       UInt               Binary 'OR'.
-*X* ``^`` *Y*       UInt               Binary 'XOR'.
-*X* ``<<`` *Y*      UInt               Bit shift left.
-*X* ``>>`` *Y*      UInt               Bit shift right.
+'Inline assembly' (see :ref:`function-calls` syntax) is a lower-level, postfix notation for arithmetic, logic and boolean 
+operators.
 
-*X* ``*`` *Y*       Int,UInt,Real      Multiplication.
-*X* ``/`` *Y*       Int,UInt,Real      Division.
-*X* ``%`` *Y*       Int,UInt           'Modulo division'.
+Infix expression macros expand to expressions of inline assembly calls. 
 
-*X* ``+`` *Y*       Int,UInt,Real      Addition.
-*X* ``-`` *Y*       Int,UInt,Real      Subtraction.
+Inline assembly functions are closely tied to the VM implementation and are hardcoded into the Piccol compiler.
+They cannot be changed or overloaded.
 
-*X* ``==`` *Y*      Int,UInt,Real,Sym  Test for equality. (Returns Bool.)
-*X* ``=`` *Y*       Int,UInt,Real,Sym  Synonym for ``==``.
-*X* ``!=`` *Y*      Int,UInt,Real,Sym  Synonym for ``!(``*X*``==``*Y*``)``.
-*X* ``<`` *Y*       Int,UInt,Real      'Less than'.
-*X* ``<=`` *Y*      Int,UInt,Real      'Less than or equal to'.
-*X* ``>`` *Y*       Int,UInt,Real      'Greater than'.
-*X* ``>=`` *Y*      Int,UInt,Real      'Greater than or equal to'.
+Syntactically, inline assembly calls look like regular function calls, except that the return type is not 
+specified, it is inferred from the argument type.
 
-*X* ``&&`` *Y*      Bool               Boolean 'AND'. (Not short-circuited!)
-*X* ``||`` *Y*      Bool               Boolean 'OR'. (Not short-circuited!)
-=================== =================  =====================================
+Names of inline assembly functions start with the ``$`` symbol.
 
+Example: ::
 
+  mul [Int Int]->Int :- [\a \b] $mul.
 
+``$mul`` executes the 'INT_MUL' opcode and returns an ``Int``, since the arguments on the left side are ``Int``.
 
+The following is a table of all inline assembly functions.
 
+.. csv-table:: 
+  :header: "Input type","Name","Output type","Operation"
+  :widths: 10,10,10,40
+  :delim: ,
+
+  ``[ Int Int ]``,    ``add``,           ``Int``, Signed integer addition
+  ``[ Int Int ]``,    ``sub``,           ``Int``, Signed integer subtraction
+  ``[ Int Int ]``,    ``mul``,           ``Int``, Signed integer multiplication
+  ``[ Int Int ]``,    ``div``,           ``Int``, Signed integer division
+  ``[ Int Int ]``,    ``mod``,           ``Int``, Signed integer modulo
+  ``Int``,            ``neg``,           ``Int``, Signed integer negation
+
+  ``[ UInt UInt ]``,  ``add``,          ``UInt``, Unsigned integer addition
+  ``[ UInt UInt ]``,  ``sub``,          ``UInt``, Unsigned integer subtraction
+  ``[ UInt UInt ]``,  ``mul``,          ``UInt``, Unsigned integer multiplication
+  ``[ UInt UInt ]``,  ``div``,          ``UInt``, Unsigned integer division
+  ``[ UInt UInt ]``,  ``mod``,          ``UInt``, Unsigned integer modulo
+
+  ``[ Real Real ]``,  ``add``,          ``Real``, Real number addition
+  ``[ Real Real ]``,  ``sub``,          ``Real``, Real number subtraction
+  ``[ Real Real ]``,  ``mul``,          ``Real``, Real number multiplication
+  ``[ Real Real ]``,  ``div``,          ``Real``, Real number division
+  ``Real``,           ``neg``,          ``Real``, Real number negation
+
+  ``[ UInt UInt ]``,  ``band``,             ``UInt``, Bitwise 'AND'
+  ``[ UInt UInt ]``,  ``bor``,              ``UInt``, Bitwise 'OR'
+  ``[ UInt UInt ]``,  ``bnot``,             ``UInt``, Bitwise 'NOT'
+  ``[ UInt UInt ]``,  ``bxor``,             ``UInt``, Bitwise 'XOR'
+  ``[ UInt UInt ]``,  ``bshl``,             ``UInt``, Bit shift left
+  ``[ UInt UInt ]``,  ``bshr``,             ``UInt``, Bit shift right
+
+  ``[ Int Int ]``,    ``eq``,            ``Bool``, Signed integer equality
+  ``[ Int Int ]``,    ``lt``,            ``Bool``, Signed integer 'less than'
+  ``[ Int Int ]``,    ``lte``,           ``Bool``, Signed integer 'less than or equal to'
+  ``[ Int Int ]``,    ``gt``,            ``Bool``, Signed integer 'greater than'
+  ``[ Int Int ]``,    ``gte``,           ``Bool``, Signed integer 'greater than or equal to'
+
+  ``[ UInt UInt ]``,  ``eq``,            ``Bool``, Unsigned integer equality
+  ``[ UInt UInt ]``,  ``lt``,            ``Bool``, Unsigned integer 'less than'
+  ``[ UInt UInt ]``,  ``lte``,           ``Bool``, Unsigned integer 'less than or equal to'
+  ``[ UInt UInt ]``,  ``gt``,            ``Bool``, Unsigned integer 'greater than'
+  ``[ UInt UInt ]``,  ``gte``,           ``Bool``, Unsigned integer 'greater than or equal to'
+
+  ``[ Real Real ]``,  ``eq``,            ``Bool``, Real number equality
+  ``[ Real Real ]``,  ``lt``,            ``Bool``, Real number 'less than'
+  ``[ Real Real ]``,  ``lte``,           ``Bool``, Real number 'less than or equal to'
+  ``[ Real Real ]``,  ``gt``,            ``Bool``, Real number 'greater than'
+  ``[ Real Real ]``,  ``gte``,           ``Bool``, Real number 'greater than or equal to'
+
+  ``[ Sym Sym ]``,  ``eq``,   ``Bool``, Comparison for equality of symbols
+
+  ``[ Bool Bool ]``,  ``and``,           ``Bool``, Boolean 'AND'
+  ``[ Bool Bool ]``,  ``or``,            ``Bool``, Boolean 'OR'
+  ``Bool``,           ``not``,           ``Bool``, Boolean negation
+
+  ``Int``,            ``to_real``,   ``Real``, Signed integer to real number conversion
+  ``UInt``,           ``to_real``,   ``Real``, Unsigned integer to real number conversion
+  ``Real``,           ``to_int``,    ``Int``, Real number to signed integer conversion
+  ``Real``,           ``to_uint``,   ``UInt``, Real number to unsigned integer conversion. (Unsafe!!)
+
+  ``Int``,            ``to_sym``,    ``Sym``, Converts ASCII code value to symbolic constant. (No Unicode support!!)
+  ``UInt``,           ``to_sym``,    ``Sym``, Converts ASCII code value to symbolic constant. (No Unicode support!!)
+            
+  ``Int``,            ``to_uint``,           ``UInt``, Signed to unsigned integer conversion. (Unsafe!!)
+  ``Int``,            ``to_bool``,           ``Bool``, Integer to boolean conversion
+  ``UInt``,           ``to_int``,            ``Int``, Unsigned to signed integer conversion. (Unsafe!!)
+  ``UInt``,           ``to_bool``,           ``Bool``, Unsigned integer to boolean conversion
+  ``Bool``,           ``to_int``,            ``Int``, Boolean to signed integer conversion
+  ``Bool``,           ``to_uint``,           ``UInt``, Boolean to unsigned integer conversion
+
+  ``[ Int ]``,   ``noop``,   ``Int``, No-op; does absolutely nothing but useful for writing macros. 
+  ``[ UInt ]``,  ``noop``,   ``UInt``, No-op
+  ``[ Bool ]``,  ``noop``,   ``Bool``, No-op
+  ``[ Real ]``,  ``noop``,   ``Real``, No-op
+  ``[ Sym ]``,   ``noop``,   ``Sym``, No-op
+
+  ``Bool``,           ``if``,               ``Void``, Equivalent to the ``?`` control construct.
+  ``Void``,           ``fail``,              A special type of 'fail', Equivalent to the ``fail`` control construct. Does not return any type.
 
 
