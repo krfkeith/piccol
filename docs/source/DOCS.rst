@@ -934,7 +934,7 @@ works as expected.
 
   You can only use literals or function argument fields as values in infix expressions!
 
-  (See :ref:`literal-values`, :ref:`funarg-fields`)
+  (See :ref:`literal-values`, :ref:`funarg-fields`.)
 
 That means, for example, that this code will result in a parse error: ::
 
@@ -1105,7 +1105,13 @@ Some other predefined macros:
   * ``literals``: matches literals (:ref:`literal-values`) or function argument fields. (:ref:`funarg-fields`)
   * ``types``: matches typenames. (:ref:`typenames`)
   * ``type_canonical``: reformats a typename to 'canonical form', required in the C++ API.
+  * ``body``: a helper macro for constructing parsers of sequences of code.
   * ``case``: the 'switch-case' construct, see below.
+  * ``q``: a macro for quoting text in other macros.
+  * ``seq``: a macro that implements the 'sequencer' idiom.
+
+'case'
+------
 
 The 'case' macro has the following syntax: ::
 
@@ -1136,4 +1142,72 @@ You can also nest macros, which is especially useful with 'case': ::
                             'two' ? 22 :> )
    :>
 
+Note that the parser of this macro correctly detects ``;`` when it is part of a symbolic literal or 
+lambda function. (Semicolons inside symbolic literals and parenthesised chunks of text are ignored.)
+
+That is, the following code snippet is safe: it *does not* confuse the 'case' macro and does not
+result in a parse error. ::
+
+  <:[case] \a :
+      1 ? 'text;with;semicolon' ;
+      2 ? \b->Sym(\a ? 's1' ; 's2')
+   :>
+
+'q'
+---
+
+'q' is a special macro that allows you to 'quote' a block of text; that is, to insert verbatim some text into the output
+of another macro.
+
+A convoluted example: ::
+
+  <:[case] \a :
+     1 ? 'one' ;
+     2 ? 'two' ;
+    <:[q] \a is_three->Bool ? 'three' ; :>
+     4 ? 'four' 
+   :>
+
+It is a very simple and straightforward macro that simply relies on the rules of nesting macro applications.
+
+'seq'
+-----
+
+'seq' is a macro for taking advantage of the 'sequencer' idiom. 
+
+'seq' has the following syntax: ::
+
+  <:[case] <ident> => <exprs> => <typename> :>
+
+or ::
+
+  <:[case] <ident> => <exprs> :>
+
+(The trailing ``=> <typename>`` is optional.)
+
+Here ``<ident>`` is a name of a function. (A name identifier, see :ref:`lexical-structure`.)
+
+``exprs`` is a **comma-separated** list of expressions. (Commas inside symbol literals and parenthesised chunks of text
+will be ignored.)
+
+Here is an example of how this idiom works. The following macro ::
+
+  <:[seq] fmt => 'One is ', one->Sym, ', two is ', two->Sym, '\n' => Sym :>
+
+will be expanded to code that looks something like this: ::
+
+  fmt
+  'One is ' fmt
+  one->Sym fmt
+  ', two is ' fmt
+  two->Sym fmt
+  '\n' fmt
+  fmt->Sym
+
+That is, the listed expressions will be interleaved with proper calls to ``fmt``, so that the list of expressions
+is finally converted to a single value of type ``Sym``.
+
+This idiom is a convienient way of passing a variable-sized list of values to a function.
+
+It is useful, for example, for implementing formatter functions similar to ``printf`` in C.
 
