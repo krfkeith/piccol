@@ -134,6 +134,21 @@ def [v:Real];
 
 ::>
 
+<:: body(literals)
+
+  body_paren :- sym body_paren.
+  body_paren :- ')'.
+  body_paren :- '(' body_paren body_paren.
+  body_paren :- \any body_paren.
+
+  body :- sym &'' body.
+  body :- '(' body_paren &'' body.
+  body :- body_end.
+  body :- \any &'' body.
+  body :- .
+
+::>
+
 
 /*** ***/
 
@@ -213,11 +228,15 @@ def [v:Real];
 
 /*** ***/
 
-<:: case(literals)
 
-  body :- ';' @';\n'.
-  body :- \any &'' body.
-  body :- .
+<:: q
+  q :- \any &'' q.
+  q :- .
+::>
+
+<:: case(body)
+
+  body_end :- ';' @';\n'.
 
   literal_here :- literal &''.
 
@@ -227,6 +246,24 @@ def [v:Real];
   variable_here :- variable &'push'.
 
   case :- spaces variable_here spaces ':' branches.
+
+::>
+
+<:: seq(body,types)
+
+  ident_here :- ident @' ' &'' @' ' &'push'.
+  type_here :- type &''.
+
+  act :- @' ' &'top' @' '.
+
+  body_end :- ',' act.
+  body_end :- '=>' act spaces.
+
+  bodies :- @' ' &'top' @'->' type_here spaces \end.
+  bodies :- \end act.
+  bodies :- body bodies.
+  
+  seq :- spaces ident_here spaces '=>' spaces bodies.
 
 ::>
 

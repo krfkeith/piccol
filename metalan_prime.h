@@ -15,15 +15,21 @@ struct charmatcher {
                     std::string::const_iterator& b, 
                     std::string::const_iterator e, size_t& n) {
 
-        if (b == e)
-            return false;
-
+        static Sym end = symtab().get("end");
         static Sym any = symtab().get("any");
         static Sym digit = symtab().get("digit");
         static Sym locase = symtab().get("locase");
         static Sym upcase = symtab().get("upcase");
 
         //std::cout << str << "~[" << std::string(b, e).substr(0, 10) << "]" << std::endl;
+
+        if (b == e) {
+            if (sc.type == Symcell::ESCAPE && sc.sym == end) {
+                return true;
+            }
+
+            return false;
+        }
 
         if (sc.type == Symcell::ESCAPE) {
 
