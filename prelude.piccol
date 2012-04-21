@@ -251,7 +251,7 @@ def [v:Real];
 
 <:: seq(body,types)
 
-  ident_here :- ident @' ' &'' @' ' &'push'.
+  ident_here :- ident @' ' &'' @'_start ' &'push'.
   type_here :- type &''.
 
   act :- @' ' &'top' @' '.
@@ -259,8 +259,8 @@ def [v:Real];
   body_end :- ',' act.
   body_end :- '=>' act spaces.
 
-  bodies :- @' ' &'top' @'->' type_here spaces \end.
-  bodies :- \end act.
+  bodies :- @' ' &'top' @'_end->' type_here spaces \end.
+  bodies :- @' ' &'top' @'_end->Void' \end.
   bodies :- body bodies.
   
   seq :- spaces ident_here spaces '=>' spaces bodies.
