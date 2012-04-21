@@ -56,6 +56,7 @@ def [v:Real];
 
 <:: literals(ident)
 
+  variable :- '\\' '\\'.
   variable :- '\\' ident.
 
   digits_tail :- \digit digits_tail.
@@ -260,7 +261,7 @@ def [v:Real];
   body_end :- '=>' act spaces.
 
   bodies :- @' ' &'top' @'_end->' type_here spaces \end.
-  bodies :- @' ' &'top' @'_end->Void' \end.
+  bodies :- \end act @' ' &'top' @'_end->Void' .
   bodies :- body bodies.
   
   seq :- spaces ident_here spaces '=>' spaces bodies.

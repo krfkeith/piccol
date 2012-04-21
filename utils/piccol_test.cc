@@ -4,6 +4,8 @@
 
 #include "piccol_vm.h"
 
+#include "sequencers.h"
+
 void print_(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Struct& struc) {
 
     std::cout << "{" << std::endl;
@@ -42,67 +44,6 @@ void print_(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom:
 bool printer(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
              const nanom::Struct& struc, nanom::Struct& ret) {
     print_(shapes, shape, struc);
-    return true;
-}
-
-bool do_cout_int(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-                 const nanom::Struct& struc, nanom::Struct& ret) {
-
-    std::cout << struc.v[0].inte;
-    return true;
-}
-
-bool do_cout_sym(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-                 const nanom::Struct& struc, nanom::Struct& ret) {
-
-    std::cout << metalan::symtab().get(struc.v[0].uint);
-    return true;
-}
-
-bool do_cout_uint(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-                 const nanom::Struct& struc, nanom::Struct& ret) {
-
-    std::cout << struc.v[0].uint;
-    return true;
-}
-
-bool do_cout_real(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-                  const nanom::Struct& struc, nanom::Struct& ret) {
-
-    std::cout << struc.v[0].real;
-    return true;
-}
-
-bool do_cin_int(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-                const nanom::Struct& struc, nanom::Struct& ret) {
-    nanom::Int v;
-    std::cin >> v;
-    ret.v.push_back(v);
-    return true;
-}
-
-bool do_cin_uint(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-                 const nanom::Struct& struc, nanom::Struct& ret) {
-    nanom::UInt v;
-    std::cin >> v;
-    ret.v.push_back(v);
-    return true;
-}
-
-bool do_cin_real(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-                 const nanom::Struct& struc, nanom::Struct& ret) {
-    nanom::Real v;
-    std::cin >> v;
-    ret.v.push_back(v);
-    return true;
-}
-
-bool do_cin_sym(const nanom::Shapes& shapes, const nanom::Shape& shape, const nanom::Shape& shapeto,
-                const nanom::Struct& struc, nanom::Struct& ret) {
-    std::string v;
-    std::getline(std::cin, v);
-    nanom::UInt v2 = metalan::symtab().get(v);
-    ret.v.push_back(v2);
     return true;
 }
 
@@ -154,17 +95,7 @@ int main(int argc, char** argv) {
 
     l.init();
 
-    l.register_callback("print", "Int", "Void", do_cout_int);
-    l.register_callback("print", "Sym", "Void", do_cout_sym);
-    l.register_callback("print", "UInt", "Void", do_cout_uint);
-    l.register_callback("print", "Real", "Void", do_cout_real);
-    l.register_callback("print", "Bool", "Void", do_cout_uint);
-
-    l.register_callback("read", "Void", "Int", do_cin_int);
-    l.register_callback("read", "Void", "Sym", do_cin_sym);
-    l.register_callback("read", "Void", "UInt", do_cin_uint);
-    l.register_callback("read", "Void", "Real", do_cin_real);
-    l.register_callback("read", "Void", "Bool", do_cin_uint);
+    piccol::register_print_sequencer(l);
 
     l.register_callback("random", "[ Int Int ]", "Int", do_unirand);
     
