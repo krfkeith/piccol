@@ -34,9 +34,7 @@ Language features of Piccol
  * It is meant to function *only* as an extension language in a host C++ program.
    It can't function stand-alone, since basic functionality is missing.
 
-
  * It has static typing at compile time.
-
 
  * *All* data is pass-by-value; there are no pointers. 
    (When data is passed to a function it is copied.)
@@ -49,6 +47,9 @@ Language features of Piccol
 
  * Strings are supported only as immutable entries in a symbol table.
    (Represented as integer indexes into the symbol table at runtime.)
+
+ * There is *no* garbage collection. (Garbage collection is unneded because all function arguments
+   are passed by value and recursive structures are not allowed.)
 
  * Piccol code is purely functional and referentially-transparent.
    (Purity of C++ callbacks called from Piccol is not enforced, though.)
