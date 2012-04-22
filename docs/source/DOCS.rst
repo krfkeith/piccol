@@ -1183,7 +1183,7 @@ or ::
 
   <:[case] <ident> => <exprs> :>
 
-(The trailing ``=> <typename>`` is optional.)
+(The trailing ``=> <typename>`` is optional; if it is left off, then ``=> Void`` will be assumed.)
 
 Here ``<ident>`` is a name of a function. (A name identifier, see :ref:`lexical-structure`.)
 
@@ -1196,18 +1196,18 @@ Here is an example of how this idiom works. The following macro ::
 
 will be expanded to code that looks something like this: ::
 
-  fmt
-  'One is ' fmt
-  one->Sym fmt
+              fmt_start
+  'One is '   fmt
+  one->Sym    fmt
   ', two is ' fmt
-  two->Sym fmt
-  '\n' fmt
-  fmt->Sym
+  two->Sym    fmt
+  '\n'        fmt
+              fmt_end->Sym
 
 That is, the listed expressions will be interleaved with proper calls to ``fmt``, so that the list of expressions
 is finally converted to a single value of type ``Sym``.
 
 This idiom is a convienient way of passing a variable-sized list of values to a function.
 
-It is useful, for example, for implementing formatter functions similar to ``printf`` in C.
+It is also useful, for example, for implementing I/O and formatter functions. (Like ``printf`` in C and other languages.)
 
