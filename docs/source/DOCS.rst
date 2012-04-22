@@ -552,6 +552,12 @@ is the exact same thing as ::
 
   Tuple types *must* be defined before use, just like structure types!
 
+.. note::
+
+  Because of how data types are defined in Piccol (no pointers, variables, call-by-value, recursive structures or closures)
+  garbage collection is not needed. Piccol is a purely stack-based language.
+
+
 Function evaluation
 -------------------
 
