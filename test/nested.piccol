@@ -1,9 +1,4 @@
 
-tmp Int->Bool :- true; true.
-
-buzz Int->Void :- true ? 'Buzz' print.
-trybuzz Int->Void :- \v buzz; .
-
 def { a:Int b:Sym } A;
 def { x:A y:A } B;
 

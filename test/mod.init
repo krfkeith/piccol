@@ -1,6 +1,7 @@
 
 
 modules Void->Void :-
+
 /*
   ['aaa' 'mod_a.piccol'] module
   ['bbb' 'mod_b.piccol'] module
