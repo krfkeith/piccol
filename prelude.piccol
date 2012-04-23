@@ -27,7 +27,16 @@ def [v:Real];
   space :- '\n'.
   space :- '\t'.
 
+  comment_x :- '\n'.
+  comment_x :- \any comment_x.
+  comment_xx :- '*/'.
+  comment_xx :- \any comment_xx.
+
+  comment :- '#' comment_x.
+  comment :- '/*' comment_xx.
+
   spaces :- space spaces.
+  spaces :- comment spaces.
   spaces :- .
 
 ::>
