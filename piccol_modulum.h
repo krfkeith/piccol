@@ -31,11 +31,11 @@ struct PiccolF : public Piccol {
                piccol::load_file(sysdir + "piccol_lex.metal"),
                piccol::load_file(sysdir + "piccol_morph.metal"),
                piccol::load_file(sysdir + "piccol_emit.metal"),
-               piccol::load_file(sysdir + "prelude.piccol")),
+               piccol::load_file(sysdir + "prelude.piccol"),
+               _verbose),
         appdir(ad)
         {
             Piccol::init();
-            verbose = _verbose;
         }
 
     void load(const std::string& fn) {

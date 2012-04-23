@@ -86,14 +86,15 @@ struct Piccol {
            std::string&& lexer_, 
            std::string&& morpher_,
            std::string&& emiter_,
-           std::string&& prelude_) : 
+           std::string&& prelude_, 
+           bool _verbose = false) : 
         vm(code), as(vm), macro(macrolan_),
         macro_code(macrolan_),
         lexer_code(lexer_),
         morpher_code(morpher_),
         emiter_code(emiter_),
         prelude_code(prelude_),
-        verbose(false)
+        verbose(_verbose)
         {}
 
     void register_callback(const std::string& name, const std::string& from, const std::string& to,
