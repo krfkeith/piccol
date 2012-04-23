@@ -213,23 +213,31 @@ struct StructStack {
 
     StructStack() {}
 
-    bool put(const Struct& k, const Struct& v) {
+    bool put(const Struct& k, const Struct& v, size_t n) {
 
         std::lock_guard<std::mutex> l(mutex);
 
-        map[k].push_back(v);
+        auto& vec = map[k];
+
+        if (n > vec.size()) {
+            return false;
+        }
+
+        vec.insert(vec.begin() + (vec.size() - n), v);
         return true;
     }
 
-    bool put(const Shape& shape, const Struct& kv) {
+    bool put(const Shape& shape, const Struct& kvn) {
         
         size_t midpoint = shape.get_nth_type(0).ix_to;
 
-        return put(kv.substruct(0, midpoint), 
-                   kv.substruct(midpoint, shape.size()));
+        return put(kvn.substruct(0, midpoint), 
+                   kvn.substruct(midpoint, shape.size()-1),
+                   kvn.v.back().uint);
     }
 
     bool get(const Struct& k, Struct& v, size_t n) {
+
         std::lock_guard<std::mutex> l(mutex);
 
         auto i = map.find(k);
@@ -248,6 +256,29 @@ struct StructStack {
     bool get(const Shape& shape, const Struct& kn, Struct& v) {
 
         return get(kn.substruct(0, shape.size()-1), v, kn.v.back().uint);
+    }
+
+    bool del(const Struct& k, Struct& v, size_t n) {
+        std::lock_guard<std::mutex> l(mutex);
+
+        auto i = map.find(k);
+        if (i == map.end()) {
+            return false;
+        }
+
+        if (n >= i->second.size()) {
+            return false;
+        }
+
+        auto j = i->second.begin() + (i->second.size()-1-n);
+        v = *j;
+        i->second.erase(j);
+        return true;
+    }
+
+    bool del(const Shape& shape, const Struct& kn, Struct& v) {
+
+        return del(kn.substruct(0, shape.size()-1), v, kn.v.back().uint);
     }
 
     bool size(const Struct& k, size_t& v) {
@@ -421,6 +452,12 @@ inline bool structstack_get(const Shapes& shapes, const Shape& shape, const Shap
     return structstack<T>().get(shape, struc, ret);
 }
 
+template <typename T>
+inline bool structstack_del(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
+                           const Struct& struc, Struct& ret) {
+    return structstack<T>().del(shape, struc, ret);
+}
+
 
 template <typename T>
 inline bool structstack_size(const Shapes& shapes, const Shape& shape, const Shape& shapeto, 
@@ -466,11 +503,12 @@ void register_pool(VM& vm, const std::string& shapefrom, const std::string& shap
 template <typename STACK, typename VM>
 void register_stack(VM& vm, const std::string& shapefrom, const std::string& shapeto) {
 
-    std::string twoshapes = "[ " + shapefrom + " " + shapeto + " ]";
+    std::string thrshapes = "[ " + shapefrom + " " + shapeto + " UInt ]";
     std::string nshapes = "[ " + shapefrom + " UInt ]";
 
-    vm.register_callback("put",  twoshapes, "Void",  structstack_put<STACK>);
+    vm.register_callback("put",  thrshapes, "Void",  structstack_put<STACK>);
     vm.register_callback("get",  nshapes,   shapeto, structstack_get<STACK>);
+    vm.register_callback("del",  nshapes,   shapeto, structstack_del<STACK>);
     vm.register_callback("size", shapefrom, "UInt",  structstack_size<STACK>);
 }
 

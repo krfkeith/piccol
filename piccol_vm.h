@@ -195,7 +195,7 @@ struct Piccol {
     }
 
     bool run(metalan::Sym name, metalan::Sym s1, metalan::Sym s2, nanom::Struct& out, size_t framehead) {
-        bm _b("running");
+        //bm _b("running");
 
         nanom::label_t l(name, s1, s2);
 
