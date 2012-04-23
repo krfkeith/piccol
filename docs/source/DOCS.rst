@@ -861,6 +861,57 @@ Example: ::
 This example shows how to implement a traditional 'if-then-else' control structure in Piccol.
 If ``ok`` returns ``true``, then ``func_then`` will be called; if it returns ``false``, then ``func_else``.
 
+Looping
+-------
+
+Piccol does not support any loop constructs, but it *does* support tail call optimisation properly.
+
+If a function's expression ends with a call of another function, that call will be converted to an
+optimized jump instruction for the VM. (i.e., that call will be effectively turned into a 'goto'.)
+
+Any function or even lambda call will be optimized, not just a recursive call.
+
+.. note:: 
+
+  The tail call must happen at the end of a whole *function*; calls at the end of a *branch* cannot be optimized.
+
+Examples: ::
+
+  infiloop Void->Void :-
+     'save me, I am an infinite loop. :(\n' print
+     infiloop
+
+This function will loop infinitely printing a message and will not consume stack or memory resources.
+(Equivalent to a ``while (1) { ... }`` in C.)
+
+Another example: ::
+
+  forloop [Int Int]->Void :-
+    <: \a >= \b :> ? ;
+    'Looping.\n' print
+    [ (<: \a + 1 :>) \b ] forloop.
+
+This function implements a 'for' loop.
+
+Example with lambda functions: ::
+
+  tailcalls Int->Int :-
+     \\->Int(\\ inc->Int(\\ inc->Int(\\ inc->Int))).
+
+This (rather silly) function has three nested tail calls of lambda functions and one tail call of ``inc->Int``.
+All four will all be optimised, converted to jumps instead of function calls.
+
+Example with branches: ::
+
+  tryit Int->Int :-
+    \\ ok->Bool ? \\ ;
+    \\ variant_a->Int tryit->Int ; 
+    \\ variant_b->Int tryit->Int.
+
+Here the *last* call of ``tryit->Int`` will be optimised, while the one above it will *not* be. 
+(Since it is called at the end of a branch, not at the end of a function.)
+
+
 Arithmetic and logic
 ====================
 
