@@ -97,6 +97,9 @@ inline void __fmt_sym(__formatter& os, const Shapes& shapes, const Shape& shape,
     os.buff += metalan::symtab().get(struc.v[0].uint);
 }
 
+inline void __fmt_void(__formatter& os, const Shapes& shapes, const Shape& shape, const Struct& struc) {
+}
+
 inline bool __fmt_get(__formatter& os, const Shapes& shapes, const Shape& shapeto, Struct& ret) {
     ret.v.push_back(metalan::symtab().get(os.buff));
     return true;
@@ -118,6 +121,9 @@ inline void __print_real(__printer& os, const Shapes& shapes, const Shape& shape
 
 inline void __print_sym(__printer& os, const Shapes& shapes, const Shape& shape, const Struct& struc) {
     std::cout << metalan::symtab().get(struc.v[0].uint);
+}
+
+inline void __print_void(__printer& os, const Shapes& shapes, const Shape& shape, const Struct& struc) {
 }
 
 inline bool __print_get_void(__printer& os, const Shapes& shapes, const Shape& shapeto, Struct& ret) {
@@ -156,6 +162,7 @@ void register_fmt_sequencer(VM& vm) {
         .feed("UInt", __fmt_uint)
         .feed("Real", __fmt_real)
         .feed("Sym", __fmt_sym)
+        .feed("Void", __fmt_void)
         .end("Sym", __fmt_get);
 
 }
@@ -168,6 +175,7 @@ void register_print_sequencer(VM& vm) {
         .feed("UInt", __print_uint)
         .feed("Real", __print_real)
         .feed("Sym", __print_sym)
+        .feed("Void", __print_void)
         .end("Void", __print_get_void)
         .end("Sym", __print_get_sym)
         .end("Int", __print_get_v<Int>)
