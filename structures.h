@@ -12,12 +12,16 @@ struct StructMap {
     typedef std::unordered_map<Struct, Struct> map_t;
     
     map_t map;
+    bool readonly;
     std::mutex mutex;
 
-    StructMap() {}
+    StructMap() : readonly(false) {}
 
     bool set(const Struct& k, const Struct& v) { 
         std::lock_guard<std::mutex> l(mutex);
+
+        if (readonly)
+            throw std::runtime_error("Trying to modify a readonly map.");
 
         auto i = map.find(k);
         if (i != map.end())
@@ -47,12 +51,20 @@ struct StructMap {
     bool del(const Struct& k, Struct& v) {
         std::lock_guard<std::mutex> l(mutex);
 
+        if (readonly)
+            throw std::runtime_error("Trying to modify a readonly map.");
+
         auto i = map.find(k);
         if (i == map.end())
             return false;
         v = i->second;
         map.erase(i);
         return true;
+    }
+
+    void set_readonly(bool ro) {
+        std::lock_guard<std::mutex> l(mutex);
+        readonly = ro;
     }
 
     void clear() {

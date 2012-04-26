@@ -307,6 +307,10 @@ struct Modules {
         }
 
         PiccolF& othervm = *(modules[i->second].second);
+
+        if (othervm.verbose) {
+            std::cout << "=== " << l.print() << " ===" << std::endl;
+        }
         
         return othervm.run(l.name, l.fromshape, l.toshape, in, out);
     }

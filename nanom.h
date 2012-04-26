@@ -688,6 +688,10 @@ inline void vm_run(Vm& vm,
     size_t topframe = vm.frame.size();
 
     VmCode::code_t* code = &(vm.code.codes[label]);
+    
+    if (verbose) {
+        std::cout << ">>> " << label.print() << " " << ip << std::endl;
+    }
 
     while (1) {
 
@@ -991,6 +995,8 @@ inline void vm_run(Vm& vm,
             Val offs_end = vm.pop();
             Val offs_beg = vm.pop();
 
+            vm.stack.reserve(vm.stack.size() + (offs_end.uint - offs_beg.uint));
+
             auto stbeg = vm.stack.end();
             stbeg = stbeg - strusize.uint;
             auto fb = stbeg + offs_beg.uint;
@@ -1007,6 +1013,8 @@ inline void vm_run(Vm& vm,
         case GET_FRAMEHEAD_FIELDS: {
             Val offs_end = vm.pop();
             Val offs_beg = vm.pop();
+
+            vm.stack.reserve(vm.stack.size() + (offs_end.uint - offs_beg.uint));
 
             const auto& fp = vm.frame.back();
             auto sb = vm.stack.begin() + fp.stack_ix;
