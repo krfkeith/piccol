@@ -467,49 +467,52 @@ inline bool structstack_size(const Shapes& shapes, const Shape& shape, const Sha
 
 
 template <typename MAP, typename VM>
-void register_map(VM& vm, const std::string& shapefrom, const std::string& shapeto) {
+void register_map(VM& vm, const std::string& shapefrom, const std::string& shapeto,
+                  const std::string& suf="") {
 
     std::string twoshapes = "[ " + shapefrom + " " + shapeto + " ]";
 
-    vm.register_callback("set", twoshapes, "Void", structmap_set<MAP>);
-    vm.register_callback("get", shapefrom, shapeto, structmap_get<MAP>);
-    vm.register_callback("del", shapefrom, shapeto, structmap_del<MAP>);
+    vm.register_callback("set"+suf, twoshapes, "Void", structmap_set<MAP>);
+    vm.register_callback("get"+suf, shapefrom, shapeto, structmap_get<MAP>);
+    vm.register_callback("del"+suf, shapefrom, shapeto, structmap_del<MAP>);
 }
 
 
 template <typename GLOBJ, typename VM>
-void register_global(VM& vm, const std::string& shape) {
+void register_global(VM& vm, const std::string& shape, const std::string& suf="") {
 
-    vm.register_callback("set", shape,  "Void", globalstruct_set<GLOBJ>);
-    vm.register_callback("get", "Void", shape,  globalstruct_get<GLOBJ>);
-    vm.register_callback("del", "Void", shape,  globalstruct_del<GLOBJ>);
+    vm.register_callback("set"+suf, shape,  "Void", globalstruct_set<GLOBJ>);
+    vm.register_callback("get"+suf, "Void", shape,  globalstruct_get<GLOBJ>);
+    vm.register_callback("del"+suf, "Void", shape,  globalstruct_del<GLOBJ>);
 }
 
 
 template <typename POOL, typename VM>
-void register_pool(VM& vm, const std::string& shapefrom, const std::string& shapeto) {
+void register_pool(VM& vm, const std::string& shapefrom, const std::string& shapeto,
+                   const std::string& suf="") {
 
     std::string thrshapes = "[ " + shapefrom + " " + shapeto + " UInt ]";
     std::string nshapes = "[ " + shapefrom + " UInt ]";
     std::string kshapes = "[ " + shapefrom + " " + shapeto + " ]";
 
-    vm.register_callback("put",  thrshapes, "Void",  structpool_put<POOL>);
-    vm.register_callback("get",  nshapes,   shapeto, structpool_get_n<POOL>);
-    vm.register_callback("get",  kshapes,   "Void",  structpool_get_k<POOL>);
-    vm.register_callback("size", shapefrom, "UInt",  structpool_size<POOL>);
+    vm.register_callback("put"+suf,  thrshapes, "Void",  structpool_put<POOL>);
+    vm.register_callback("get"+suf,  nshapes,   shapeto, structpool_get_n<POOL>);
+    vm.register_callback("get"+suf,  kshapes,   "Void",  structpool_get_k<POOL>);
+    vm.register_callback("size"+suf, shapefrom, "UInt",  structpool_size<POOL>);
 }
 
 
 template <typename STACK, typename VM>
-void register_stack(VM& vm, const std::string& shapefrom, const std::string& shapeto) {
+void register_stack(VM& vm, const std::string& shapefrom, const std::string& shapeto,
+                    const std::string& suf="") {
 
     std::string thrshapes = "[ " + shapefrom + " " + shapeto + " UInt ]";
     std::string nshapes = "[ " + shapefrom + " UInt ]";
 
-    vm.register_callback("put",  thrshapes, "Void",  structstack_put<STACK>);
-    vm.register_callback("get",  nshapes,   shapeto, structstack_get<STACK>);
-    vm.register_callback("del",  nshapes,   shapeto, structstack_del<STACK>);
-    vm.register_callback("size", shapefrom, "UInt",  structstack_size<STACK>);
+    vm.register_callback("put"+suf,  thrshapes, "Void",  structstack_put<STACK>);
+    vm.register_callback("get"+suf,  nshapes,   shapeto, structstack_get<STACK>);
+    vm.register_callback("del"+suf,  nshapes,   shapeto, structstack_del<STACK>);
+    vm.register_callback("size"+suf, shapefrom, "UInt",  structstack_size<STACK>);
 }
 
 
