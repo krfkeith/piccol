@@ -170,13 +170,14 @@ def [v:Real];
   val :- spaces literal_here spaces.
   val :- spaces '(' expr ')' spaces.
 
+  val :- spaces 'bool' spaces '(' expr ')' spaces @' $to_bool'.
+  val :- spaces 'int'  spaces '(' expr ')' spaces @' $to_int'.
+  val :- spaces 'uint' spaces '(' expr ')' spaces @' $to_uint'.
+  val :- spaces 'real' spaces '(' expr ')' spaces @' $to_real'.
+
   expr_neg :- spaces '!' spaces val @' $not'.
   expr_neg :- spaces '-' spaces val @' $neg'.
   expr_neg :- spaces '~' spaces val @' $bnot'.
-  expr_neg :- spaces 'bool' spaces '(' expr ')' spaces @' $to_bool'.
-  expr_neg :- spaces 'int'  spaces '(' expr ')' spaces @' $to_int'.
-  expr_neg :- spaces 'uint' spaces '(' expr ')' spaces @' $to_uint'.
-  expr_neg :- spaces 'real' spaces '(' expr ')' spaces @' $to_real'.
   expr_neg :- spaces val.
 
   noop_tail :- @'] $noop'.

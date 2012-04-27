@@ -948,14 +948,14 @@ Here is the list of supported operators, in order of precedence. (The more tight
 
   0;``(`` *EXPR* ``)``;  ;                   Parentheses can be used for grouping
   0;*LITERAL*;           ;                   Literal values or function argument fields
+  0;``bool(`` *EXPR* ``)``; Int,UInt;           Converts the argument to a Bool
+  0;``int(`` *EXPR* ``)``;  UInt,Real,Bool;     Converts the argument to an Int
+  0;``uint(`` *EXPR* ``)``; Real,Int,Bool;      Converts the argument to a UInt
+  0;``real(`` *EXPR* ``)``; Int,UInt;           Converts the argument to a Real    
 
   1;``!`` *X*;           Bool;               Boolean negation
   1;``-`` *X*;           Int,Real;           The negation of a number
   1;``~`` *X*;           UInt;               Binary 'not' (bit flipping)
-  1;``bool(`` *EXPR* ``)``; Int,UInt;           Converts the argument to a Bool
-  1;``int(`` *EXPR* ``)``;  UInt,Real,Bool;     Converts the argument to an Int
-  1;``uint(`` *EXPR* ``)``; Real,Int,Bool;      Converts the argument to a UInt
-  1;``real(`` *EXPR* ``)``; Int,UInt;           Converts the argument to a Real    
 
   2;*X* ``&`` *Y*;       UInt;               Binary 'AND'
   2;*X* ``|`` *Y*;       UInt;               Binary 'OR'
