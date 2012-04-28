@@ -1268,3 +1268,73 @@ This idiom is a convienient way of passing a variable-sized list of values to a 
 
 It is also useful, for example, for implementing I/O and formatter functions. (Like ``printf`` in C and other languages.)
 
+'do'
+-----
+
+'do' is a macro for expressing sequences of computations, but in a 'linear' fashion with variables, rather 
+than the more ugly notation of nested expressions.
+
+'do' has the following syntax: ::
+
+  <:[do] <typename> -> <typename>
+
+         <ident> = <expr>,
+         <ident> = <expr>,
+         ...
+      =>
+         <ident> = <expr>,
+         ...
+      =>
+         <expr>
+   :>
+
+For example: ::
+
+  <:[do] [Int Int] -> Int
+
+     a = [\a \b] random->Int
+     b = <: \a + \b :>
+    =>
+     a = <: \a * \b :>
+    =>
+     b = <: \a * \b :>
+    => 
+     [\a \b] foo->Int
+   :>
+
+This code will be transformed to: ::
+
+  [Int Int] { a=([\a \b] random->Int)
+              b=(<: \a + \b :>)
+  } ->Int(
+     \\ { a=(<: \a * \b :>) 
+     } ->Int(
+        \\ { b=(<: \a * \b :>)
+        } ->Int(
+           [\a \b] foo->Int
+        )
+     )
+  )
+
+The ``do`` expression is a kind of 'mini-program': a set of variables, a sequence of instructions, and
+a resulting output value.
+
+You can think of the first type (``[Int Int]`` in the example) as a kind of 
+'memory bank', which holds the variables of your mini-program.
+
+The second type (``Int``) is the type of the resulting output value.
+
+Each line (separated by ``=>``) describes how to change variable values at each step of the mini-program's 
+execution.
+
+.. note::
+
+  The last expression after the final ``=>`` is special! It describes how to convert the 'memory bank' into
+  the resulting value.
+
+.. note::
+
+  The ``do`` macro is converted into a series of nested, tail-call-optimized function calls.
+  This makes ``do`` macros particularly suitable for implementing loop-like functions.
+
+
