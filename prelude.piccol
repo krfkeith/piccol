@@ -147,12 +147,16 @@ def [v:Real];
 <:: body(literals)
 
   body_paren :- sym body_paren.
+  body_paren :- '#' comment_x body_paren.
+  body_paren :- '/*' comment_xx body_paren.
   body_paren :- ')'.
   body_paren :- '(' body_paren body_paren.
   body_paren :- \any body_paren.
 
   body :- sym &'' body.
   body :- '(' body_paren &'' body.
+  body :- '#' comment_x body.
+  body :- '/*' comment_xx body.
   body :- body_end.
   body :- \any &'' body.
   body :- .
@@ -278,3 +282,26 @@ def [v:Real];
 
 ::>
 
+<:: do(body,types)
+  type_here :- type &''.
+  type_push :- type &'push'.
+  ident_here :- ident &''.
+
+  tail :- \any &'' tail.
+  tail :- .
+
+  try_clauses :- @'( \\\\ { ' do_clauses @')'.
+  try_clauses :- @'( ' tail @')'.
+
+  body_end :- ','  @') '.
+  body_end :- '=>' @') } ->' &'top' try_clauses.
+
+  clause :- spaces ident_here spaces '=' @'=(' spaces body.
+
+  do_clauses_x :- clause do_clauses_x.
+  do_clauses_x :- .
+  do_clauses :-  clause do_clauses_x.
+
+  do :- spaces type_here spaces '->' spaces type_push
+        spaces '=>' @' {' do_clauses.
+::>

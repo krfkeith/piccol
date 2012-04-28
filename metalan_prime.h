@@ -21,7 +21,8 @@ struct charmatcher {
         static Sym locase = symtab().get("locase");
         static Sym upcase = symtab().get("upcase");
 
-        //std::cout << str << "~[" << std::string(b, e).substr(0, 10) << "]" << std::endl;
+        //std::cout << metalan::symtab().get(sc.sym) << "~[" << std::string(b, e).substr(0, 10)
+        //          << "]" << std::endl;
 
         if (b == e) {
             if (sc.type == Symcell::ESCAPE && sc.sym == end) {
