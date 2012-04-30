@@ -368,10 +368,7 @@ enum op_t {
     INT_TO_REAL,
     REAL_TO_INT,
     UINT_TO_REAL,
-    REAL_TO_UINT,
-    INT_TO_CHAR,
-    UINT_TO_CHAR
-
+    REAL_TO_UINT
 };
 
 
@@ -572,8 +569,6 @@ struct _mapper {
         m[(size_t)REAL_TO_INT] = "REAL_TO_INT";
         m[(size_t)UINT_TO_REAL] = "UINT_TO_REAL";
         m[(size_t)REAL_TO_UINT] = "REAL_TO_UINT";
-        m[(size_t)INT_TO_CHAR] = "INT_TO_CHAR";
-        m[(size_t)UINT_TO_CHAR] = "UINT_TO_CHAR";
         
         n["NOOP"] = NOOP;
         n["PUSH"] = PUSH;
@@ -640,8 +635,6 @@ struct _mapper {
         n["REAL_TO_INT"] = REAL_TO_INT;
         n["UINT_TO_REAL"] = UINT_TO_REAL;
         n["REAL_TO_UINT"] = REAL_TO_UINT;
-        n["INT_TO_CHAR"] = INT_TO_CHAR;
-        n["UINT_TO_CHAR"] = UINT_TO_CHAR;
     }
 
     const std::string& name(op_t opc) const {
@@ -1311,22 +1304,6 @@ inline void vm_run(Vm& vm,
         case REAL_TO_UINT: {
             Val v = vm.pop();
             Val ret = (UInt)v.real;
-            vm.stack.push_back(ret);
-            break;
-        }
-
-        case INT_TO_CHAR: {
-            Val v = vm.pop();
-            Val ret;
-            ret.uint = symtab().get(std::string(1, (char)v.inte));
-            vm.stack.push_back(ret);
-            break;
-        }
-
-        case UINT_TO_CHAR: {
-            Val v = vm.pop();
-            Val ret;
-            ret.uint = symtab().get(std::string(1, (unsigned char)v.uint));
             vm.stack.push_back(ret);
             break;
         }

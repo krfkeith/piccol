@@ -123,9 +123,6 @@ private:
             add("Real",          "to_int",  REAL_TO_INT,  "Int");
             add("Real",          "to_uint", REAL_TO_UINT, "UInt");
 
-            add("Int",           "to_sym",  INT_TO_CHAR,  "Sym");
-            add("UInt",          "to_sym",  UINT_TO_CHAR, "Sym");
-            
             add("Int",           "to_uint", NOOP,         "UInt");
             add("Int",           "to_bool", NOOP,         "Bool");
             add("UInt",          "to_int",  NOOP,         "Int");

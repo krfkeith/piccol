@@ -1120,9 +1120,6 @@ The following is a table of all inline assembly functions.
   ``Real``,           ``to_int``,    ``Int``, Real number to signed integer conversion
   ``Real``,           ``to_uint``,   ``UInt``, Real number to unsigned integer conversion. (Unsafe!!)
 
-  ``Int``,            ``to_sym``,    ``Sym``, Converts ASCII code value to symbolic constant. (No Unicode support!!)
-  ``UInt``,           ``to_sym``,    ``Sym``, Converts ASCII code value to symbolic constant. (No Unicode support!!)
-            
   ``Int``,            ``to_uint``,           ``UInt``, Signed to unsigned integer conversion. (Unsafe!!)
   ``Int``,            ``to_bool``,           ``Bool``, Integer to boolean conversion
   ``UInt``,           ``to_int``,            ``Int``, Unsigned to signed integer conversion. (Unsafe!!)
