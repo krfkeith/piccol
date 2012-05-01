@@ -185,6 +185,10 @@ struct Modules {
         // Load common code.
         PiccolF comvm(sysdir, appdir, verbose);
 
+        for (const auto& cb : callbacks) {
+            comvm.code.register_callback(cb.first, cb.second);
+        }
+
         if (common.size() != 0) {
             comvm.load(common);
         }
@@ -198,10 +202,6 @@ struct Modules {
 
         for (auto& mod : modules) {
             PiccolF& vm = *(mod.second.second);
-
-            for (const auto& cb : callbacks) {
-                vm.code.register_callback(cb.first, cb.second);
-            }
 
             for (const auto& func : exports) {
 
@@ -270,6 +270,7 @@ struct Modules {
     }
 
     void init() {
+        std::cout << "INIT!!!" << std::endl;
         _link();
     }
 
@@ -282,6 +283,8 @@ struct Modules {
 
     void register_callback(const std::string& name, const std::string& from, const std::string& to,
                            callback_t cb) {
+
+        std::cout << "!!! CALLBACK " << name << " " << from << " " << to << std::endl;
 
         label_t l(metalan::symtab().get(name),
                   metalan::symtab().get(from), 
