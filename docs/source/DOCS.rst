@@ -1033,6 +1033,13 @@ The code should be rewritten with parentheses: ::
 
   Foo { a=(<: \one + 1 :>) }
 
+.. note::
+
+  All operators are **non-associative**!!
+
+  You **cannot** write something like ``1 + 2 + 3`` -- this is a parse error. Use parentheses to group operators
+  explicitly: ``(1 + 2) + 3``.
+
 
 Inline assembly functions
 -------------------------
