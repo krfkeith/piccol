@@ -187,7 +187,7 @@ def [v:Real];
   noop_tail :- @'] $noop'.
 
   expr_bit_head :- @'[(' expr_neg @')'.
-  expr_bit_tail :- @'('  expr_bit @')] '.
+  expr_bit_tail :- @'('  expr_neg @')] '.
 
   expr_bit :- expr_bit_head '&' expr_bit_tail @'$band'.
   expr_bit :- expr_bit_head '|' expr_bit_tail @'$bor'.
@@ -197,7 +197,7 @@ def [v:Real];
   expr_bit :- expr_bit_head noop_tail.
 
   expr_mul_head :- @'[(' expr_bit @')'.
-  expr_mul_tail :- @'('  expr_mul @')] '.
+  expr_mul_tail :- @'('  expr_bit @')] '.
 
   expr_mul :- expr_mul_head '*' expr_mul_tail @'$mul'.
   expr_mul :- expr_mul_head '/' expr_mul_tail @'$div'.
@@ -205,7 +205,7 @@ def [v:Real];
   expr_mul :- expr_mul_head noop_tail.
 
   expr_add_head :- @'[(' expr_mul @')'.
-  expr_add_tail :- @'('  expr_add @')] '.
+  expr_add_tail :- @'('  expr_mul @')] '.
 
   expr_add :- expr_add_head '+' expr_add_tail @'$add'.
   expr_add :- expr_add_head '-' expr_add_tail @'$sub'.
@@ -224,7 +224,7 @@ def [v:Real];
   expr_eq :- expr_eq_head noop_tail.
 
   expr_and_head :- @'[(' expr_eq @')'.
-  expr_and_tail :- @'('  expr_and @')] '.
+  expr_and_tail :- @'('  expr_eq @')] '.
 
   expr_and :- expr_and_head '&&' expr_and_tail @'$and'.
   expr_and :- expr_and_head '||' expr_and_tail @'$or'.
