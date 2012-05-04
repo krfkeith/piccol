@@ -472,7 +472,11 @@ struct Vm {
     Shape tmp_shape;
 
 
-    Vm(VmCode& c) : failbit(false), code(c), shapes(code.shapes) {}
+    Vm(VmCode& c) : failbit(false), code(c), shapes(code.shapes) {
+
+        stack.reserve(2048);
+        frame.reserve(256);
+    }
 
     Vm(VmCode& c, Shapes& s) : failbit(false), code(c), shapes(s) {}
 

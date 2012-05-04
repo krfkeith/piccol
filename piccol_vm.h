@@ -142,6 +142,9 @@ struct Piccol {
             throw std::runtime_error(std::string("Error in stage 1 (piccol_lex): ") + e.what());
         }
 
+        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        std::cout << stage1.print() << std::endl;
+
         metalan::Symlist stage2;
 
         while (1) {
