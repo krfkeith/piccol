@@ -416,10 +416,33 @@ namespace nanom {
 
 typedef std::function<bool(const Shapes&, const Shape&, const Shape&, const Struct&, Struct&)> callback_t;
 
+struct Timings {
+    std::unordered_map<label_t, size_t> timings;
+    
+    struct scope {
+        struct timeval b;
+        size_t& counter;
+
+        scope(Timings& t, const label_t& l) : counter(t.timings[l]) {
+            gettimeofday(&b, NULL);
+        }
+
+        ~scope() {
+            struct timeval e;
+            gettimeofday(&e, NULL);
+            size_t a = (e.tv_sec*1e6 + e.tv_usec);
+            size_t q = (b.tv_sec*1e6 + b.tv_usec);
+            counter += (a-q);
+        }
+    };
+};
+
+
 
 struct VmCode {
     typedef std::vector<Opcode> code_t;
      
+    Timings timings;
     std::unordered_map<label_t, code_t> codes;
 
     Shapes shapes;
@@ -917,6 +940,7 @@ inline void vm_run(Vm& vm,
                 throw std::runtime_error("Callback '" + l.print() + "' undefined");
             }
 
+            Timings::scope(vm.code.timings, l);
             vm.failbit = !(j->second)(vm.shapes, shape, vm.shapes.get(totype.uint), tmp, ret);
 
             vm.stack.insert(vm.stack.end(), ret.v.begin(), ret.v.end());

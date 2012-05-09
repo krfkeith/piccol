@@ -97,6 +97,12 @@ struct Piccol {
         verbose(_verbose)
         {}
 
+    ~Piccol() {
+        for (const auto& l : code.timings.timings) {
+            std::cout << l.first.print() << " : " << (double)l.second/1e6 << std::endl;
+        }
+    }
+
     void register_callback(const std::string& name, const std::string& from, const std::string& to,
                            nanom::callback_t cb) {
         code.register_callback(nanom::label_t(metalan::symtab().get(name),
@@ -142,8 +148,8 @@ struct Piccol {
             throw std::runtime_error(std::string("Error in stage 1 (piccol_lex): ") + e.what());
         }
 
-        std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
-        std::cout << stage1.print() << std::endl;
+        //std::cout << "++++++++++++++++++++++++++++++++++++++++++++++" << std::endl;
+        //std::cout << stage1.print() << std::endl;
 
         metalan::Symlist stage2;
 

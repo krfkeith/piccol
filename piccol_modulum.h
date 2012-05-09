@@ -270,7 +270,6 @@ struct Modules {
     }
 
     void init() {
-        std::cout << "INIT!!!" << std::endl;
         _link();
     }
 
@@ -283,8 +282,6 @@ struct Modules {
 
     void register_callback(const std::string& name, const std::string& from, const std::string& to,
                            callback_t cb) {
-
-        std::cout << "!!! CALLBACK " << name << " " << from << " " << to << std::endl;
 
         label_t l(metalan::symtab().get(name),
                   metalan::symtab().get(from), 
